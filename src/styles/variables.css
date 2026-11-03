@@ -1,0 +1,11 @@
+:root {
+  /* 초기 임시 값: 추후 Figma 디자인 토큰으로 확정합니다. */
+  --color-primary: #184d3a;
+  --color-background: #ffffff;
+  --color-surface: #eef3ef;
+  --color-text: #18251e;
+  --color-border: #d5dfd8;
+  --mobile-max-width: 480px;
+  --space-page: 20px;
+  --radius-base: 12px;
+}
