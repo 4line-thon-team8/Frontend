@@ -1,0 +1,94 @@
+/* Figma '첫 화면' (390 × 844) 기준 */
+.splash {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  /* MobileLayout 의 main padding 을 상쇄해 배경을 화면 끝까지 채웁니다. */
+  margin: calc(var(--space-page) * -1);
+  color: var(--color-on-primary);
+  background: var(--gradient-primary);
+  text-align: center;
+}
+
+.splash__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 로고 SVG 를 마스크로 써서 색을 CSS 로 바꿉니다 (로그인 화면 등에서 다른 색으로 재사용). */
+.splash__logo {
+  width: 106px;
+  height: 109px;
+  margin-bottom: 36px;
+  background-color: currentColor;
+  -webkit-mask: var(--logo-url) center / contain no-repeat;
+  mask: var(--logo-url) center / contain no-repeat;
+}
+
+.splash__title {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.splash__subtitle {
+  margin: 0;
+  color: var(--color-primary-sub);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.splash__loading {
+  position: absolute;
+  bottom: 92px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.splash__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.splash__dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+  animation: splash-dot 1.2s ease-in-out infinite;
+}
+
+.splash__dots span:nth-child(2) { animation-delay: 0.2s; }
+.splash__dots span:nth-child(3) { animation-delay: 0.4s; }
+
+.splash__loading-text {
+  width: 77px;
+  color: var(--color-primary-sub-light);
+  font-family: 'Helvetica43-ExtendedLight', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  line-height: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+@keyframes splash-dot {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash__dots span { animation: none; opacity: 0.8; }
+}
