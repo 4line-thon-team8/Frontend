@@ -1,7 +1,7 @@
 @import './variables.css';
 
 * { box-sizing: border-box; }
-body { margin: 0; font-family: system-ui, sans-serif; color: var(--color-text); background: var(--color-background); }
+body { margin: 0; font-family: var(--font-base); color: var(--color-text); background: var(--color-background); }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
 .mobile-layout { width: 100%; max-width: var(--mobile-max-width); min-height: 100dvh; margin-inline: auto; }

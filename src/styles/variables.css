@@ -1,10 +1,17 @@
 :root {
   /* 초기 임시 값: 추후 Figma 디자인 토큰으로 확정합니다. */
-  --color-primary: #184d3a;
+  --color-primary: #2f5d50; /* Figma 메인 컬러 */
+  --color-on-primary: #fefefe; /* Figma 1_메인 서브 */
+  --color-primary-sub: #c3cfca; /* Figma 2_메인컬러서브 */
+  --color-primary-sub-light: #dfe6e3; /* Figma 2_메인컬러서브 (밝은 톤) */
+  --gradient-primary: linear-gradient(180deg, #2f5d50 0%, #305d50 100%);
   --color-background: #ffffff;
   --color-surface: #eef3ef;
-  --color-text: #18251e;
+  --color-text: #1a1a1a; /* Figma Text Color */
   --color-border: #d5dfd8;
+  --font-base: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+  /* 폰트 파일 등록 전에는 기기에 설치된 경우에만 적용되고, 없으면 기본 폰트로 표시됩니다. */
+  --font-display: '페어 큰부리새', var(--font-base);
   --mobile-max-width: 480px;
   --space-page: 20px;
   --radius-base: 12px;
