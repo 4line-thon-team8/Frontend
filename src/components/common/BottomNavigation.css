@@ -1,0 +1,32 @@
+.grade-bottom-navigation {
+  --navigation-primary: #2f5d50;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 390px;
+  min-height: calc(106px + env(safe-area-inset-bottom));
+  padding: 29px max(58px, env(safe-area-inset-right)) calc(29px + env(safe-area-inset-bottom)) max(58px, env(safe-area-inset-left));
+  border-radius: 30px 30px 0 0;
+  background: #fefefe;
+  box-shadow: 6px -8px 30px rgb(47 93 80 / 8%);
+  font-family: 'S02 Pretendard', sans-serif;
+}
+.grade-bottom-navigation-item { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #c2c6c4; }
+.grade-bottom-navigation-item:not(.grade-bottom-navigation-home) img { display: block; object-fit: contain; filter: grayscale(1); opacity: 0.45; }
+.grade-bottom-navigation-item[aria-current='page'] { color: var(--navigation-primary); }
+.grade-bottom-navigation-item:not(.grade-bottom-navigation-home)[aria-current='page'] img { filter: brightness(0) saturate(100%) invert(31%) sepia(18%) saturate(922%) hue-rotate(108deg) brightness(93%) contrast(88%); opacity: 1; }
+/* 홈 SVG 안의 원과 그림자를 그대로 사용합니다. */
+.grade-bottom-navigation-home img { display: block; width: 48px; height: 48px; filter: grayscale(1); }
+.grade-bottom-navigation-home[aria-current='page'] img { filter: none; }
+/* Figma는 아이콘 전용 메뉴입니다. 접근성 이름은 시각적으로만 숨깁니다. */
+.grade-bottom-navigation-item span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 360px) { .grade-bottom-navigation { padding-inline: 32px; } }
+
+/* 마이페이지 SVG의 원래 비활성 회색을 유지합니다. */
+.grade-bottom-navigation-item:last-child:not([aria-current="page"]) img { filter: none; opacity: 1; }
