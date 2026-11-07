@@ -1,0 +1,113 @@
+@font-face {
+  font-family: 'Analysis Loading Pretendard';
+  src: url('../../assets/fonts/PretendardVariable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* MobileLayout의 main 여백을 이 페이지에서만 상쇄합니다. */
+.analysis-loading-page {
+  --color-primary: #2f5d50;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% + var(--space-page) * 2);
+  max-width: 390px;
+  min-height: 100dvh;
+  margin-block: calc(-1 * var(--space-page));
+  margin-inline: calc((100% - min(390px, 100% + var(--space-page) * 2)) / 2);
+  background: var(--color-background);
+  color: var(--color-primary);
+  font-family: 'Analysis Loading Pretendard', sans-serif;
+}
+
+.analysis-loading-header {
+  flex-shrink: 0;
+  padding: max(18px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
+}
+
+.analysis-loading-header a {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -5px;
+}
+
+.analysis-loading-header img { display: block; }
+
+.analysis-loading-content {
+  flex: 1;
+  min-width: 0;
+  /* 하단 경계 위로 올라오는 캐릭터와 진행 상태 사이의 공간을 확보합니다. */
+  padding: 16px max(20px, env(safe-area-inset-right)) 144px max(20px, env(safe-area-inset-left));
+}
+
+.analysis-loading-content h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.analysis-loading-steps {
+  display: grid;
+  gap: 32px;
+  margin: 64px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.analysis-loading-step h2 {
+  margin: 0 0 8px;
+  color: #52625d;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.analysis-loading-track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 100px;
+  background: #f1f1f1;
+}
+
+.analysis-loading-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.analysis-loading-step.is-complete .analysis-loading-fill { width: 100%; }
+
+.analysis-loading-step p {
+  margin: 8px 0 0;
+  color: #1c2b26;
+  text-align: center;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+
+.analysis-loading-step.is-waiting p { color: #8a9893; }
+
+.analysis-loading-footer {
+  position: relative;
+  flex-shrink: 0;
+  height: calc(169px + env(safe-area-inset-bottom));
+  background: #1c2b26;
+}
+
+.analysis-loading-character {
+  position: absolute;
+  right: clamp(20px, 12.3%, 48px);
+  bottom: calc(100% - 48px);
+  display: block;
+  width: 204px;
+  max-width: calc(100% - 40px);
+  height: auto;
+}
