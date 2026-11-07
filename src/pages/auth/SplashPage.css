@@ -19,14 +19,14 @@
   align-items: center;
 }
 
-/* 로고 SVG 를 마스크로 써서 색을 CSS 로 바꿉니다 (로그인 화면 등에서 다른 색으로 재사용). */
+/* logo.svg 는 메인 컬러(#2F5D50)로 칠해져 있어 배경과 겹치므로, 필터로 흰색으로 바꿔 보여줍니다. */
 .splash__logo {
+  display: block;
   width: 106px;
   height: 109px;
   margin-bottom: 36px;
-  background-color: currentColor;
-  -webkit-mask: var(--logo-url) center / contain no-repeat;
-  mask: var(--logo-url) center / contain no-repeat;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .splash__title {
