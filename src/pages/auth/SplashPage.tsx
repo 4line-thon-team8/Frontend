@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import logo from '../../assets/images/logo.svg';
 import './SplashPage.css';
@@ -16,7 +16,7 @@ export default function SplashPage() {
   return (
     <section className="splash">
       <div className="splash__brand">
-        <span className="splash__logo" style={{ '--logo-url': `url(${logo})` } as CSSProperties} aria-hidden="true" />
+        <img className="splash__logo" src={logo} alt="" width="106" height="109" />
         <h1 className="splash__title">오 등급</h1>
         <p className="splash__subtitle">내 생기부로 찾는 나만의 진학 방향</p>
       </div>

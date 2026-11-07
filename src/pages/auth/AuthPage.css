@@ -1,0 +1,169 @@
+/*
+ * Figma '로그인-입력 전' / '회원가입-입력 전' (390 × 844) 기준
+ * Figma 의 y 값에서 기기 상태바(44px)를 뺀 값을 사용합니다. 하단 홈 인디케이터(34px)는 safe-area 로 처리합니다.
+ */
+@font-face {
+  font-family: 'Auth Pretendard';
+  src: url('../../assets/fonts/PretendardVariable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+.auth-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  /* MobileLayout 의 main padding 을 상쇄해 화면 끝까지 채웁니다. */
+  margin: calc(var(--space-page) * -1);
+  padding: env(safe-area-inset-top) 20px calc(40px + env(safe-area-inset-bottom));
+  overflow: hidden;
+  font-family: 'Auth Pretendard', var(--font-base);
+  color: var(--color-text);
+  background: var(--color-background);
+}
+
+.auth-page button,
+.auth-page input { font-family: inherit; }
+
+.auth-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.auth-fields {
+  display: grid;
+  gap: 16px;
+}
+
+/* 입력 필드 묶음: 라벨 ~ 입력창 22px, 입력창 아래 18px (총 86px) */
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 18px;
+}
+
+.auth-field label {
+  padding-left: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.auth-field input {
+  width: 100%;
+  height: 46px;
+  margin-top: 6px;
+  padding: 15px 25px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--color-text);
+  background: #f1f1f1;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.auth-field input::placeholder { color: #8a9893; }
+.auth-field input:focus-visible { outline: none; border-color: var(--color-primary); background: #fff; }
+.auth-field input[aria-invalid='true'] { border-color: #b34a40; }
+
+.auth-field__error {
+  margin: 4px 0 -4px;
+  padding-left: 10px;
+  color: #b34a40;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* 하단 버튼 영역: 마지막 입력 묶음과 최소 60px 간격 */
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 60px;
+}
+
+.auth-page .auth-submit {
+  width: 100%;
+  height: 49px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  box-shadow: 0 4px 8px #2f5d5033;
+}
+
+.auth-link {
+  margin-top: 11px;
+  color: #737e78;
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: none;
+}
+
+/* 로그인: 상단의 큰 연한 로고 (이메일 묶음 시작 y=471 → 427) */
+.auth-page--login {
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.auth-page--login .auth-hero {
+  position: relative;
+  flex-shrink: 0;
+  height: 427px;
+  margin: 0 -20px;
+}
+
+/* 로고 오른쪽 끝을 입력칸 오른쪽 끝(화면 오른쪽에서 20px)에 맞춥니다. */
+.auth-hero__logo {
+  position: absolute;
+  top: -55px;
+  right: 20px;
+  width: 422px;
+  height: auto;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* 회원가입: 뒤로가기(y=59) → 로고(y=141, 57×60) → 제목 → 부제 → 입력(y=372) */
+.auth-back {
+  display: block;
+  width: 29px;
+  height: 29px;
+  margin-top: 15px;
+}
+
+.auth-back img { display: block; }
+
+.auth-intro {
+  margin: 53px 0 74px;
+}
+
+.auth-intro__logo {
+  display: block;
+  width: 57px;
+  height: 60px;
+}
+
+/* 제목: Figma 137 × 58, 1_메인 블랙 */
+.auth-intro h1 {
+  margin: 10px 0 0;
+  color: #1a1a1a;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+/* 부제: Figma top 281 · left 22 · 251 × 17, 2_메인컬러서브 */
+.auth-intro p {
+  margin: 12px 0 0 2px;
+  color: #52625d;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.auth-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
