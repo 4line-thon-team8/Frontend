@@ -86,19 +86,43 @@
   padding-top: 60px;
 }
 
-/* 버튼: Figma 350 × 49 (padding 15 147, 글자 56 × 19), 모서리 6px */
-.auth-page .auth-submit {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/*
+ * 로그인 버튼: Figma 에서 내보낸 SVG 를 그대로 씁니다. 버튼 영역은 350 × 49 (화면이 좁으면 비율대로 줄어듭니다).
+ * - login-button-before.svg: 입력 전(비활성) 350 × 49
+ * - login-button.svg: 활성, 그림자 포함 367 × 66 → 버튼 영역 기준 left -8.4 · top -2.4 로 겹쳐 놓습니다.
+ */
+.auth-image-button {
+  position: relative;
+  display: block;
   width: 100%;
-  height: 49px;
-  padding: 15px 0;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: normal;
-  box-shadow: 0 4px 8px #2f5d5033;
+  max-width: 350px;
+  aspect-ratio: 350 / 49;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.auth-image-button:disabled { cursor: not-allowed; }
+.auth-image-button:focus-visible { outline-offset: 3px; border-radius: 6px; }
+
+.auth-image-button img {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.auth-image-button__before {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-image-button__active {
+  top: calc(-2.4 / 49 * 100%);
+  left: calc(-8.4 / 350 * 100%);
+  width: calc(367 / 350 * 100%);
+  height: calc(66 / 49 * 100%);
 }
 
 /* 로그인 화면 '회원가입' 링크: 버튼 아래 15px, 가운데 정렬(49 × 17), 화면 아래에서 42px */

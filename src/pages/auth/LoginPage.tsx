@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
-import Button from '../../components/common/Button';
 import AuthField from '../../components/auth/AuthField';
+import AuthImageButton from '../../components/auth/AuthImageButton';
 import logo from '../../assets/images/logo.svg';
+import loginButton from '../../assets/icons/login-button.svg';
+import loginButtonBefore from '../../assets/icons/login-button-before.svg';
 import { PASSWORD_MAX_LENGTH, validateEmail, validatePassword } from './authValidation';
 import './AuthPage.css';
 
@@ -13,6 +15,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<LoginErrors>({});
+  // 이메일·비밀번호를 모두 입력하기 전에는 회색(비활성) 버튼을 보여줍니다.
+  const canSubmit = email.trim() !== '' && password !== '';
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -58,7 +62,7 @@ export default function LoginPage() {
         </div>
 
         <div className="auth-actions">
-          <Button type="submit" className="auth-submit">로그인</Button>
+          <AuthImageButton label="로그인" activeSrc={loginButton} beforeSrc={loginButtonBefore} enabled={canSubmit} />
           <Link className="auth-link" to="/signup">회원가입</Link>
         </div>
       </form>

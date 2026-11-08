@@ -1,0 +1,151 @@
+/* Figma '활동·지원 전략'. 공통 틀·제목·접힌 카드·구분 띠는 ReportPage.css 에 있습니다. */
+
+/* 활동 요약 카드: 350 × 71, 14px semibold */
+.strategy-activity {
+  min-height: 71px;
+  padding: 20px 20px 17px 34px;
+  color: #2f5d50;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+/* 역량 평가 카드: 350 × 171, 구분 띠 아래 42px */
+.strategy-scores {
+  min-height: 171px;
+  margin-top: 42px;
+  padding: 30px 26px 25px 20px;
+}
+
+.strategy-scores ul {
+  display: grid;
+  gap: 15px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 한 줄: 라벨(75px) | 막대 + 설명 | 점수 */
+.strategy-score {
+  display: grid;
+  grid-template-columns: 75px minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.strategy-score h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.strategy-score__bar {
+  display: flex;
+  gap: 2px;
+}
+
+.strategy-score__bar span {
+  width: 33px;
+  height: 10px;
+  border-radius: 2px;
+  background: #8a9893;
+}
+
+.strategy-score__bar span.is-filled { background: #fefefe; }
+
+.strategy-score__detail p {
+  margin-top: 4px;
+  white-space: nowrap;
+  color: #dfe6e3;
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.strategy-score__value {
+  margin-left: 13px;
+  font-size: 12px;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+/* 학과별 조언 카드: 350 × 137, 역량 카드 아래 14px */
+.strategy-advice {
+  display: grid;
+  gap: 14px;
+  min-height: 137px;
+  margin-top: 14px;
+  padding: 20px 20px 19px 34px;
+  font-size: 12px;
+  line-height: normal;
+}
+
+.strategy-advice h2 {
+  margin: 0;
+  color: #2f5d50;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.strategy-advice p {
+  margin-top: 6px;
+  color: #52625d;
+  white-space: pre-line;
+}
+
+/* 나의 지원 전략 */
+.strategy-applications { margin-top: 23px; }
+
+.strategy-applications ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 원서 수 타일: 높이 50px, 모서리 4px */
+.strategy-application {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  height: 50px;
+  border-radius: 4px;
+  color: #fefefe;
+}
+
+.strategy-application.is-safe { background: #2f5d50; }
+.strategy-application.is-match { background: #c9a227; }
+.strategy-application.is-reach { background: #a84c78; }
+
+.strategy-application__count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.strategy-application__count strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.strategy-application__label {
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.strategy-applications .strategy-applications__note {
+  margin-top: 8px;
+  color: #c9a227;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.strategy-pagination { padding-top: 47px; }

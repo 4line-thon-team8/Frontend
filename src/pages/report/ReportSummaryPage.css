@@ -1,0 +1,25 @@
+/* Figma '리포트 요약'. 공통 틀·제목·접힌 카드·구분 띠는 ReportPage.css 에 있습니다. */
+
+/* 요약 카드: 350 × 78 */
+.report-summary-profile {
+  min-height: 78px;
+  padding: 16px 20px 14px 34px;
+  color: #2f5d50;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 23px;
+}
+
+/* 총평 */
+.report-summary-overall { margin-top: 21px; }
+
+/* 총평 카드: 350 × 92, 글자 영역 283 × 56 (14px, 줄 28px) */
+.report-summary-overall .report-fold-card {
+  min-height: 92px;
+  padding: 19px 33px 15px 34px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 28px;
+}
+
+.report-summary-overall strong { font-weight: 600; }
