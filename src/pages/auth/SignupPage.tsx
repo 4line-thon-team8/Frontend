@@ -29,7 +29,8 @@ export default function SignupPage() {
     if (nextErrors.email || nextErrors.password || nextErrors.passwordConfirm) return;
 
     // TODO: authApi 의 회원가입(POST /api/auth/signup) 구현 후 연동합니다.
-    navigate('/login', { replace: true });
+    // 회원가입 후 약관 동의 화면으로 이어집니다. 약관에서 뒤로가기하면 이 화면으로 돌아옵니다.
+    navigate('/terms');
   };
 
   return (

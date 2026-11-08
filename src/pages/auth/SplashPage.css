@@ -29,12 +29,20 @@
   filter: brightness(0) invert(1);
 }
 
+/*
+ * '오 등급' 글씨: Figma 는 '페어 큰부리새' 30px(line-height normal, 높이 36px).
+ * 성적 입력 화면과 같은 워드마크 SVG(brand-logo.svg, 51:22)를 Figma 텍스트 크기(약 83 × 36)로 키워 흰색으로 씁니다.
+ */
 .splash__title {
   margin: 0 0 16px;
-  font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 400;
-  line-height: normal;
+  line-height: 0;
+}
+
+.splash__title img {
+  display: block;
+  width: 83px;
+  height: 36px;
+  filter: brightness(0) invert(1);
 }
 
 .splash__subtitle {

@@ -1,0 +1,142 @@
+/*
+ * Figma '약관 동의' (390 × 844) 기준. 페이지 틀·뒤로가기·하단 버튼은 AuthPage.css 를 함께 씁니다.
+ * y 값은 Figma 에서 상태바(44px)를 뺀 값입니다.
+ */
+
+/* 제목: 뒤로가기(15 + 29) 아래 50px, 24px semibold */
+.terms-title {
+  margin: 50px 0 0;
+  color: #1a1a1a;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+/*
+ * 제목과 '진행 안내' 박스 사이의 캐릭터 영역.
+ * 캐릭터는 Figma 140 × 114, 오른쪽 끝을 박스 오른쪽 끝에 맞추고 박스 위에 21px 걸칩니다.
+ */
+.terms-hero {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  height: 111px;
+}
+
+.terms-hero__character {
+  position: absolute;
+  right: 0;
+  bottom: -21px;
+  width: 140px;
+  height: 114px;
+}
+
+/* 안내 박스 공통 */
+.terms-box {
+  position: relative;
+  border-radius: 4px;
+  background: #dfe6e3;
+  color: #52625d;
+  font-size: 14px;
+  word-break: keep-all;
+}
+
+/* 박스 제목('진행 안내', '개인정보 안내'): Figma 2_메인컬러서브 · 14px · bold · line-height normal */
+.terms-box h2 {
+  margin: 0;
+  color: #52625d;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.terms-box ul,
+.terms-box ol { margin: 0; }
+
+/* 진행 안내: 350 × 116, padding 13 63 23 18, gap 10 */
+.terms-box--process {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 116px;
+  padding: 13px 63px 23px 18px;
+  line-height: 20px;
+}
+
+/* 좁은 화면에서도 박스가 좌우 20px 여백 밖으로 넘치지 않도록 항목이 줄바꿈됩니다. */
+.terms-box--process ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.terms-box--process li { white-space: nowrap; }
+
+/* 개인정보 안내: 350 × 159, padding 20 31 21 19, gap 10, 진행 안내 박스 아래 15px (내용 300 × 118) */
+.terms-box--privacy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 159px;
+  margin-top: 15px;
+  padding: 20px 31px 21px 19px;
+  line-height: normal;
+}
+
+.terms-box--privacy:focus-visible { outline-offset: 2px; }
+
+/* 제목 영역 20px + gap 10px → 목록은 내용 위에서 30px 아래 (Figma 목록 300 × 88) */
+.terms-box--privacy h2 { min-height: 20px; }
+
+/* 목록 항목: 2_메인컬러서브 · 14px · 400 · 줄 17px (2줄 = 34px), 항목 사이 20px.
+ * 글자(줄바꿈된 줄 포함)는 21px 들여쓰고, 번호는 그 앞(약 5px 위치)에 붙습니다. */
+.terms-box--privacy ol {
+  display: grid;
+  gap: 20px;
+  padding-left: 21px;
+  color: #52625d;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+}
+
+/* 동의 체크 */
+.terms-agree {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 14px;
+}
+
+.terms-agree__label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #52625d;
+  font-size: 14px;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.terms-agree__label input {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.terms-agree__label input:not(:checked) + img { filter: grayscale(1); opacity: 0.3; }
+.terms-agree__label input:focus-visible + img { outline: 3px solid var(--color-primary); outline-offset: 3px; border-radius: 50%; }
+
+.terms-agree__detail {
+  margin: 9px 0 0 38px;
+  color: #8a9893;
+  font-size: 12px;
+  line-height: normal;
+  text-decoration: none;
+}

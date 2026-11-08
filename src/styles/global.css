@@ -1,10 +1,10 @@
 @import './variables.css';
 
 * { box-sizing: border-box; }
-body { margin: 0; font-family: var(--font-base); color: var(--color-text); background: var(--color-background); }
+body { margin: 0; font-family: var(--font-base); color: var(--color-text); background: var(--color-backdrop); }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
-.mobile-layout { width: 100%; max-width: var(--mobile-max-width); min-height: 100dvh; margin-inline: auto; }
+.mobile-layout { width: 100%; max-width: var(--mobile-max-width); min-height: 100dvh; margin-inline: auto; background: var(--color-background); }
 main { padding: var(--space-page); overflow-wrap: anywhere; }
 h1 { font-size: 1.5rem; }
 .button { padding: 12px 20px; border: 0; border-radius: var(--radius-base); color: white; background: var(--color-primary); cursor: pointer; }
