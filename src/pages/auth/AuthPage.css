@@ -86,28 +86,34 @@
   padding-top: 60px;
 }
 
+/* 버튼: Figma 350 × 49 (padding 15 147, 글자 56 × 19), 모서리 6px */
 .auth-page .auth-submit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   height: 49px;
-  padding: 0;
+  padding: 15px 0;
   border-radius: 6px;
   font-size: 16px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: normal;
   box-shadow: 0 4px 8px #2f5d5033;
 }
 
+/* 로그인 화면 '회원가입' 링크: 버튼 아래 15px, 가운데 정렬(49 × 17), 화면 아래에서 42px */
 .auth-link {
-  margin-top: 11px;
+  margin-top: 15px;
   color: #737e78;
   font-size: 14px;
-  line-height: 20px;
+  line-height: 17px;
   text-decoration: none;
 }
 
-/* 로그인: 상단의 큰 연한 로고 (이메일 묶음 시작 y=471 → 427) */
+/* 로그인: 상단의 큰 연한 로고 (이메일 묶음 시작 y=471 → 427)
+ * 링크 아래 42px = 홈 인디케이터 영역(34px, safe-area) + 8px */
 .auth-page--login {
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
 }
 
 .auth-page--login .auth-hero {
@@ -117,14 +123,17 @@
   margin: 0 -20px;
 }
 
-/* 로고 오른쪽 끝을 입력칸 오른쪽 끝(화면 오른쪽에서 20px)에 맞춥니다. */
+/*
+ * Figma: 422 × 438, top -10 · left -99 (상태바 44px 포함 기준 → 화면에서는 top -54).
+ * 색 #A7BAB5(2_메인컬러서브): logo.svg(#2F5D50)를 흰 배경 위 opacity 0.424 로 겹치면 정확히 이 색이 됩니다.
+ */
 .auth-hero__logo {
   position: absolute;
-  top: -55px;
-  right: 20px;
+  top: -54px;
+  left: -99px;
   width: 422px;
-  height: auto;
-  opacity: 0.4;
+  height: 438px;
+  opacity: 0.424;
   pointer-events: none;
 }
 

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import logo from '../../assets/images/logo.svg';
+import brandLogo from '../../assets/icons/brand-logo.svg';
 import './SplashPage.css';
 
 const SPLASH_DURATION_MS = 2000;
@@ -17,7 +18,9 @@ export default function SplashPage() {
     <section className="splash">
       <div className="splash__brand">
         <img className="splash__logo" src={logo} alt="" width="106" height="109" />
-        <h1 className="splash__title">오 등급</h1>
+        <h1 className="splash__title">
+          <img src={brandLogo} alt="오등급" width="83" height="36" />
+        </h1>
         <p className="splash__subtitle">내 생기부로 찾는 나만의 진학 방향</p>
       </div>
 

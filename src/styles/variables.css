@@ -6,6 +6,7 @@
   --color-primary-sub-light: #dfe6e3; /* Figma 2_메인컬러서브 (밝은 톤) */
   --gradient-primary: linear-gradient(180deg, #2f5d50 0%, #305d50 100%);
   --color-background: #ffffff;
+  --color-backdrop: #e5e5e5; /* 데스크톱에서 모바일 화면 바깥 영역 */
   --color-surface: #eef3ef;
   --color-text: #1a1a1a; /* Figma Text Color */
   --color-border: #d5dfd8;
