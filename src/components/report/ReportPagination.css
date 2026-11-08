@@ -1,0 +1,18 @@
+/* 리포트 페이지 번호: 171 × 37 단계 SVG 를 가운데 두고, 번호·화살표 위에 투명한 링크를 겹칩니다. */
+.report-pagination {
+  position: relative;
+  width: 171px;
+  height: 37px;
+  margin-inline: auto;
+}
+
+.report-pagination img { display: block; }
+
+.report-pagination__hit {
+  position: absolute;
+  top: 0;
+  height: 37px;
+  border-radius: 50%;
+}
+
+.report-pagination__hit:focus-visible { outline: 3px solid #2f5d50; outline-offset: 0; }

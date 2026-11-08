@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
-import Button from '../../components/common/Button';
+import AuthImageButton from '../../components/auth/AuthImageButton';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import checkCircle from '../../assets/icons/check-circle.svg';
+import startButton from '../../assets/icons/start-button.svg';
+import startButtonBefore from '../../assets/icons/start-button-before.svg';
 import character from '../../assets/images/agree-images.svg';
 import './AuthPage.css';
 import './TermsPage.css';
@@ -62,7 +64,8 @@ export default function TermsPage() {
         </div>
 
         <div className="auth-actions">
-          <Button type="submit" className="auth-submit" disabled={!agreed}>시작하기</Button>
+          {/* 필수 동의에 체크하기 전에는 회색(비활성) 버튼을 보여줍니다. */}
+          <AuthImageButton label="시작하기" activeSrc={startButton} beforeSrc={startButtonBefore} enabled={agreed} />
         </div>
       </form>
     </section>

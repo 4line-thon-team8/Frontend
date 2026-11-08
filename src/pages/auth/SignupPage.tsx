@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
-import Button from '../../components/common/Button';
 import AuthField from '../../components/auth/AuthField';
+import AuthImageButton from '../../components/auth/AuthImageButton';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import logo from '../../assets/images/logo.svg';
+import signupButton from '../../assets/icons/signup-button.svg';
+import signupButtonBefore from '../../assets/icons/signup-button-before.svg';
 import { PASSWORD_MAX_LENGTH, validateEmail, validatePassword } from './authValidation';
 import './AuthPage.css';
 
@@ -15,6 +17,8 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [errors, setErrors] = useState<SignupErrors>({});
+  // 세 칸을 모두 입력하기 전에는 회색(비활성) 버튼을 보여줍니다.
+  const canSubmit = email.trim() !== '' && password !== '' && passwordConfirm !== '';
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -83,7 +87,7 @@ export default function SignupPage() {
         </div>
 
         <div className="auth-actions">
-          <Button type="submit" className="auth-submit">회원가입</Button>
+          <AuthImageButton label="회원가입" activeSrc={signupButton} beforeSrc={signupButtonBefore} enabled={canSubmit} />
         </div>
       </form>
     </section>
