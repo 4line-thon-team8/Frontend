@@ -47,14 +47,14 @@ function NavItem({ to, label, icon, active, end }: { to: string; label: string; 
 
 export default function BottomNavigation() {
   const { pathname } = useLocation();
-  // 리포트 결과 화면(/report/*)과 리포트 목록(/mypage/reports/*)에서 리포트 탭을 활성화합니다.
-  const isReportActive = pathname.startsWith('/report/') || pathname.startsWith('/mypage/reports');
+  // 리포트 결과 화면(/report/*)에서 리포트 탭을 활성화합니다. 마이페이지 아래 화면(/mypage/*)은 마이페이지 탭이 활성화됩니다.
+  const isReportActive = pathname.startsWith('/report/');
 
   return (
     <nav className="grade-bottom-navigation" aria-label="주요 메뉴">
-      <NavItem to="/mypage/reports" label="리포트" icon={<ReportIcon />} active={isReportActive} />
+      <NavItem to="/report/summary" label="리포트" icon={<ReportIcon />} active={isReportActive} />
       <NavItem to="/grade/input" label="홈" icon={<HomeIcon />} end />
-      <NavItem to="/mypage" label="마이페이지" icon={<MypageIcon />} end />
+      <NavItem to="/mypage" label="마이페이지" icon={<MypageIcon />} />
     </nav>
   );
 }
