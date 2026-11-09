@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router';
 import step1 from '../../assets/icons/step1.svg';
 import step2 from '../../assets/icons/step2.svg';
@@ -27,6 +28,10 @@ export default function ReportPagination({ current }: { current: number }) {
   const page = REPORT_PAGES[current - 1];
   const prev = REPORT_PAGES[current - 2];
   const next = REPORT_PAGES[current];
+
+  // 페이지 번호로 다른 리포트 화면에 오면 항상 맨 위(제목)부터 보이도록 스크롤을 올립니다.
+  useEffect(() => { window.scrollTo(0, 0); }, [current]);
+
   if (!page) return null;
 
   return (

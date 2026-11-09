@@ -104,5 +104,29 @@
   line-height: normal;
 }
 
-/* 페이지 번호: 내용이 짧으면 하단 내비게이션 바로 위(35px)에 붙습니다. */
-.report-pagination-slot { margin-top: auto; padding-top: 40px; }
+/*
+ * 페이지 번호: 내용 바로 아래(47px)에 옵니다.
+ * 내용이 짧으면 하단 내비게이션 위 35px 에 붙어 모든 리포트 화면에서 같은 위치에 보이고,
+ * 내용이 길면 끝까지 스크롤해야 보입니다.
+ */
+.report-pagination-slot { margin-top: auto; padding-top: 47px; }
+
+/*
+ * 고정 페이지 번호 (요약 · 활동·지원 전략): 내용 길이와 상관없이 항상 같은 위치(내비 위 35px)에 보입니다.
+ * 스크롤되는 내용이 비치지 않게 흰 배경을 깔고, 마지막 내용이 가리지 않도록 페이지 아래 여백을 늘립니다.
+ */
+.report-page--fixed-pagination {
+  padding-bottom: calc(106px + 35px + 37px + 24px + env(safe-area-inset-bottom));
+}
+
+.report-page--fixed-pagination .report-pagination-slot {
+  position: fixed;
+  bottom: calc(106px + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 4;
+  width: 100%;
+  max-width: 390px;
+  padding: 8px 0 35px;
+  transform: translateX(-50%);
+  background: var(--color-background);
+}

@@ -10,10 +10,12 @@
   line-height: normal;
 }
 
-/* 역량 평가 카드: 350 × 171, 구분 띠 아래 42px */
+/* 활동에서의 강점: 구분 띠 아래 21px 라벨 → 6px 아래 역량 평가 카드 */
+.strategy-strengths { margin-top: 21px; }
+
+/* 역량 평가 카드: 350 × 171 */
 .strategy-scores {
   min-height: 171px;
-  margin-top: 42px;
   padding: 30px 26px 25px 20px;
 }
 
@@ -32,7 +34,7 @@
   align-items: center;
 }
 
-.strategy-score h2 {
+.strategy-score h3 {
   margin: 0;
   font-size: 12px;
   font-weight: 700;
@@ -67,6 +69,9 @@
   line-height: normal;
   white-space: nowrap;
 }
+
+/* 점수 "4 / 5": 받은 점수만 굵게 */
+.strategy-score__value strong { font-weight: 700; }
 
 /* 학과별 조언 카드: 350 × 137, 역량 카드 아래 14px */
 .strategy-advice {
@@ -119,7 +124,7 @@
 
 .strategy-application.is-safe { background: #2f5d50; }
 .strategy-application.is-match { background: #c9a227; }
-.strategy-application.is-reach { background: #a84c78; }
+.strategy-application.is-reach { background: #a44a77; }
 
 .strategy-application__count {
   display: flex;
@@ -148,4 +153,3 @@
   line-height: 16px;
 }
 
-.strategy-pagination { padding-top: 47px; }
