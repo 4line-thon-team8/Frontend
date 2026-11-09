@@ -10,7 +10,7 @@ export default function StrategyPage() {
   const { activitySummaryLines, scores, advices, applications } = MOCK_STRATEGY_REPORT;
 
   return (
-    <div className="report-page">
+    <div className="report-page report-page--fixed-pagination">
       <header className="report-header">
         <h1>
           <img src={clipboard} alt="" width="15" height="17" />
@@ -25,23 +25,26 @@ export default function StrategyPage() {
 
       <hr className="report-divider" />
 
-      <section className="report-fold-card report-fold-card--primary strategy-scores" aria-label="활동 역량 평가">
-        <ul>
-          {scores.map(item => (
-            <li key={item.id} className="strategy-score">
-              <h2>{item.name}</h2>
-              <div className="strategy-score__detail">
-                <div className="strategy-score__bar" role="img" aria-label={`${SCORE_MAX}점 중 ${item.score}점`}>
-                  {Array.from({ length: SCORE_MAX }, (_, index) => (
-                    <span key={index} className={index < item.score ? 'is-filled' : undefined} />
-                  ))}
+      <section className="strategy-strengths" aria-labelledby="strategy-strengths-title">
+        <h2 id="strategy-strengths-title" className="report-section-label">활동에서의 강점</h2>
+        <div className="report-fold-card report-fold-card--primary strategy-scores">
+          <ul>
+            {scores.map(item => (
+              <li key={item.id} className="strategy-score">
+                <h3>{item.name}</h3>
+                <div className="strategy-score__detail">
+                  <div className="strategy-score__bar" role="img" aria-label={`${SCORE_MAX}점 중 ${item.score}점`}>
+                    {Array.from({ length: SCORE_MAX }, (_, index) => (
+                      <span key={index} className={index < item.score ? 'is-filled' : undefined} />
+                    ))}
+                  </div>
+                  <p>{item.description}</p>
                 </div>
-                <p>{item.description}</p>
-              </div>
-              <span className="strategy-score__value" aria-hidden="true">{item.score} / {SCORE_MAX}</span>
-            </li>
-          ))}
-        </ul>
+                <span className="strategy-score__value" aria-hidden="true"><strong>{item.score}</strong> / {SCORE_MAX}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <section className="report-fold-card strategy-advice" aria-label="학과별 활동 조언">
@@ -68,7 +71,7 @@ export default function StrategyPage() {
         <p className="strategy-applications__note">*상향 카드 포함 설정이 반영됐어요.</p>
       </section>
 
-      <div className="report-pagination-slot strategy-pagination">
+      <div className="report-pagination-slot">
         <ReportPagination current={2} />
       </div>
 

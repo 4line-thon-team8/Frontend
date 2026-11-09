@@ -1,0 +1,93 @@
+/* Figma '추천 원서 6장'. 공통 틀·제목·접힌 카드·고정 페이지 번호는 ReportPage.css 에 있습니다. */
+
+/* 카드 목록: 제목 아래 41px(공통), 카드 사이 13px */
+.recommendation-list {
+  display: grid;
+  gap: 13px;
+  margin-bottom: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 추천 카드: 350 × 124. 안정 · 적정 · 소신에 따라 배경 · 테두리 · 접힌 모서리 · 배지 색이 바뀝니다. */
+.recommendation-card {
+  --tier-color: #2f5d50;
+  --tier-border: #dfe6e3;
+  --fold-color: #c3cfca;
+  min-height: 124px;
+  padding: 27px 17px 21px;
+  border-color: var(--tier-border);
+  background: #f5f8f6;
+}
+
+.recommendation-card.is-match {
+  --tier-color: #c9a227;
+  --tier-border: #e9dfc8;
+  --fold-color: #e6ddc9;
+  background: #fffdf7;
+}
+
+.recommendation-card.is-reach {
+  --tier-color: #a44a77;
+  --tier-border: #e8d2dd;
+  --fold-color: #e5d0db;
+  background: #f9f4f6;
+}
+
+/* 지망(14px bold 초록) + 학교 · 학과 · 전형(16px bold) */
+.recommendation-card h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  margin: 0;
+  padding-right: 66px;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.recommendation-card__rank {
+  flex-shrink: 0;
+  color: #2f5d50;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 오른쪽 위 배지: 58 × 25 */
+.recommendation-card__tier {
+  position: absolute;
+  top: 21px;
+  right: 17px;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 25px;
+  border-radius: 999px;
+  background: var(--tier-color);
+  color: #fefefe;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.recommendation-card .recommendation-card__reason {
+  margin-top: 3px;
+  color: #52625d;
+  font-size: 12px;
+  line-height: normal;
+}
+
+/* 근거 칩: 카드 테두리색 알약 모양 (높이 26px) */
+.recommendation-card .recommendation-card__evidence {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  margin-top: 12px;
+  padding: 0 12px;
+  border: 1px solid var(--tier-border);
+  border-radius: 999px;
+  color: #52625d;
+  font-size: 12px;
+  line-height: normal;
+}
+

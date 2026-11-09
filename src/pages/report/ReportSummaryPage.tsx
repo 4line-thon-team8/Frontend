@@ -15,7 +15,7 @@ export default function ReportSummaryPage() {
   const { profileLines, overallLines } = MOCK_REPORT_SUMMARY;
 
   return (
-    <div className="report-page">
+    <div className="report-page report-page--fixed-pagination">
       <header className="report-header">
         <h1>
           <img src={clipboard} alt="" width="15" height="17" />
