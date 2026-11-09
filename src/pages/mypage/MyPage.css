@@ -1,0 +1,265 @@
+/*
+ * Figma '마이페이지' · '마이페이지-리포트상세' (390 × 844) 기준.
+ * y 값은 Figma 에서 상태바(44px)를 뺀 값입니다. 하단 내비게이션(106px)은 화면에 고정되어 있습니다.
+ */
+@font-face {
+  font-family: 'Mypage Pretendard';
+  src: url('../../assets/fonts/PretendardVariable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+.mypage-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  /* MobileLayout 의 main padding 을 상쇄해 화면 끝까지 채웁니다. */
+  margin: calc(var(--space-page) * -1);
+  padding: calc(33px + env(safe-area-inset-top)) 20px calc(106px + 27px + env(safe-area-inset-bottom));
+  font-family: 'Mypage Pretendard', var(--font-base);
+  color: #1a1a1a;
+  background: var(--color-background);
+  word-break: keep-all;
+}
+
+.mypage-page p { margin: 0; }
+.mypage-page button { font-family: inherit; cursor: pointer; }
+
+/* ── 마이페이지 ── */
+
+/* '마이페이지'(10px 회색) + '저장된 리포트'(20px bold 초록) */
+.mypage-header p {
+  color: #8a9893;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.mypage-header h1 {
+  margin: 7px 0 0;
+  color: #2f5d50;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+/* 저장된 리포트 카드: 350 × 85, 카드 사이 15px, 제목 아래 19px */
+.mypage-reports {
+  display: grid;
+  gap: 15px;
+  margin: 19px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mypage-report-card {
+  position: relative;
+  min-height: 85px;
+  padding: 24px 20px 9px 19px;
+  border-radius: 8px;
+  background: #f5f8f6;
+}
+
+/* 날짜(14px 초록) + 대표 학과(16px bold). 카드 전체를 누르면 상세로 이동합니다. */
+.mypage-report-card h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.mypage-report-card h2 a {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.mypage-report-card h2 a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.mypage-report-card__date {
+  color: #2f5d50;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mypage-report-card > p {
+  margin-top: 3px;
+  color: #52625d;
+  font-size: 12px;
+  line-height: normal;
+}
+
+/* 오른쪽 아래 '삭제' (10px) — 카드 링크 위에 올라와 따로 눌립니다. */
+.mypage-report-card__delete {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: 4px 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #52625d;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.mypage-add {
+  align-self: center;
+  margin-top: 14px;
+  color: #8a9893;
+  font-size: 12px;
+  line-height: normal;
+  text-decoration: none;
+}
+
+/* 화면 끝까지 이어지는 10px 회색 띠 */
+.mypage-divider {
+  flex-shrink: 0;
+  height: 10px;
+  margin: 23px -20px 0;
+  border: 0;
+  background: #f1f1f1;
+}
+
+/* 시스템 규칙 제목: Figma #1C2B26 · 14px · 600 · line-height normal */
+.mypage-rules h2 {
+  margin: 22px 0 0;
+  color: #1c2b26;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+/*
+ * 규칙 상자: 350 × 156, padding 21 19, #DFE6E3.
+ * 각 줄: #52625D · 10px · line-height normal, 줄 사이 5px. 굵은 제목 600 / 설명 400.
+ * Figma 처럼 한 줄씩 보이도록 줄바꿈하지 않습니다 (마지막 줄은 오른쪽 여백까지 살짝 넘어갑니다).
+ */
+.mypage-rules ul {
+  display: grid;
+  gap: 5px;
+  margin: 22px 0 0;
+  padding: 21px 19px;
+  border-radius: 4px;
+  background: #dfe6e3;
+  color: #52625d;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: normal;
+  list-style: none;
+}
+
+.mypage-rules li { white-space: nowrap; }
+
+.mypage-rules strong { font-weight: 600; }
+
+/* 초록 버튼: 350 × 49, 16px */
+.mypage-primary-button {
+  width: 100%;
+  height: 49px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: #2f5d50;
+  color: #fefefe;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 8px #2f5d5033;
+}
+
+.mypage-logout { margin-top: 33px; }
+
+.mypage-page .mypage-note {
+  margin-top: 13px;
+  color: #c9a227;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* ── 리포트 상세 ── */
+
+.mypage-page--detail { padding-top: calc(15px + env(safe-area-inset-top)); }
+
+.mypage-back {
+  display: block;
+  width: 29px;
+  height: 29px;
+}
+
+.mypage-back img { display: block; }
+
+.mypage-detail-title {
+  margin: 20px 0 0;
+  color: #2f5d50;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.mypage-page .mypage-detail-created {
+  margin-top: 31px;
+  color: #8a9893;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+/* 추천 원서 줄: 350 × 58, padding 16 15, 줄 사이 10px */
+.mypage-detail-list {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mypage-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 58px;
+  padding: 16px 15px;
+  border-radius: 8px;
+  background: #dfe6e3;
+  font-size: 12px;
+  line-height: normal;
+}
+
+.mypage-detail-row__rank {
+  flex-shrink: 0;
+  color: #52625d;
+}
+
+.mypage-detail-row__name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+}
+
+/* 배지: 58 × 26 알약 */
+.mypage-detail-row__tier {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 58px;
+  height: 26px;
+  border-radius: 999px;
+  background: #2f5d50;
+  color: #fefefe;
+  font-size: 11px;
+}
+
+.mypage-detail-row__tier.is-match { background: #c9a227; }
+.mypage-detail-row__tier.is-reach { background: #a44a77; }
+
+.mypage-detail-delete { margin-top: 49px; }
