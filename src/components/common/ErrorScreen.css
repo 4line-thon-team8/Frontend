@@ -34,7 +34,7 @@
 
 .error-screen__message img {
   display: block;
-  max-width: calc(100vw - 40px);
+  max-width: calc(100% - 40px);
   height: auto;
 }
 

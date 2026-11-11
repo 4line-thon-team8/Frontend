@@ -12,10 +12,10 @@
   display: flex;
   flex-direction: column;
   width: calc(100% + var(--space-page) * 2);
-  max-width: 390px;
+  max-width: var(--mobile-max-width);
   min-height: 100dvh;
   margin-block: calc(-1 * var(--space-page));
-  margin-inline: calc((100% - min(390px, 100% + var(--space-page) * 2)) / 2);
+  margin-inline: calc((100% - min(var(--mobile-max-width), 100% + var(--space-page) * 2)) / 2);
   background: var(--color-background);
   color: var(--color-primary);
   font-family: 'Analysis Loading Pretendard', sans-serif;

@@ -8,9 +8,9 @@
 .grade-confirm-page {
   --color-primary: #2f5d50;
   width: calc(100% + var(--space-page) * 2);
-  max-width: 390px;
+  max-width: var(--mobile-max-width);
   margin-block: calc(-1 * var(--space-page));
-  margin-inline: calc((100% - min(390px, 100% + var(--space-page) * 2)) / 2);
+  margin-inline: calc((100% - min(var(--mobile-max-width), 100% + var(--space-page) * 2)) / 2);
   min-height: 100dvh;
   font-family: 'Grade Confirm Pretendard', sans-serif;
   color: #1a1a1a;

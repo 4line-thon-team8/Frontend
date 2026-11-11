@@ -10,7 +10,7 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  max-width: 390px;
+  max-width: var(--mobile-max-width);
   min-height: calc(106px + env(safe-area-inset-bottom));
   padding: 29px max(58px, env(safe-area-inset-right)) calc(29px + env(safe-area-inset-bottom)) max(58px, env(safe-area-inset-left));
   border-radius: 30px 30px 0 0;

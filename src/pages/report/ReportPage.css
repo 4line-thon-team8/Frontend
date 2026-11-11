@@ -125,7 +125,7 @@
   left: 50%;
   z-index: 4;
   width: 100%;
-  max-width: 390px;
+  max-width: var(--mobile-max-width);
   padding: 8px 0 35px;
   transform: translateX(-50%);
   background: var(--color-background);
