@@ -24,7 +24,6 @@ export default function GradeConfirmPage() {
   const [draft, setDraft] = useState<GradeConfirmDraft>(createMockGradeConfirmDraft);
   const [editing, setEditing] = useState(false);
   const [dialogKind, setDialogKind] = useState<'majors' | 'reset' | null>(null);
-  const [notice, setNotice] = useState('');
   // 원본 이미지를 추가 저장/표시하지 않고 기존 입력 출처만 읽습니다. 성적은 명시적인 목업입니다.
   const [imageSource] = useState(() => getGradeImage()?.source ?? null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -43,7 +42,6 @@ export default function GradeConfirmPage() {
   }, [dialogKind]);
 
   function updateSubject(id: string, field: 'name' | 'grade', value: string) {
-    setNotice('');
     setDraft(current => ({ ...current, subjects: current.subjects.map(subject => subject.id === id
       ? { ...subject, [field]: value } : subject) }));
   }
@@ -51,31 +49,27 @@ export default function GradeConfirmPage() {
   function addSubject() {
     const id = `added-${++nextSubjectId.current}`;
     setDraft(current => ({ ...current, subjects: [...current.subjects, { id, name: '', grade: '' }] }));
-    setNotice('');
   }
 
   function removeSubject(id: string) {
     setDraft(current => ({ ...current, subjects: current.subjects.filter(subject => subject.id !== id) }));
-    setNotice('');
   }
 
   function finishEditing() {
     setEditing(false);
-    setNotice('');
   }
 
   function toggleMajor(id: string) {
     setDraft(current => ({ ...current, majorIds: current.majorIds.includes(id)
       ? current.majorIds.filter(value => value !== id)
       : current.majorIds.length < MOCK_MAJOR_LIMIT ? [...current.majorIds, id] : current.majorIds }));
-    setNotice('');
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (editing || errors.length || !toSimulationSubjectRows(draft)) return;
     setEditing(false);
-    setNotice('입력값 확인을 완료했습니다. 분석 API는 아직 연결되지 않았습니다.');
+    navigate('/grade/loading');
   }
 
   function resetInput() {
@@ -123,7 +117,7 @@ export default function GradeConfirmPage() {
         <section className="grade-confirm-grades" aria-labelledby="grade-confirm-subject-title">
           <div className="grade-confirm-section-heading">
             <h2 id="grade-confirm-subject-title">과목</h2>
-            {!editing && <button type="button" className="grade-confirm-edit" onClick={() => { setNotice(''); setEditing(true); }}><img src={editPencil} alt="" width="12" height="12" />수정하기</button>}
+            {!editing && <button type="button" className="grade-confirm-edit" onClick={() => setEditing(true)}><img src={editPencil} alt="" width="12" height="12" />수정하기</button>}
           </div>
           <p className="grade-confirm-field-hint">국수영사과(한국사 포함) 참고 평균의 반영 여부를 확인해 주세요. 대학별 반영 방식과 다를 수 있습니다.</p>
           <ul className="grade-confirm-subjects">{draft.subjects.map(subjectRow)}</ul>
@@ -138,19 +132,18 @@ export default function GradeConfirmPage() {
           <fieldset className="grade-confirm-admissions">
             <legend>선호하는 전형 <span>*1개 이상 선택해 주세요.</span></legend>
             {ADMISSION_OPTIONS.map(option => <label className="grade-confirm-admission" key={option.id}>
-              <input type="checkbox" checked={draft.admissions.includes(option.id)} onChange={() => { setDraft(current => ({ ...current, admissions: toggleAdmission(current.admissions, option.id) })); setNotice(''); }} />
+              <input type="checkbox" checked={draft.admissions.includes(option.id)} onChange={() => { setDraft(current => ({ ...current, admissions: toggleAdmission(current.admissions, option.id) })); }} />
               <img src={checkCircle} alt="" width="24" height="24" />
               <span>{option.name}</span>
             </label>)}
           </fieldset>
           <div className="grade-confirm-options">
-            <label><span>상향 지원 카드 포함</span><input role="switch" type="checkbox" checked={draft.includeReach} onChange={event => { setDraft(current => ({ ...current, includeReach: event.target.checked })); setNotice(''); }} /></label>
-            <label><span>비슷한 학과로 확대</span><input role="switch" type="checkbox" checked={draft.expandSimilarMajors} onChange={event => { setDraft(current => ({ ...current, expandSimilarMajors: event.target.checked })); setNotice(''); }} /></label>
+            <label><span>상향 지원 카드 포함</span><input role="switch" type="checkbox" checked={draft.includeReach} onChange={event => { setDraft(current => ({ ...current, includeReach: event.target.checked })); }} /></label>
+            <label><span>비슷한 학과로 확대</span><input role="switch" type="checkbox" checked={draft.expandSimilarMajors} onChange={event => { setDraft(current => ({ ...current, expandSimilarMajors: event.target.checked })); }} /></label>
           </div>
           <div className="grade-confirm-submit">
             <Button type="submit" className="grade-confirm-analyze" disabled={editing || errors.length > 0} aria-describedby="grade-confirm-validation">분석하기</Button>
             <div id="grade-confirm-validation" className="grade-confirm-validation" aria-live="polite">{errors.map(error => <p key={error}>{error}</p>)}</div>
-            <p className="grade-confirm-notice" role="status">{notice}</p>
           </div>
         </section>
       </form>

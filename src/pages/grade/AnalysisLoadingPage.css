@@ -76,13 +76,10 @@
 
 .analysis-loading-fill {
   display: block;
-  width: 0;
   height: 100%;
   border-radius: inherit;
   background: var(--color-primary);
 }
-
-.analysis-loading-step.is-complete .analysis-loading-fill { width: 100%; }
 
 .analysis-loading-step p {
   margin: 8px 0 0;
