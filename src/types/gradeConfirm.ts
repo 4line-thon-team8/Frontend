@@ -3,12 +3,12 @@ export interface ConfirmSubject {
   id: string;
   name: string;
   grade: string;
-  needsReview: boolean;
 }
 
 export type AdmissionPreference = 'school-record' | 'comprehensive' | 'exam' | 'any';
 
 export interface GradeConfirmDraft {
+  curriculum: '2022' | '2015' | null;
   subjects: ConfirmSubject[];
   majorIds: string[];
   admissions: AdmissionPreference[];

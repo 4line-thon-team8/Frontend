@@ -1,7 +1,6 @@
 import type { AdmissionPreference, GradeConfirmDraft } from '../../types/gradeConfirm';
 
-// UI 목업 전용 목록/규칙. 실제 학과 사전·과목·등급 체계는 추후 명세로 교체합니다.
-export const MOCK_GRADE_LIMITS = { min: 1, max: 9 } as const;
+// UI 목업 전용 목록/규칙. 희망 학과는 목업 목록입니다.
 export const MOCK_MAJOR_LIMIT = 3;
 export const MOCK_MAJORS = [
   { id: 'computer', name: '컴퓨터공학' },
@@ -22,13 +21,14 @@ export const ADMISSION_OPTIONS: { id: AdmissionPreference; name: string }[] = [
 
 export function createMockGradeConfirmDraft(): GradeConfirmDraft {
   return {
+    curriculum: '2022',
     subjects: [
-      { id: 'korean', name: '국어', grade: '2', needsReview: false },
-      { id: 'math', name: '수학', grade: '3', needsReview: false },
-      { id: 'english', name: '영어', grade: '2', needsReview: false },
-      { id: 'inquiry-1', name: '탐구 1', grade: '1', needsReview: false },
-      { id: 'inquiry-2', name: '탐구 2', grade: '2', needsReview: false },
-      { id: 'history', name: '한국사', grade: '1', needsReview: false },
+      { id: 'korean', name: '공통국어1', grade: '2' },
+      { id: 'math', name: '공통수학1', grade: '3' },
+      { id: 'english', name: '공통영어1', grade: '2' },
+      { id: 'inquiry-1', name: '통합사회1', grade: '1' },
+      { id: 'inquiry-2', name: '통합과학1', grade: '2' },
+      { id: 'history', name: '한국사1', grade: '1' },
     ],
     majorIds: ['computer', 'statistics'],
     admissions: ['school-record'],

@@ -29,13 +29,25 @@
 .grade-confirm-section-heading h2 { margin: 0; font-size: 14px; line-height: 22px; font-weight: 700; }
 .grade-confirm-edit { display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 6px 0; background: transparent; color: #8a9893; font-size: 10px; }
 .grade-confirm-subjects { padding: 0; margin: 0; list-style: none; }
-.grade-confirm-subject { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 62px; border-radius: 6px; }
-.grade-confirm-subject.needs-review { background: #fff5cc; }
-.grade-confirm-subject-name { display: flex; align-items: center; gap: 16px; min-width: 0; font-size: 16px; line-height: 24px; font-weight: 500; }
+.grade-confirm-subject { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 0; padding-block: 8px; min-height: 62px; border-radius: 6px; }
+.grade-confirm-subject-status { margin: 0 0 0 40px; font-size: 12px; }
+.grade-confirm-subject-fields { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.grade-confirm-subject.needs-review {
+  row-gap: 8px;
+  padding-block: 10px;
+  background: #fff5cc;
+}
+.grade-confirm-subject.needs-review .grade-confirm-subject-status {
+  margin-inline-end: 8px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+.grade-confirm-subject-name { display: flex; flex: 1; align-items: center; gap: 16px; min-width: 0; font-size: 16px; line-height: 24px; font-weight: 500; }
 .grade-confirm-subject-name img { flex-shrink: 0; }
-.grade-confirm-subject-grade { display: flex; align-items: center; gap: 6px; color: var(--color-primary); font-size: 16px; line-height: 24px; font-weight: 600; white-space: nowrap; }
+.grade-confirm-subject-grade { display: flex; flex-shrink: 0; max-width: 50%; align-items: center; gap: 6px; color: var(--color-primary); font-size: 16px; line-height: 24px; font-weight: 600; white-space: nowrap; }
+.grade-confirm-subject-grade > span:only-child { white-space: normal; overflow-wrap: anywhere; }
 .grade-confirm-subject input { min-width: 0; max-width: 100%; border: 1px solid #c2c6c4; border-radius: 5px; padding: 8px 6px; font-size: 14px; background: #fff; color: #1a1a1a; }
-.grade-confirm-subject-name input { width: 100%; }
+.grade-confirm-subject-name input { flex: 1; width: 0; }
 .grade-confirm-subject-grade input { width: 48px; appearance: textfield; }
 .grade-confirm-subject input::-webkit-inner-spin-button { appearance: none; }
 .grade-confirm-subject input[aria-invalid='true'] { border-color: #b34a40; }
@@ -64,7 +76,9 @@
 .grade-confirm-options input::before { content: ''; position: absolute; width: 25px; height: 25px; left: 5px; top: 5px; border-radius: 50%; background: #fff; }
 .grade-confirm-options input:checked::before { left: 25px; }
 .grade-confirm-submit { margin-top: 40px; }
+.grade-confirm-page .grade-confirm-finish,
 .grade-confirm-page .grade-confirm-analyze { width: 100%; min-height: 50px; border-radius: 5px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 8px #2f5d5026; }
+.grade-confirm-finish { margin-top: 12px; }
 .grade-confirm-validation p { margin: 8px 0 0; font-size: 11px; line-height: 18px; color: #a9443c; }
 .grade-confirm-notice { margin: 8px 0 0; color: var(--color-primary); font-size: 12px; line-height: 20px; }
 .grade-confirm-dialog { width: min(350px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow: auto; padding: 24px; border: 0; border-radius: 16px; font-family: 'Grade Confirm Pretendard', sans-serif; color: #1a1a1a; background: #fff; }
@@ -83,6 +97,6 @@
   .grade-confirm-subject-name { gap: 8px; }
   .grade-confirm-subject-grade { gap: 4px; }
   .grade-confirm-subject-grade input { width: 42px; }
-  .grade-confirm-subject { gap: 8px; }
+  .grade-confirm-subject-fields { gap: 8px; }
   .grade-confirm-major-chip, .grade-confirm-add-major { padding-inline: 20px; }
 }
