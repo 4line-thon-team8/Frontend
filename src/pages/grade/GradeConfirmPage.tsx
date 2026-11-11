@@ -8,13 +8,12 @@ import editPencil from '../../assets/icons/edit-pencil.svg';
 import checkCircle from '../../assets/icons/check-circle.svg';
 import type { ConfirmSubject, GradeConfirmDraft } from '../../types/gradeConfirm';
 import { clearGradeImage, getGradeImage } from '../../utils/gradeImageStore';
-import { isValidSubject, toggleAdmission, validateGradeConfirm } from '../../utils/gradeConfirmValidation';
-import { ADMISSION_OPTIONS, createMockGradeConfirmDraft, MOCK_GRADE_LIMITS, MOCK_MAJOR_LIMIT, MOCK_MAJORS } from './gradeConfirm.mock';
+import { reviewSubject, toggleAdmission, validateGradeConfirm } from '../../utils/gradeConfirmValidation';
+import { ADMISSION_OPTIONS, createMockGradeConfirmDraft, MOCK_MAJOR_LIMIT, MOCK_MAJORS } from './gradeConfirm.mock';
+import { toSimulationSubjectRows } from '../../services/simulationApi';
 import './GradeConfirmPage.css';
 
 const rules = {
-  minGrade: MOCK_GRADE_LIMITS.min,
-  maxGrade: MOCK_GRADE_LIMITS.max,
   maxMajors: MOCK_MAJOR_LIMIT,
   allowedMajorIds: MOCK_MAJORS.map(major => major.id),
   allowedAdmissions: ADMISSION_OPTIONS.map(option => option.id),
@@ -46,12 +45,12 @@ export default function GradeConfirmPage() {
   function updateSubject(id: string, field: 'name' | 'grade', value: string) {
     setNotice('');
     setDraft(current => ({ ...current, subjects: current.subjects.map(subject => subject.id === id
-      ? { ...subject, [field]: value, needsReview: false } : subject) }));
+      ? { ...subject, [field]: value } : subject) }));
   }
 
   function addSubject() {
     const id = `added-${++nextSubjectId.current}`;
-    setDraft(current => ({ ...current, subjects: [...current.subjects, { id, name: '', grade: '', needsReview: false }] }));
+    setDraft(current => ({ ...current, subjects: [...current.subjects, { id, name: '', grade: '' }] }));
     setNotice('');
   }
 
@@ -61,10 +60,6 @@ export default function GradeConfirmPage() {
   }
 
   function finishEditing() {
-    if (!draft.subjects.length || draft.subjects.some(subject => !isValidSubject(subject.name, subject.grade, rules))) {
-      setNotice('과목명과 1~9 사이의 정수 등급을 확인해주세요.');
-      return;
-    }
     setEditing(false);
     setNotice('');
   }
@@ -78,7 +73,7 @@ export default function GradeConfirmPage() {
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (errors.length) return;
+    if (editing || errors.length || !toSimulationSubjectRows(draft)) return;
     setEditing(false);
     setNotice('입력값 확인을 완료했습니다. 분석 API는 아직 연결되지 않았습니다.');
   }
@@ -91,18 +86,26 @@ export default function GradeConfirmPage() {
   }
 
   function subjectRow(subject: ConfirmSubject, index: number) {
-    const invalid = !isValidSubject(subject.name, subject.grade, rules);
+    const review = reviewSubject(subject, draft.curriculum);
+    const needsReview = review.status === 'review';
+    const statusId = `subject-status-${subject.id}`;
     return (
-      <li className={`grade-confirm-subject${subject.needsReview ? ' needs-review' : ''}`} key={subject.id}>
-        <div className="grade-confirm-subject-name">
-          <img src={subjectBook} alt="" width="24" height="24" />
-          {editing ? <input aria-label={`${index + 1}번째 과목명`} value={subject.name} maxLength={40} onChange={event => updateSubject(subject.id, 'name', event.target.value)} placeholder="과목명" aria-invalid={!subject.name.trim()} /> : <span>{subject.name}</span>}
+      <li className={`grade-confirm-subject${needsReview ? ' needs-review' : ''}`} key={subject.id}>
+        <div className="grade-confirm-subject-fields">
+          <div className="grade-confirm-subject-name">
+            <img src={subjectBook} alt="" width="24" height="24" />
+            {editing ? <input aria-label={`${index + 1}번째 과목명`} value={subject.name} maxLength={40} onChange={event => updateSubject(subject.id, 'name', event.target.value)} placeholder="과목명" aria-describedby={statusId} aria-invalid={needsReview && !('subjectCode' in review)} /> : <span>{'subjectName' in review ? review.subjectName : subject.name}</span>}
+          </div>
+          <div className="grade-confirm-subject-grade">
+            {editing ? <><input type="text" maxLength={8} aria-label={`${subject.name || `${index + 1}번째 과목`} 등급`} value={subject.grade} onChange={event => updateSubject(subject.id, 'grade', event.target.value)} aria-describedby={statusId} aria-invalid={needsReview && 'subjectCode' in review} /><span>등급</span>
+              <button type="button" className="grade-confirm-delete" aria-label={`${subject.name || '새 과목'} 삭제`} onClick={() => removeSubject(subject.id)}>삭제</button></> : <span>{review.status === 'included' ? `${review.gradeValue} 등급` : subject.grade}</span>}
+          </div>
         </div>
-        <div className="grade-confirm-subject-grade">
-          {editing ? <><input type="number" inputMode="numeric" min={MOCK_GRADE_LIMITS.min} max={MOCK_GRADE_LIMITS.max} step="1" aria-label={`${subject.name || `${index + 1}번째 과목`} 등급`} value={subject.grade} onChange={event => updateSubject(subject.id, 'grade', event.target.value)} aria-invalid={invalid} /><span>등급</span>
-            <button type="button" className="grade-confirm-delete" aria-label={`${subject.name || '새 과목'} 삭제`} onClick={() => removeSubject(subject.id)}>삭제</button></> : <span>{subject.grade} 등급</span>}
-          {subject.needsReview && <span className="grade-confirm-sr-only">인식값 확인 필요</span>}
-        </div>
+        <p className="grade-confirm-subject-status" id={statusId}>
+          {review.status === 'included'
+            ? `평균 반영 · ${review.subjectName}`
+            : `${needsReview ? '확인 필요' : '평균 제외'} · ${review.message}`}
+        </p>
       </li>
     );
   }
@@ -114,16 +117,17 @@ export default function GradeConfirmPage() {
       </header>
       <section className="grade-confirm-intro" aria-labelledby="grade-confirm-title">
         <h1 id="grade-confirm-title">읽어온 값이 맞는지 확인하고,<br />틀리면 고쳐주세요.</h1>
-        <p>*인식 이후 신뢰도가 낮은 항목은 노란색으로 표시됩니다.</p>
+        <p>2022 개정 교육과정의 5등급제 성적을 확인해 주세요. 현재 성적은 예시입니다.</p>
       </section>
       <form onSubmit={submit} noValidate>
         <section className="grade-confirm-grades" aria-labelledby="grade-confirm-subject-title">
           <div className="grade-confirm-section-heading">
             <h2 id="grade-confirm-subject-title">과목</h2>
-            <button type="button" className="grade-confirm-edit" aria-pressed={editing} onClick={() => editing ? finishEditing() : setEditing(true)}><img src={editPencil} alt="" width="12" height="12" />{editing ? '수정 완료' : '수정하기'}</button>
+            {!editing && <button type="button" className="grade-confirm-edit" onClick={() => { setNotice(''); setEditing(true); }}><img src={editPencil} alt="" width="12" height="12" />수정하기</button>}
           </div>
+          <p className="grade-confirm-field-hint">국수영사과(한국사 포함) 참고 평균의 반영 여부를 확인해 주세요. 대학별 반영 방식과 다를 수 있습니다.</p>
           <ul className="grade-confirm-subjects">{draft.subjects.map(subjectRow)}</ul>
-          {editing && <><button type="button" className="grade-confirm-add-subject" onClick={addSubject}>+ 과목 추가</button><p className="grade-confirm-field-hint">목업 기준: 모든 과목에 과목명과 1~9등급을 입력해주세요.</p></>}
+          {editing && <><button type="button" className="grade-confirm-add-subject" onClick={addSubject}>+ 과목 추가</button><p className="grade-confirm-field-hint">성적표의 과목명과 석차등급(1~5)을 입력해 주세요. 성취도만 기록된 경우 A~E 또는 P를 입력해 주세요.</p><Button type="button" className="grade-confirm-finish" onClick={finishEditing}>수정 완료</Button></>}
         </section>
         <section className="grade-confirm-directions" aria-labelledby="grade-confirm-direction-title">
           <div className="grade-confirm-direction-heading"><h2 id="grade-confirm-direction-title">지원 방향</h2><span>희망 학과 (1~3)</span></div>
@@ -144,7 +148,7 @@ export default function GradeConfirmPage() {
             <label><span>비슷한 학과로 확대</span><input role="switch" type="checkbox" checked={draft.expandSimilarMajors} onChange={event => { setDraft(current => ({ ...current, expandSimilarMajors: event.target.checked })); setNotice(''); }} /></label>
           </div>
           <div className="grade-confirm-submit">
-            <Button type="submit" className="grade-confirm-analyze" disabled={errors.length > 0} aria-describedby="grade-confirm-validation">분석하기</Button>
+            <Button type="submit" className="grade-confirm-analyze" disabled={editing || errors.length > 0} aria-describedby="grade-confirm-validation">분석하기</Button>
             <div id="grade-confirm-validation" className="grade-confirm-validation" aria-live="polite">{errors.map(error => <p key={error}>{error}</p>)}</div>
             <p className="grade-confirm-notice" role="status">{notice}</p>
           </div>

@@ -1,0 +1,3654 @@
+{
+  "schemaVersion": 2,
+  "catalogVersion": "1.0.0-rc.3",
+  "preparedAt": "2026-11-11",
+  "definitionStatus": "PREPARED_FOR_SHARED_USE",
+  "policyStatus": "CONFIRMED_FOR_MVP",
+  "teamPolicyAgreed": true,
+  "backendImplemented": false,
+  "modelCompatibilityVerified": false,
+  "codeNamespace": "SERVICE_OWNED_NOT_OFFICIAL_MOE_CODES",
+  "previousCatalogVersion": "1.0.0-rc.2",
+  "previousCatalogSha256": "a287275254462c4f46bd2e1855d12090bba5d17f613d6b16a6df484c3a50f748",
+  "scope": "2022 개정 교육과정 기본 보통 교과 편제 표. 특수목적고 별도 선택 과목·전문 교과·고시 외 과목·IB 등은 미포함.",
+  "notes": [
+    "과목 식별자·명칭·교과군·교육과정 정의와 추천용 계산 정책은 별개다.",
+    "numericRankEligibleInStandardScope=true는 일반적인 숫자 석차등급 산출 가능성을 뜻하며 학생별 숫자 등급 존재를 보장하지 않는다.",
+    "mvpApiAllowed와 includedInMvpAverage는 확정된 이번 배포 입력·평균 정책의 값이다. 현재 서버가 이미 이 정책을 적용한다는 뜻이 아니다.",
+    "이번 배포의 확정 입력·평균 정책은 국어·수학·영어·사회(한국사 포함)·과학의 실제 숫자 석차등급 행에 대한 동일 비중 평균이다.",
+    "정보·기술가정·제2외국어·한문은 정상 과목으로 식별하되 이번 공통 평균에서는 제외한다. 대학에서 반영하지 않는다는 뜻이 아니다.",
+    "성취도만 있는 과목이 대학 입시에서 무의미하다는 뜻이 아니다. 현재 숫자 석차등급 전용 API에 넣지 않는 것이다.",
+    "현재 API에 curriculum, subjectGroup, gradeSystem, credits, dictionaryVersion 등을 추가하지 않는다.",
+    "국수영사과 평균과 대학별 입결 산출 기준의 비교 가능성은 재원님 추천 모듈과 별도로 확인한다.",
+    "teamPolicyAgreed는 입력·평균 기준에 한정한다. 실제 FE·BE 적용과 과거 컷·백테스트 비교 검증의 완료를 뜻하지 않는다."
+  ],
+  "sources": [
+    {
+      "id": "MOE_CURRICULUM_2022",
+      "title": "교육부 2022 개정 교육과정 편수자료 I",
+      "url": "https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202304060600196081.pdf",
+      "location": "인쇄 68~70쪽 / PDF 0-based 67~69쪽",
+      "use": "국어·수학·영어 과목명·선택 유형, 특수목적고 선택 과목 범위 구분"
+    },
+    {
+      "id": "GOE_CURRICULUM_2026",
+      "title": "경기도교육청 2026 학생중심 학교교육과정 도움 자료집 고등학교",
+      "url": "https://www.goe.go.kr/resource/goe/na/bbs_2675/2026/02/a811781f-2e6f-4a1c-a8a0-de23e31896d5.pdf",
+      "location": "인쇄 54~55쪽 / PDF 0-based 57~58쪽",
+      "use": "2026 자료의 기본 보통 교과 편제와 사회·과학 과목명 대조"
+    },
+    {
+      "id": "ICE_SUBJECT_TABLE",
+      "title": "인천광역시교육청 고교학점제: 2022 개정 교육과정 보통 교과",
+      "url": "https://www.ice.go.kr/hakjeom/cm/cntnts/cntntsView.do?cntntsId=272&mi=10083",
+      "location": "2022 개정 교육과정 보통 교과 표",
+      "use": "기술·가정·정보·제2외국어·한문·체육·예술·교양 명칭과 유형 대조"
+    },
+    {
+      "id": "SCHOOL_RECORD_2026",
+      "title": "2026학년도 학교생활기록부 기재요령 고등학교 (교육부·17개 시도교육청, 한동대 입학처 게시본)",
+      "url": "https://admissions.handong.edu/ext/bbs/download.dcp?id=16263",
+      "location": "인쇄 93~95쪽 / PDF 0-based 98~100쪽, 제15조",
+      "use": "석차등급 산출 예외, 실제 숫자 석차등급 확인, 소인원·공동교육과정 등 행별 예외"
+    },
+    {
+      "id": "SCHOOL_RECORD_RULE_2026",
+      "title": "학교생활기록 작성 및 관리지침: 교육부훈령 제555호 (2026-03-01 시행)",
+      "url": "https://www.law.go.kr/admRulLsInfoP.do?admRulSeq=2100000274694",
+      "location": "제15조; 위 2026 기재요령 수록 본문과 대조",
+      "use": "현행 규정 식별; 학교별 평가 방식을 과목 이름만으로 단정하지 않음"
+    }
+  ],
+  "subjects": [
+    {
+      "code": "SUBJ_0001",
+      "name": "공통국어1",
+      "aliases": [],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0002",
+      "name": "공통국어2",
+      "aliases": [],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0003",
+      "name": "화법과 언어",
+      "aliases": [
+        "화법과언어"
+      ],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0004",
+      "name": "독서와 작문",
+      "aliases": [
+        "독서와작문"
+      ],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0005",
+      "name": "문학",
+      "aliases": [],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0006",
+      "name": "공통수학1",
+      "aliases": [],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0007",
+      "name": "공통수학2",
+      "aliases": [],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0008",
+      "name": "대수",
+      "aliases": [],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0009",
+      "name": "미적분Ⅰ",
+      "aliases": [
+        "미적분1",
+        "미적분I"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0010",
+      "name": "확률과 통계",
+      "aliases": [
+        "확률과통계"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0011",
+      "name": "공통영어1",
+      "aliases": [],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0012",
+      "name": "공통영어2",
+      "aliases": [],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0013",
+      "name": "영어Ⅰ",
+      "aliases": [
+        "영어1",
+        "영어I"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0014",
+      "name": "영어Ⅱ",
+      "aliases": [
+        "영어2",
+        "영어II"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0015",
+      "name": "영어 독해와 작문",
+      "aliases": [
+        "영어독해와작문"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0016",
+      "name": "한국사1",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0017",
+      "name": "한국사2",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0018",
+      "name": "통합사회1",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0019",
+      "name": "통합사회2",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0020",
+      "name": "세계시민과 지리",
+      "aliases": [
+        "세계시민과지리"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0021",
+      "name": "세계사",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0022",
+      "name": "사회와 문화",
+      "aliases": [
+        "사회와문화"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0023",
+      "name": "현대사회와 윤리",
+      "aliases": [
+        "현대사회와윤리"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0024",
+      "name": "통합과학1",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0025",
+      "name": "통합과학2",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0026",
+      "name": "물리학",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0027",
+      "name": "화학",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0028",
+      "name": "생명과학",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0029",
+      "name": "지구과학",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0030",
+      "name": "국어",
+      "aliases": [],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2015",
+      "courseType": "COMMON",
+      "sourceIds": [],
+      "classification": "LEGACY_RESERVED",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "OUT_OF_CURRENT_API_SCOPE",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "CURRICULUM_2015_OUT_OF_SCOPE"
+    },
+    {
+      "code": "SUBJ_0031",
+      "name": "수학",
+      "aliases": [],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2015",
+      "courseType": "COMMON",
+      "sourceIds": [],
+      "classification": "LEGACY_RESERVED",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "OUT_OF_CURRENT_API_SCOPE",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "CURRICULUM_2015_OUT_OF_SCOPE"
+    },
+    {
+      "code": "SUBJ_0032",
+      "name": "영어",
+      "aliases": [],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2015",
+      "courseType": "COMMON",
+      "sourceIds": [],
+      "classification": "LEGACY_RESERVED",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "OUT_OF_CURRENT_API_SCOPE",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "CURRICULUM_2015_OUT_OF_SCOPE"
+    },
+    {
+      "code": "SUBJ_0033",
+      "name": "한국사",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2015",
+      "courseType": "COMMON",
+      "sourceIds": [],
+      "classification": "LEGACY_RESERVED",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "OUT_OF_CURRENT_API_SCOPE",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "CURRICULUM_2015_OUT_OF_SCOPE"
+    },
+    {
+      "code": "SUBJ_0034",
+      "name": "통합사회",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2015",
+      "courseType": "COMMON",
+      "sourceIds": [],
+      "classification": "LEGACY_RESERVED",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "OUT_OF_CURRENT_API_SCOPE",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "CURRICULUM_2015_OUT_OF_SCOPE"
+    },
+    {
+      "code": "SUBJ_0035",
+      "name": "통합과학",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2015",
+      "courseType": "COMMON",
+      "sourceIds": [],
+      "classification": "LEGACY_RESERVED",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "OUT_OF_CURRENT_API_SCOPE",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "CURRICULUM_2015_OUT_OF_SCOPE"
+    },
+    {
+      "code": "SUBJ_0036",
+      "name": "주제 탐구 독서",
+      "aliases": [
+        "주제탐구독서"
+      ],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0037",
+      "name": "문학과 영상",
+      "aliases": [
+        "문학과영상"
+      ],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0038",
+      "name": "직무 의사소통",
+      "aliases": [
+        "직무의사소통"
+      ],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0039",
+      "name": "독서 토론과 글쓰기",
+      "aliases": [
+        "독서토론과글쓰기"
+      ],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0040",
+      "name": "매체 의사소통",
+      "aliases": [
+        "매체의사소통"
+      ],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0041",
+      "name": "언어생활 탐구",
+      "aliases": [
+        "언어생활탐구"
+      ],
+      "subjectGroup": "KOREAN",
+      "subjectGroupName": "국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0042",
+      "name": "기본수학1",
+      "aliases": [],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0043",
+      "name": "기본수학2",
+      "aliases": [],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0044",
+      "name": "기하",
+      "aliases": [],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0045",
+      "name": "미적분Ⅱ",
+      "aliases": [
+        "미적분2",
+        "미적분II"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0046",
+      "name": "경제 수학",
+      "aliases": [
+        "경제수학"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0047",
+      "name": "인공지능 수학",
+      "aliases": [
+        "인공지능수학"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0048",
+      "name": "직무 수학",
+      "aliases": [
+        "직무수학"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0049",
+      "name": "수학과 문화",
+      "aliases": [
+        "수학과문화"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0050",
+      "name": "실용 통계",
+      "aliases": [
+        "실용통계"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0051",
+      "name": "수학과제 탐구",
+      "aliases": [
+        "수학과제탐구"
+      ],
+      "subjectGroup": "MATHEMATICS",
+      "subjectGroupName": "수학",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0052",
+      "name": "기본영어1",
+      "aliases": [],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0053",
+      "name": "기본영어2",
+      "aliases": [],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0054",
+      "name": "영미 문학 읽기",
+      "aliases": [
+        "영미문학읽기"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0055",
+      "name": "영어 발표와 토론",
+      "aliases": [
+        "영어발표와토론"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0056",
+      "name": "심화 영어",
+      "aliases": [
+        "심화영어"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0057",
+      "name": "심화 영어 독해와 작문",
+      "aliases": [
+        "심화영어독해와작문"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0058",
+      "name": "직무 영어",
+      "aliases": [
+        "직무영어"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0059",
+      "name": "실생활 영어 회화",
+      "aliases": [
+        "실생활영어회화"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0060",
+      "name": "미디어 영어",
+      "aliases": [
+        "미디어영어"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0061",
+      "name": "세계 문화와 영어",
+      "aliases": [
+        "세계문화와영어"
+      ],
+      "subjectGroup": "ENGLISH",
+      "subjectGroupName": "영어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "MOE_CURRICULUM_2022",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0062",
+      "name": "한국지리 탐구",
+      "aliases": [
+        "한국지리탐구"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0063",
+      "name": "도시의 미래 탐구",
+      "aliases": [
+        "도시의미래탐구"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0064",
+      "name": "동아시아 역사 기행",
+      "aliases": [
+        "동아시아역사기행"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0065",
+      "name": "정치",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0066",
+      "name": "법과 사회",
+      "aliases": [
+        "법과사회"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0067",
+      "name": "경제",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0068",
+      "name": "윤리와 사상",
+      "aliases": [
+        "윤리와사상"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0069",
+      "name": "인문학과 윤리",
+      "aliases": [
+        "인문학과윤리"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0070",
+      "name": "국제 관계의 이해",
+      "aliases": [
+        "국제관계의이해"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0071",
+      "name": "여행지리",
+      "aliases": [],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0072",
+      "name": "역사로 탐구하는 현대 세계",
+      "aliases": [
+        "역사로탐구하는현대세계"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0073",
+      "name": "사회문제 탐구",
+      "aliases": [
+        "사회문제탐구"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0074",
+      "name": "금융과 경제생활",
+      "aliases": [
+        "금융과경제생활"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0075",
+      "name": "윤리문제 탐구",
+      "aliases": [
+        "윤리문제탐구"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0076",
+      "name": "기후변화와 지속가능한 세계",
+      "aliases": [
+        "기후변화와지속가능한세계"
+      ],
+      "subjectGroup": "SOCIAL_STUDIES",
+      "subjectGroupName": "사회(역사·도덕 포함)",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0077",
+      "name": "과학탐구실험1",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SCIENCE_INQUIRY_EXPERIMENT_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0078",
+      "name": "과학탐구실험2",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "COMMON",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SCIENCE_INQUIRY_EXPERIMENT_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0079",
+      "name": "역학과 에너지",
+      "aliases": [
+        "역학과에너지"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0080",
+      "name": "전자기와 양자",
+      "aliases": [
+        "전자기와양자"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0081",
+      "name": "물질과 에너지",
+      "aliases": [
+        "물질과에너지"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0082",
+      "name": "화학 반응의 세계",
+      "aliases": [
+        "화학반응의세계"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0083",
+      "name": "세포와 물질대사",
+      "aliases": [
+        "세포와물질대사"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0084",
+      "name": "생물의 유전",
+      "aliases": [
+        "생물의유전"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0085",
+      "name": "지구시스템과학",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0086",
+      "name": "행성우주과학",
+      "aliases": [],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "MVP_NUMERIC_CANDIDATE",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": true,
+      "includedInMvpAverage": true,
+      "exclusionReason": null
+    },
+    {
+      "code": "SUBJ_0087",
+      "name": "과학의 역사와 문화",
+      "aliases": [
+        "과학의역사와문화"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0088",
+      "name": "기후변화와 환경생태",
+      "aliases": [
+        "기후변화와환경생태"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0089",
+      "name": "융합과학 탐구",
+      "aliases": [
+        "융합과학탐구"
+      ],
+      "subjectGroup": "SCIENCE",
+      "subjectGroupName": "과학",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "GOE_CURRICULUM_2026",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "SOCIAL_SCIENCE_CONVERGENCE_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0090",
+      "name": "기술·가정",
+      "aliases": [
+        "기술・가정",
+        "기술ㆍ가정"
+      ],
+      "subjectGroup": "TECHNOLOGY_HOME_ECONOMICS",
+      "subjectGroupName": "기술·가정",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0091",
+      "name": "로봇과 공학세계",
+      "aliases": [
+        "로봇과공학세계"
+      ],
+      "subjectGroup": "TECHNOLOGY_HOME_ECONOMICS",
+      "subjectGroupName": "기술·가정",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0092",
+      "name": "생활과학 탐구",
+      "aliases": [
+        "생활과학탐구"
+      ],
+      "subjectGroup": "TECHNOLOGY_HOME_ECONOMICS",
+      "subjectGroupName": "기술·가정",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0093",
+      "name": "창의 공학 설계",
+      "aliases": [
+        "창의공학설계"
+      ],
+      "subjectGroup": "TECHNOLOGY_HOME_ECONOMICS",
+      "subjectGroupName": "기술·가정",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0094",
+      "name": "지식 재산 일반",
+      "aliases": [
+        "지식재산일반"
+      ],
+      "subjectGroup": "TECHNOLOGY_HOME_ECONOMICS",
+      "subjectGroupName": "기술·가정",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0095",
+      "name": "생애 설계와 자립",
+      "aliases": [
+        "생애설계와자립"
+      ],
+      "subjectGroup": "TECHNOLOGY_HOME_ECONOMICS",
+      "subjectGroupName": "기술·가정",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0096",
+      "name": "아동발달과 부모",
+      "aliases": [
+        "아동발달과부모"
+      ],
+      "subjectGroup": "TECHNOLOGY_HOME_ECONOMICS",
+      "subjectGroupName": "기술·가정",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0097",
+      "name": "정보",
+      "aliases": [],
+      "subjectGroup": "INFORMATION",
+      "subjectGroupName": "정보",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0098",
+      "name": "인공지능 기초",
+      "aliases": [
+        "인공지능기초"
+      ],
+      "subjectGroup": "INFORMATION",
+      "subjectGroupName": "정보",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0099",
+      "name": "데이터 과학",
+      "aliases": [
+        "데이터과학"
+      ],
+      "subjectGroup": "INFORMATION",
+      "subjectGroupName": "정보",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0100",
+      "name": "소프트웨어와 생활",
+      "aliases": [
+        "소프트웨어와생활"
+      ],
+      "subjectGroup": "INFORMATION",
+      "subjectGroupName": "정보",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0101",
+      "name": "독일어",
+      "aliases": [],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0102",
+      "name": "프랑스어",
+      "aliases": [],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0103",
+      "name": "스페인어",
+      "aliases": [],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0104",
+      "name": "중국어",
+      "aliases": [],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0105",
+      "name": "일본어",
+      "aliases": [],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0106",
+      "name": "러시아어",
+      "aliases": [],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0107",
+      "name": "아랍어",
+      "aliases": [],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0108",
+      "name": "베트남어",
+      "aliases": [],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0109",
+      "name": "독일어 회화",
+      "aliases": [
+        "독일어회화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0110",
+      "name": "프랑스어 회화",
+      "aliases": [
+        "프랑스어회화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0111",
+      "name": "스페인어 회화",
+      "aliases": [
+        "스페인어회화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0112",
+      "name": "중국어 회화",
+      "aliases": [
+        "중국어회화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0113",
+      "name": "일본어 회화",
+      "aliases": [
+        "일본어회화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0114",
+      "name": "러시아어 회화",
+      "aliases": [
+        "러시아어회화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0115",
+      "name": "아랍어 회화",
+      "aliases": [
+        "아랍어회화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0116",
+      "name": "베트남어 회화",
+      "aliases": [
+        "베트남어회화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0117",
+      "name": "심화 독일어",
+      "aliases": [
+        "심화독일어"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0118",
+      "name": "심화 프랑스어",
+      "aliases": [
+        "심화프랑스어"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0119",
+      "name": "심화 스페인어",
+      "aliases": [
+        "심화스페인어"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0120",
+      "name": "심화 중국어",
+      "aliases": [
+        "심화중국어"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0121",
+      "name": "심화 일본어",
+      "aliases": [
+        "심화일본어"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0122",
+      "name": "심화 러시아어",
+      "aliases": [
+        "심화러시아어"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0123",
+      "name": "심화 아랍어",
+      "aliases": [
+        "심화아랍어"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0124",
+      "name": "심화 베트남어",
+      "aliases": [
+        "심화베트남어"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0125",
+      "name": "독일어권 문화",
+      "aliases": [
+        "독일어권문화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0126",
+      "name": "프랑스어권 문화",
+      "aliases": [
+        "프랑스어권문화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0127",
+      "name": "스페인어권 문화",
+      "aliases": [
+        "스페인어권문화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0128",
+      "name": "중국 문화",
+      "aliases": [
+        "중국문화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0129",
+      "name": "일본 문화",
+      "aliases": [
+        "일본문화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0130",
+      "name": "러시아 문화",
+      "aliases": [
+        "러시아문화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0131",
+      "name": "아랍 문화",
+      "aliases": [
+        "아랍문화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0132",
+      "name": "베트남 문화",
+      "aliases": [
+        "베트남문화"
+      ],
+      "subjectGroup": "SECOND_FOREIGN_LANGUAGE",
+      "subjectGroupName": "제2외국어",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0133",
+      "name": "한문",
+      "aliases": [],
+      "subjectGroup": "CLASSICAL_CHINESE",
+      "subjectGroupName": "한문",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0134",
+      "name": "한문 고전 읽기",
+      "aliases": [
+        "한문고전읽기"
+      ],
+      "subjectGroup": "CLASSICAL_CHINESE",
+      "subjectGroupName": "한문",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0135",
+      "name": "언어생활과 한자",
+      "aliases": [
+        "언어생활과한자"
+      ],
+      "subjectGroup": "CLASSICAL_CHINESE",
+      "subjectGroupName": "한문",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "KNOWN_OUTSIDE_MVP_POLICY",
+      "numericRankEligibleInStandardScope": true,
+      "gradeRecordingPolicy": "NUMERIC_RANK_IF_RECORDED",
+      "requiresActualNumericRank": true,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "OUTSIDE_CORE_SUBJECTS_POLICY"
+    },
+    {
+      "code": "SUBJ_0136",
+      "name": "체육1",
+      "aliases": [],
+      "subjectGroup": "PHYSICAL_EDUCATION",
+      "subjectGroupName": "체육",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0137",
+      "name": "체육2",
+      "aliases": [],
+      "subjectGroup": "PHYSICAL_EDUCATION",
+      "subjectGroupName": "체육",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0138",
+      "name": "운동과 건강",
+      "aliases": [
+        "운동과건강"
+      ],
+      "subjectGroup": "PHYSICAL_EDUCATION",
+      "subjectGroupName": "체육",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0139",
+      "name": "스포츠 문화",
+      "aliases": [
+        "스포츠문화"
+      ],
+      "subjectGroup": "PHYSICAL_EDUCATION",
+      "subjectGroupName": "체육",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0140",
+      "name": "스포츠 과학",
+      "aliases": [
+        "스포츠과학"
+      ],
+      "subjectGroup": "PHYSICAL_EDUCATION",
+      "subjectGroupName": "체육",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0141",
+      "name": "스포츠 생활1",
+      "aliases": [
+        "스포츠생활1"
+      ],
+      "subjectGroup": "PHYSICAL_EDUCATION",
+      "subjectGroupName": "체육",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0142",
+      "name": "스포츠 생활2",
+      "aliases": [
+        "스포츠생활2"
+      ],
+      "subjectGroup": "PHYSICAL_EDUCATION",
+      "subjectGroupName": "체육",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0143",
+      "name": "음악",
+      "aliases": [],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0144",
+      "name": "미술",
+      "aliases": [],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0145",
+      "name": "연극",
+      "aliases": [],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0146",
+      "name": "음악 연주와 창작",
+      "aliases": [
+        "음악연주와창작"
+      ],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0147",
+      "name": "음악 감상과 비평",
+      "aliases": [
+        "음악감상과비평"
+      ],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0148",
+      "name": "미술 창작",
+      "aliases": [
+        "미술창작"
+      ],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0149",
+      "name": "미술 감상과 비평",
+      "aliases": [
+        "미술감상과비평"
+      ],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0150",
+      "name": "음악과 미디어",
+      "aliases": [
+        "음악과미디어"
+      ],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0151",
+      "name": "미술과 매체",
+      "aliases": [
+        "미술과매체"
+      ],
+      "subjectGroup": "ARTS",
+      "subjectGroupName": "예술",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "ACHIEVEMENT_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "STANDARD_PE_ARTS_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0152",
+      "name": "진로와 직업",
+      "aliases": [
+        "진로와직업"
+      ],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0153",
+      "name": "생태와 환경",
+      "aliases": [
+        "생태와환경"
+      ],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "GENERAL",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0154",
+      "name": "인간과 철학",
+      "aliases": [
+        "인간과철학"
+      ],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0155",
+      "name": "논리와 사고",
+      "aliases": [
+        "논리와사고"
+      ],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0156",
+      "name": "인간과 심리",
+      "aliases": [
+        "인간과심리"
+      ],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0157",
+      "name": "교육의 이해",
+      "aliases": [
+        "교육의이해"
+      ],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0158",
+      "name": "삶과 종교",
+      "aliases": [
+        "삶과종교"
+      ],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0159",
+      "name": "보건",
+      "aliases": [],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "CAREER",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0160",
+      "name": "인간과 경제활동",
+      "aliases": [
+        "인간과경제활동"
+      ],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    },
+    {
+      "code": "SUBJ_0161",
+      "name": "논술",
+      "aliases": [],
+      "subjectGroup": "LIBERAL_ARTS",
+      "subjectGroupName": "교양",
+      "curriculum": "2022",
+      "courseType": "CONVERGENCE",
+      "sourceIds": [
+        "ICE_SUBJECT_TABLE",
+        "SCHOOL_RECORD_2026"
+      ],
+      "classification": "NO_NUMERIC_RANK_IN_STANDARD_SCOPE",
+      "numericRankEligibleInStandardScope": false,
+      "gradeRecordingPolicy": "COMPLETION_ONLY",
+      "requiresActualNumericRank": false,
+      "mvpPolicyId": "CORE_SUBJECTS_UNWEIGHTED_V1",
+      "mvpApiAllowed": false,
+      "includedInMvpAverage": false,
+      "exclusionReason": "COMPLETION_ONLY_NO_RANK"
+    }
+  ],
+  "policyConfirmation": {
+    "confirmedAt": "2026-11-11",
+    "planningApproved": true,
+    "confirmedScope": "이번 배포의 과목 입력·제외·동일 비중 평균 계산 기준",
+    "basis": "사용자가 공유한 사라님의 기획 동의 및 세빈님의 적용 지시",
+    "frontendImplementationVerified": false,
+    "modelCompatibilityVerified": false
+  }
+}
