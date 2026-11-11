@@ -5,7 +5,7 @@ export interface ConfirmSubject {
   grade: string;
 }
 
-export type AdmissionPreference = 'school-record' | 'comprehensive' | 'exam' | 'any';
+export type AdmissionPreference = 'school-record' | 'comprehensive' | 'any';
 
 export interface GradeConfirmDraft {
   curriculum: '2022' | '2015' | null;

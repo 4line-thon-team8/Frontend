@@ -13,7 +13,7 @@
   --font-base: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
   /* 폰트 파일 등록 전에는 기기에 설치된 경우에만 적용되고, 없으면 기본 폰트로 표시됩니다. */
   --font-display: '페어 큰부리새', var(--font-base);
-  --mobile-max-width: 480px;
+  --mobile-max-width: 390px;
   --space-page: 20px;
   --radius-base: 12px;
 }

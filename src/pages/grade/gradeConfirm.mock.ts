@@ -15,7 +15,6 @@ export const MOCK_MAJORS = [
 export const ADMISSION_OPTIONS: { id: AdmissionPreference; name: string }[] = [
   { id: 'school-record', name: '학생부교과' },
   { id: 'comprehensive', name: '학생부종합' },
-  { id: 'exam', name: '정시' },
   { id: 'any', name: '상관없음' },
 ];
 

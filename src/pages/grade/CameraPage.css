@@ -7,7 +7,7 @@
   color: #fefefe;
   font-family: inherit;
 }
-.grade-camera-shell { width: 100%; max-width: 390px; min-height: 100dvh; margin-inline: auto; display: flex; flex-direction: column; }
+.grade-camera-shell { width: 100%; max-width: var(--mobile-max-width); min-height: 100dvh; margin-inline: auto; display: flex; flex-direction: column; }
 .grade-camera-header { display: flex; align-items: center; gap: 14px; padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 16px max(20px, env(safe-area-inset-left)); font-size: 14px; }
 .grade-camera-header a { width: 32px; min-height: 32px; display: grid; place-items: center; }
 .grade-camera-header img { transform: rotate(180deg); }
