@@ -103,7 +103,8 @@
 
 .strategy-applications ul {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* 구간 수(1~6개)에 맞춰 칸이 늘어나요. */
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 11px;
   margin: 0;
   padding: 0;
@@ -117,14 +118,20 @@
   justify-content: center;
   align-items: center;
   gap: 3px;
-  height: 50px;
+  min-height: 50px;
+  padding: 4px 6px;
   border-radius: 4px;
   color: #fefefe;
+  text-align: center;
 }
 
 .strategy-application.is-safe { background: #2f5d50; }
 .strategy-application.is-match { background: #c9a227; }
 .strategy-application.is-reach { background: #a44a77; }
+/* 임시 색상 (디자인 확정 후 조정) */
+.strategy-application.is-far { background: #b5533c; }
+.strategy-application.is-over { background: #3d7a9e; }
+.strategy-application.is-unrated { background: #7d8783; }
 
 .strategy-application__count {
   display: flex;

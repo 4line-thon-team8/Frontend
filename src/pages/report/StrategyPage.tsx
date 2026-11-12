@@ -1,13 +1,34 @@
 import BottomNavigation from '../../components/common/BottomNavigation';
 import ReportPagination from '../../components/report/ReportPagination';
 import clipboard from '../../assets/icons/clipboard.svg';
+import RecommendationEmpty from '../../components/report/RecommendationEmpty';
+import { useMockRecommendationResult } from './recommendation.mock';
+import { countByTier, tierClassName } from './reportTier';
 import { MOCK_STRATEGY_REPORT, SCORE_MAX } from './strategy.mock';
 import './ReportPage.css';
 import './StrategyPage.css';
 
 export default function StrategyPage() {
   // TODO: reportApi 구현 후 실제 리포트 데이터로 교체합니다.
-  const { activitySummaryLines, scores, advices, applications } = MOCK_STRATEGY_REPORT;
+  const { activitySummaryLines, scores, advices } = MOCK_STRATEGY_REPORT;
+  const { recommendations } = useMockRecommendationResult();
+  // 추천 카드의 구간(BE 값)별 장수. 0장인 구간은 표시하지 않아요.
+  const applications = countByTier(recommendations);
+
+  if (recommendations.length === 0) {
+    return (
+      <div className="report-page">
+        <header className="report-header">
+          <h1>
+            <img src={clipboard} alt="" width="15" height="17" />
+            활동·지원 전략
+          </h1>
+        </header>
+        <RecommendationEmpty />
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   return (
     <div className="report-page report-page--fixed-pagination">
@@ -62,13 +83,12 @@ export default function StrategyPage() {
         <h2 id="strategy-applications-title" className="report-section-label">나의 지원 전략</h2>
         <ul>
           {applications.map(item => (
-            <li key={item.tier} className={`strategy-application is-${item.tier}`}>
+            <li key={item.tier} className={`strategy-application ${tierClassName(item.tier)}`}>
               <span className="strategy-application__count"><strong>{item.count}</strong> 장</span>
               <span className="strategy-application__label">{item.label}</span>
             </li>
           ))}
         </ul>
-        <p className="strategy-applications__note">*상향 카드 포함 설정이 반영됐어요.</p>
       </section>
 
       <div className="report-pagination-slot">

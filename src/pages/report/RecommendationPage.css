@@ -1,4 +1,4 @@
-/* Figma '추천 원서 6장'. 공통 틀·제목·접힌 카드·고정 페이지 번호는 ReportPage.css 에 있습니다. */
+/* Figma '추천 원서 6장' (0~6장 대응). 공통 틀·제목·접힌 카드·고정 페이지 번호는 ReportPage.css 에 있습니다. */
 
 /* 카드 목록: 제목 아래 41px(공통), 카드 사이 13px */
 .recommendation-list {
@@ -32,6 +32,54 @@
   --tier-border: #e8d2dd;
   --fold-color: #e5d0db;
   background: #f9f4f6;
+}
+
+/* FAR · OVER · UNRATED: 임시 색상 (디자인 확정 후 조정) */
+.recommendation-card.is-far {
+  --tier-color: #b5533c;
+  --tier-border: #ecd4cc;
+  --fold-color: #e8cdc4;
+  background: #fbf5f3;
+}
+
+.recommendation-card.is-over {
+  --tier-color: #3d7a9e;
+  --tier-border: #cfe0ea;
+  --fold-color: #c7d9e4;
+  background: #f4f8fb;
+}
+
+.recommendation-card.is-unrated {
+  --tier-color: #7d8783;
+  --tier-border: #e0e3e2;
+  --fold-color: #d6dad8;
+  background: #f7f8f8;
+}
+
+/* 이름이 긴 구간 배지는 제목 아래로 내립니다. */
+.recommendation-card.is-far h2,
+.recommendation-card.is-over h2,
+.recommendation-card.is-unrated h2 { padding-right: 0; }
+
+.recommendation-card.is-far .recommendation-card__tier,
+.recommendation-card.is-over .recommendation-card__tier,
+.recommendation-card.is-unrated .recommendation-card__tier {
+  position: static;
+  display: inline-grid;
+  width: auto;
+  margin-top: 8px;
+  padding: 0 10px;
+}
+
+.result-notices + .recommendation-list { margin-top: 16px; }
+
+/* 카드별 주의 안내 (LOW 등) */
+.recommendation-card .recommendation-card__warning {
+  margin-top: 4px;
+  color: #c9a227;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: normal;
 }
 
 /* 지망(14px bold 초록) + 학교 · 학과 · 전형(16px bold) */

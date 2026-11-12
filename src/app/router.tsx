@@ -41,7 +41,7 @@ export default function AppRouter() {
         <Route path="/error/camera" element={<CameraErrorPage />} />
         <Route path="/error/analysis" element={<AnalysisErrorPage />} />
         <Route path="/error/session-expired" element={<SessionExpiredPage />} />
-        <Route path="*" element={<h1>페이지를 찾을 수 없습니다</h1>} />
+        <Route path="*" element={<h1>페이지를 찾을 수 없어요.</h1>} />
       </Route>
     </Routes>
   );

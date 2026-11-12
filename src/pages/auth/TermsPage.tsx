@@ -12,8 +12,8 @@ import './TermsPage.css';
 const PROCESS_STEPS = ['① 성적 입력 (촬영 · PDF)', '② 확인 · 지원 방향', '③ 컨설팅 리포트'];
 
 const PRIVACY_NOTICES = [
-  '성적표 원본은 서버로 전송되지 않고, 처리 후 폐기됩니다.',
-  '추천 원서 6장·추천 이유·생성 시각은 로그인 계정에 자동 저장됩니다.',
+  '성적표 원본은 서버로 전송되지 않고, 처리 후 폐기돼요.',
+  '추천 원서·추천 이유·생성 시각은 로그인 계정에 저장돼요.',
 ];
 
 export default function TermsPage() {
