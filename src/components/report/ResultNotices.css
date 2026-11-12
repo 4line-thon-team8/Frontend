@@ -1,0 +1,65 @@
+/* 추천 결과 상단 안내 (임시 스타일, 디자인 확정 후 조정) */
+.result-notices {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid #e9dfc8;
+  border-radius: 8px;
+  background: #fffdf7;
+  color: #52625d;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.result-notices .result-notices__count {
+  color: #2f5d50;
+  font-weight: 700;
+}
+
+.result-notices ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-notices li::before {
+  content: '· ';
+}
+
+/* 추천 0장 안내 */
+.recommendation-empty {
+  display: grid;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 1px solid #dfe6e3;
+  border-radius: 8px;
+  background: #f5f8f6;
+  text-align: center;
+}
+
+.recommendation-empty h2 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.recommendation-empty p {
+  color: #52625d;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.recommendation-empty__action {
+  display: block;
+  margin-top: 12px;
+  padding: 12px 0;
+  border-radius: 8px;
+  background: #2f5d50;
+  color: #fefefe;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}

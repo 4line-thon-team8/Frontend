@@ -1,7 +1,8 @@
 import { Link, useNavigate, useParams } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
 import arrowBack from '../../assets/icons/arrow-back.svg';
-import { MOCK_RECOMMENDATIONS, TIER_LABELS } from '../report/recommendation.mock';
+import { MOCK_RECOMMENDATIONS } from '../report/recommendation.mock';
+import { TIER_LABELS, tierClassName } from '../report/reportTier';
 import { MOCK_SAVED_REPORTS } from './mypage.mock';
 import './MyPage.css';
 
@@ -34,7 +35,7 @@ export default function ReportDetailPage() {
               <li key={item.rank} className="mypage-detail-row">
                 <span className="mypage-detail-row__rank">{item.rank}지망</span>
                 <span className="mypage-detail-row__name">{item.university} {item.major} · {item.admission}</span>
-                <span className={`mypage-detail-row__tier is-${item.tier}`}>{TIER_LABELS[item.tier]}</span>
+                <span className={`mypage-detail-row__tier ${tierClassName(item.tier)}`}>{TIER_LABELS[item.tier]}</span>
               </li>
             ))}
           </ol>

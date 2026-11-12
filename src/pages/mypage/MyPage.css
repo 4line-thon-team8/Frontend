@@ -251,15 +251,21 @@
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 58px;
+  min-width: 58px;
   height: 26px;
+  padding: 0 10px;
   border-radius: 999px;
   background: #2f5d50;
+  white-space: nowrap;
   color: #fefefe;
   font-size: 11px;
 }
 
 .mypage-detail-row__tier.is-match { background: #c9a227; }
 .mypage-detail-row__tier.is-reach { background: #a44a77; }
+/* 임시 색상 (디자인 확정 후 조정) */
+.mypage-detail-row__tier.is-far { background: #b5533c; }
+.mypage-detail-row__tier.is-over { background: #3d7a9e; }
+.mypage-detail-row__tier.is-unrated { background: #7d8783; }
 
 .mypage-detail-delete { margin-top: 49px; }

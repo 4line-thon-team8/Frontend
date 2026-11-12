@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
-import { MOCK_SAVED_REPORTS, SYSTEM_RULES } from './mypage.mock';
+import { APPLICATION_TIERS, TIER_LABELS } from '../report/reportTier';
+import { MOCK_SAVED_REPORTS, SYSTEM_RULES, type SavedReport } from './mypage.mock';
 import './MyPage.css';
 
 function TrashIcon() {
@@ -10,6 +11,13 @@ function TrashIcon() {
       <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
+}
+
+/** 예: 추천 원서 4장 · 적정 2 / 도전 부담이 큰 후보 1 / 판단 자료 부족 1 (0장 구간은 빼요) */
+function formatReportCounts(counts: SavedReport['counts']) {
+  const tiers = APPLICATION_TIERS.filter(tier => (counts[tier] ?? 0) > 0);
+  const total = tiers.reduce((sum, tier) => sum + (counts[tier] ?? 0), 0);
+  return `추천 원서 ${total}장 · ${tiers.map(tier => `${TIER_LABELS[tier]} ${counts[tier]}`).join(' / ')}`;
 }
 
 export default function MyPage() {
@@ -43,7 +51,7 @@ export default function MyPage() {
                 {report.title}
               </Link>
             </h2>
-            <p>추천 원서 6장 · 안정 {report.counts.safe} / 적정 {report.counts.match} / 소신 {report.counts.reach}</p>
+            <p>{formatReportCounts(report.counts)}</p>
             <button type="button" className="mypage-report-card__delete" onClick={() => handleDelete(report.id)} aria-label={`${report.createdAt} 리포트 삭제`}>
               <TrashIcon />
               삭제
