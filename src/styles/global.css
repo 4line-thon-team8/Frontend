@@ -1,6 +1,8 @@
 @import './variables.css';
 
 * { box-sizing: border-box; }
+/* Keep the centered mobile layout stable when routes differ in height. */
+html { scrollbar-gutter: stable; }
 body { margin: 0; font-family: var(--font-base); color: var(--color-text); background: var(--color-backdrop); }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }

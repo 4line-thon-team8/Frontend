@@ -28,7 +28,7 @@ export default function GradeInputPage() {
             <img className="grade-input-card-icon" src={camera} alt="" width="46" height="46" />
             <div className="grade-input-card-copy">
               <h2>성적표 촬영</h2>
-              <p>인식이 가능할 것 같게 밝은 곳에서 촬영해주세요.</p>
+              <p>성적표가 잘 인식되도록 밝은 곳에서 촬영해 주세요.</p>
             </div>
             <img className="grade-input-chevron" src={chevron} alt="" width="10" height="18" />
           </Link>
