@@ -6,10 +6,11 @@ import arrowBack from '../../assets/icons/arrow-back.svg';
 import subjectBook from '../../assets/icons/subject-book.svg';
 import editPencil from '../../assets/icons/edit-pencil.svg';
 import checkCircle from '../../assets/icons/check-circle.svg';
-import type { ConfirmSubject, GradeConfirmDraft } from '../../types/gradeConfirm';
+import type { ConfirmSubject } from '../../types/gradeConfirm';
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import { clearGradeImage, getGradeImage } from '../../utils/gradeImageStore';
 import { reviewSubject, toggleAdmission, validateGradeConfirm } from '../../utils/gradeConfirmValidation';
-import { ADMISSION_OPTIONS, createMockGradeConfirmDraft, MOCK_MAJOR_LIMIT, MOCK_MAJORS } from './gradeConfirm.mock';
+import { ADMISSION_OPTIONS, MOCK_MAJOR_LIMIT, MOCK_MAJORS } from './gradeConfirm.mock';
 import { toSimulationSubjectRows } from '../../services/simulationApi';
 import './GradeConfirmPage.css';
 
@@ -21,13 +22,12 @@ const rules = {
 
 export default function GradeConfirmPage() {
   const navigate = useNavigate();
-  const [draft, setDraft] = useState<GradeConfirmDraft>(createMockGradeConfirmDraft);
+  const { draft, setDraft, setSnapshot, reset } = useGradeAnalysis();
   const [editing, setEditing] = useState(false);
   const [dialogKind, setDialogKind] = useState<'majors' | 'reset' | null>(null);
   // 원본 이미지를 추가 저장/표시하지 않고 기존 입력 출처만 읽습니다. 성적은 명시적인 목업입니다.
   const [imageSource] = useState(() => getGradeImage()?.source ?? null);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const nextSubjectId = useRef(0);
   const errors = validateGradeConfirm(draft, rules);
 
   useEffect(() => {
@@ -47,8 +47,15 @@ export default function GradeConfirmPage() {
   }
 
   function addSubject() {
-    const id = `added-${++nextSubjectId.current}`;
-    setDraft(current => ({ ...current, subjects: [...current.subjects, { id, name: '', grade: '' }] }));
+    setDraft(current => {
+      const usedIds = new Set(current.subjects.map(subject => subject.id));
+      let sequence = current.subjects.length + 1;
+      while (usedIds.has(`added-${sequence}`)) sequence++;
+      return {
+        ...current,
+        subjects: [...current.subjects, { id: `added-${sequence}`, name: '', grade: '' }],
+      };
+    });
   }
 
   function removeSubject(id: string) {
@@ -67,14 +74,25 @@ export default function GradeConfirmPage() {
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (editing || errors.length || !toSimulationSubjectRows(draft)) return;
+    if (editing || errors.length) return;
+    const subjects = toSimulationSubjectRows(draft);
+    if (!subjects) return;
+    setSnapshot({
+      subjects,
+      preferences: {
+        majorIds: [...draft.majorIds],
+        admissions: [...draft.admissions],
+        includeReach: draft.includeReach,
+        expandSimilarMajors: draft.expandSimilarMajors,
+      },
+    });
     setEditing(false);
     navigate('/grade/loading');
   }
 
   function resetInput() {
     clearGradeImage();
-    setDraft(createMockGradeConfirmDraft());
+    reset();
     setDialogKind(null);
     navigate('/grade/input');
   }
