@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import analysisCharacter from '../../assets/images/analysis-character.svg';
 import { MOCK_ANALYSIS_STEPS, MOCK_ANALYSIS_STEP_DURATION_MS } from './analysisLoading.mock';
@@ -8,6 +9,7 @@ import './AnalysisLoadingPage.css';
 const duration = MOCK_ANALYSIS_STEPS.length * MOCK_ANALYSIS_STEP_DURATION_MS;
 
 export default function AnalysisLoadingPage() {
+  const { snapshot } = useGradeAnalysis();
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function AnalysisLoadingPage() {
       if (next === duration) window.clearInterval(timer);
     }, 50);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [snapshot]);
 
   const finished = elapsed === duration;
   return (
