@@ -10,13 +10,15 @@ type ErrorScreenProps = {
   description: string;
   actionLabel: string;
   actionTo: string;
+  /** 이동할 화면에 넘길 location.state (예: 재로그인 후 돌아갈 경로) */
+  actionState?: unknown;
 };
 
 /**
  * 공통 오류 · 권한 화면 (Figma 'S-00~ 공통 오류·권한').
  * 가운데에 안내 이미지, 아래에 초록 버튼 하나가 있습니다.
  */
-export default function ErrorScreen({ image, imageHeight, title, description, actionLabel, actionTo }: ErrorScreenProps) {
+export default function ErrorScreen({ image, imageHeight, title, description, actionLabel, actionTo, actionState }: ErrorScreenProps) {
   return (
     <section className="error-screen" aria-labelledby="error-screen-title">
       <div className="error-screen__message">
@@ -24,7 +26,7 @@ export default function ErrorScreen({ image, imageHeight, title, description, ac
         <h1 id="error-screen-title" className="error-screen__sr-only">{title}</h1>
         <p className="error-screen__sr-only">{description}</p>
       </div>
-      <Link className="error-screen__action" to={actionTo} replace>{actionLabel}</Link>
+      <Link className="error-screen__action" to={actionTo} state={actionState} replace>{actionLabel}</Link>
     </section>
   );
 }

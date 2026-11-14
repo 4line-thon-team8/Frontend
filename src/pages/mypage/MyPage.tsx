@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
+import { logout } from '../../services/authApi';
 import { APPLICATION_TIERS, TIER_LABELS } from '../report/reportTier';
 import { MOCK_SAVED_REPORTS, SYSTEM_RULES, type SavedReport } from './mypage.mock';
 import './MyPage.css';
@@ -30,8 +31,8 @@ export default function MyPage() {
     setReports(current => current.filter(report => report.id !== id));
   };
 
-  const handleLogout = () => {
-    // TODO: authApi 의 로그아웃(POST /api/auth/logout) 구현 후 연동합니다.
+  const handleLogout = async () => {
+    await logout();
     navigate('/login', { replace: true });
   };
 
@@ -73,7 +74,7 @@ export default function MyPage() {
         </ul>
       </section>
 
-      <button type="button" className="mypage-primary-button mypage-logout" onClick={handleLogout}>로그아웃</button>
+      <button type="button" className="mypage-primary-button mypage-logout" onClick={() => void handleLogout()}>로그아웃</button>
       <p className="mypage-note">*회원 탈퇴 시 저장된 리포트가 모두 삭제돼요.</p>
 
       <BottomNavigation />
