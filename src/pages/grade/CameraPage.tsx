@@ -6,12 +6,16 @@ import { useCamera } from '../../hooks/useCamera';
 import { setGradeImage } from '../../utils/gradeImageStore';
 import type { GradeImage } from '../../utils/gradeImageStore';
 import { extractImageText } from '../../utils/extractImageText';
+import { parseOcrGrades } from '../../utils/parseOcrGrades';
+import { applyOcrGrades, reviewOcrGrades } from '../../utils/applyOcrGrades';
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
+import type { ConfirmSubject } from '../../types/gradeConfirm';
 import './CameraPage.css';
 
 type OcrState =
   | { kind: 'idle' | 'preparing' | 'empty' | 'error' }
   | { kind: 'recognizing'; progress: number }
-  | { kind: 'success'; text: string };
+  | { kind: 'success'; text: string; subjects: ConfirmSubject[] };
 
 function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
   return (
@@ -25,6 +29,8 @@ function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
 
 export default function CameraPage() {
   const navigate = useNavigate();
+  const { draft, setDraft, setSnapshot } = useGradeAnalysis();
+  const [replaceConfirmed, setReplaceConfirmed] = useState(false);
   const [photo, setPhoto] = useState<GradeImage | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [message, setMessage] = useState('');
@@ -109,6 +115,7 @@ export default function CameraPage() {
   }
 
   function retake() {
+    setReplaceConfirmed(false);
     activeOcr.current?.abort();
     activeOcr.current = null;
     setOcr({ kind: 'idle' });
@@ -125,11 +132,12 @@ export default function CameraPage() {
     activeOcr.current = request;
     setOcr({ kind: 'preparing' });
     try {
-      const text = await extractImageText(photo.file, request.signal, progress => {
+      const { text, words } = await extractImageText(photo.file, request.signal, progress => {
         if (!request.signal.aborted) setOcr(progress);
       });
       if (!request.signal.aborted) {
-        setOcr(text ? { kind: 'success', text } : { kind: 'empty' });
+        setReplaceConfirmed(false);
+        setOcr(text.trim() ? { kind: 'success', text, subjects: parseOcrGrades(words) } : { kind: 'empty' });
       }
     } catch {
       if (!request.signal.aborted) setOcr({ kind: 'error' });
@@ -138,10 +146,29 @@ export default function CameraPage() {
     }
   }
 
-  function confirmPhoto() {
-    if (!photo || ocr.kind !== 'success') return;
+  const { reviews, duplicate, valid } = reviewOcrGrades(ocr.kind === 'success' ? ocr.subjects : [], draft.curriculum);
+
+  function openGradeConfirm() {
+    if (!photo) return;
     setGradeImage(photo);
     navigate('/grade/confirm');
+  }
+
+  function applyOcrSubjects() {
+    if (!photo || ocr.kind !== 'success' || !valid || !replaceConfirmed) return;
+    setDraft(current => applyOcrGrades(current, ocr.subjects, replaceConfirmed));
+    setSnapshot(null);
+    openGradeConfirm();
+  }
+
+  function editCandidate(id: string, change?: Partial<Pick<ConfirmSubject, 'name' | 'grade'>>) {
+    setReplaceConfirmed(false);
+    setOcr(current => current.kind === 'success' ? {
+      ...current,
+      subjects: change
+        ? current.subjects.map(subject => subject.id === id ? { ...subject, ...change } : subject)
+        : current.subjects.filter(subject => subject.id !== id),
+    } : current);
   }
 
   return (
@@ -173,13 +200,33 @@ export default function CameraPage() {
           </div>
           {ocr.kind === 'recognizing' && <progress aria-label="텍스트 인식 진행률" max={1} value={ocr.progress} />}
           {ocr.kind === 'success' && <pre tabIndex={0} aria-label="추출된 텍스트">{ocr.text}</pre>}
+          {(ocr.kind === 'empty' || (ocr.kind === 'success' && ocr.subjects.length === 0)) &&
+            <p role="status">사진 속 성적을 반영하지 못했어요. 기존 성적이 유지되며, 성적 확인 화면에서 직접 수정할 수 있어요.</p>}
+          {ocr.kind === 'empty' && <button type="button" onClick={() => void recognizePhoto()}>다시 시도</button>}
+          {ocr.kind === 'success' && ocr.subjects.length > 0 && <>
+            <h2>인식한 성적 확인</h2>
+            {ocr.subjects.map((subject, index) => <fieldset key={subject.id}>
+              <legend>{index + 1}번째 과목</legend>
+              <label>공식 과목명 <input value={subject.name} maxLength={40} onChange={event => editCandidate(subject.id, { name: event.target.value })} /></label>
+              <label>석차등급 <input value={subject.grade} inputMode="numeric" maxLength={1} onChange={event => editCandidate(subject.id, { grade: event.target.value })} /></label>
+              <button type="button" onClick={() => editCandidate(subject.id)}>이 행 제외</button>
+              {reviews[index]?.status !== 'included' && <p>지원되는 공식 과목명과 석차등급(1~5)을 확인하거나 이 행을 제외해 주세요.</p>}
+            </fieldset>)}
+            {duplicate && <p>같은 과목이 여러 번 있어요. 성적표를 확인하고 적용할 행만 남겨 주세요.</p>}
+            <label><input type="checkbox" checked={replaceConfirmed} onChange={event => setReplaceConfirmed(event.target.checked)} />
+              과목과 등급을 확인했으며 기존 성적을 이 값으로 교체합니다.
+            </label>
+            <button type="button" className="grade-camera-retake" onClick={openGradeConfirm}>기존 성적 유지</button>
+          </>}
         </div>}
         {photo ? <div className="grade-camera-review-actions">
           <button type="button" className="grade-camera-retake" onClick={retake}>다시 촬영</button>
-          {ocr.kind === 'success'
-            ? <button type="button" className="grade-camera-use" onClick={confirmPhoto}>성적 확인으로 이동</button>
+          {ocr.kind === 'success' && ocr.subjects.length > 0
+            ? <button type="button" className="grade-camera-use" disabled={!valid || !replaceConfirmed} onClick={applyOcrSubjects}>확인한 성적 적용</button>
+            : ocr.kind === 'success' || ocr.kind === 'empty'
+            ? <button type="button" className="grade-camera-use" onClick={openGradeConfirm}>성적 확인으로 이동</button>
             : <button type="button" className="grade-camera-use" onClick={() => void recognizePhoto()} disabled={!previewUrl || recognizing}>
-              {ocr.kind === 'error' || ocr.kind === 'empty' ? '다시 시도' : '사진 사용'}
+              {ocr.kind === 'error' ? '다시 시도' : '사진 사용'}
             </button>}
         </div> : <div className="grade-camera-controls">
           <button type="button" className="grade-camera-icon-button" aria-label="갤러리에서 사진 선택" disabled={busy} onClick={() => inputRef.current?.click()}><CameraIcon kind="gallery" /></button>

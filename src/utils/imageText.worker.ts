@@ -18,10 +18,12 @@ self.onmessage = async ({ data: file }: MessageEvent<File>) => {
     });
     await engine.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_COLUMN });
     self.postMessage({ kind: 'recognizing', progress: 0 });
-    const { data } = await engine.recognize(new Uint8Array(await file.arrayBuffer()));
+    const { data } = await engine.recognize(new Uint8Array(await file.arrayBuffer()), {}, { text: true, blocks: true });
+    const words = (data.blocks ?? []).flatMap(block => block.paragraphs.flatMap(paragraph =>
+      paragraph.lines.flatMap(line => line.words.map(({ text, confidence, bbox }) => ({ text, confidence, bbox })))));
     await engine.terminate();
     engine = undefined;
-    self.postMessage({ kind: 'success', text: data.text.trim() });
+    self.postMessage({ kind: 'success', result: { text: data.text, words } });
   } catch {
     await engine?.terminate();
     self.postMessage({ kind: 'error' });

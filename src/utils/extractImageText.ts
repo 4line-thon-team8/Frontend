@@ -1,14 +1,24 @@
 export type ImageTextProgress = { kind: 'recognizing'; progress: number };
+export interface ImageTextWord {
+  text: string;
+  confidence: number;
+  bbox: { x0: number; y0: number; x1: number; y1: number };
+}
+
+export interface ImageTextResult {
+  text: string;
+  words: ImageTextWord[];
+}
 
 type ImageTextWorkerMessage = ImageTextProgress
-  | { kind: 'success'; text: string }
+  | { kind: 'success'; result: ImageTextResult }
   | { kind: 'error' };
 
 export function extractImageText(
   file: File,
   signal: AbortSignal,
   onProgress: (progress: ImageTextProgress) => void,
-): Promise<string> {
+): Promise<ImageTextResult> {
   return new Promise((resolve, reject) => {
     signal.throwIfAborted();
     // Own the worker from startup so cancellation also stops engine/model loading.
@@ -36,7 +46,7 @@ export function extractImageText(
         onProgress(data);
       } else if (data.kind === 'success') {
         cleanup();
-        resolve(data.text);
+        resolve(data.result);
       } else {
         fail();
       }
