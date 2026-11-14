@@ -5,7 +5,13 @@ import chevron from '../../assets/icons/chevron-right.svg';
 import { useCamera } from '../../hooks/useCamera';
 import { setGradeImage } from '../../utils/gradeImageStore';
 import type { GradeImage } from '../../utils/gradeImageStore';
+import { extractImageText } from '../../utils/extractImageText';
 import './CameraPage.css';
+
+type OcrState =
+  | { kind: 'idle' | 'preparing' | 'empty' | 'error' }
+  | { kind: 'recognizing'; progress: number }
+  | { kind: 'success'; text: string };
 
 function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
   return (
@@ -23,6 +29,9 @@ export default function CameraPage() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [ocr, setOcr] = useState<OcrState>({ kind: 'idle' });
+  const activeOcr = useRef<AbortController | null>(null);
+  const recognizing = ocr.kind === 'preparing' || ocr.kind === 'recognizing';
   const inputRef = useRef<HTMLInputElement>(null);
   const mounted = useRef(false);
   const operation = useRef(0);
@@ -30,7 +39,11 @@ export default function CameraPage() {
 
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; operation.current += 1; };
+    return () => {
+      mounted.current = false;
+      operation.current += 1;
+      activeOcr.current?.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -96,6 +109,9 @@ export default function CameraPage() {
   }
 
   function retake() {
+    activeOcr.current?.abort();
+    activeOcr.current = null;
+    setOcr({ kind: 'idle' });
     operation.current += 1;
     setPhoto(null);
     setPreviewUrl('');
@@ -103,9 +119,27 @@ export default function CameraPage() {
     restart();
   }
 
-  function usePhoto() {
-    if (!photo) return;
-    stop();
+  async function recognizePhoto() {
+    if (!photo || activeOcr.current) return;
+    const request = new AbortController();
+    activeOcr.current = request;
+    setOcr({ kind: 'preparing' });
+    try {
+      const text = await extractImageText(photo.file, request.signal, progress => {
+        if (!request.signal.aborted) setOcr(progress);
+      });
+      if (!request.signal.aborted) {
+        setOcr(text ? { kind: 'success', text } : { kind: 'empty' });
+      }
+    } catch {
+      if (!request.signal.aborted) setOcr({ kind: 'error' });
+    } finally {
+      if (activeOcr.current === request) activeOcr.current = null;
+    }
+  }
+
+  function confirmPhoto() {
+    if (!photo || ocr.kind !== 'success') return;
     setGradeImage(photo);
     navigate('/grade/confirm');
   }
@@ -129,9 +163,24 @@ export default function CameraPage() {
           </>}
         </div>
         <div className="grade-camera-feedback" aria-live="polite">{message || (status === 'ready' && !photo ? error : '')}</div>
+        {photo && ocr.kind !== 'idle' && <div className="grade-camera-ocr">
+          <div role="status">
+            {ocr.kind === 'preparing' && '인식 엔진과 언어 데이터를 준비하고 있어요.'}
+            {ocr.kind === 'recognizing' && '사진에서 텍스트를 읽고 있어요.'}
+            {ocr.kind === 'success' && '텍스트 추출이 완료됐어요.'}
+            {ocr.kind === 'empty' && '읽을 수 있는 텍스트가 없어요. 다시 시도하거나 촬영해 주세요.'}
+            {ocr.kind === 'error' && '텍스트를 읽지 못했어요. 네트워크를 확인하고 다시 시도하거나 촬영해 주세요.'}
+          </div>
+          {ocr.kind === 'recognizing' && <progress aria-label="텍스트 인식 진행률" max={1} value={ocr.progress} />}
+          {ocr.kind === 'success' && <pre tabIndex={0} aria-label="추출된 텍스트">{ocr.text}</pre>}
+        </div>}
         {photo ? <div className="grade-camera-review-actions">
           <button type="button" className="grade-camera-retake" onClick={retake}>다시 촬영</button>
-          <button type="button" className="grade-camera-use" onClick={usePhoto} disabled={!previewUrl}>사진 사용</button>
+          {ocr.kind === 'success'
+            ? <button type="button" className="grade-camera-use" onClick={confirmPhoto}>성적 확인으로 이동</button>
+            : <button type="button" className="grade-camera-use" onClick={() => void recognizePhoto()} disabled={!previewUrl || recognizing}>
+              {ocr.kind === 'error' || ocr.kind === 'empty' ? '다시 시도' : '사진 사용'}
+            </button>}
         </div> : <div className="grade-camera-controls">
           <button type="button" className="grade-camera-icon-button" aria-label="갤러리에서 사진 선택" disabled={busy} onClick={() => inputRef.current?.click()}><CameraIcon kind="gallery" /></button>
           <button type="button" className="grade-camera-shutter" aria-label="성적표 촬영" disabled={status !== 'ready' || busy} onClick={() => void capture()} />
