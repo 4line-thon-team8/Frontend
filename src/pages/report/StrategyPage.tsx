@@ -2,6 +2,7 @@ import BottomNavigation from '../../components/common/BottomNavigation';
 import ReportPagination from '../../components/report/ReportPagination';
 import clipboard from '../../assets/icons/clipboard.svg';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
+import { isNoCandidates } from '../../components/report/resultWarnings';
 import { useMockRecommendationResult } from './recommendation.mock';
 import { countByTier, tierClassName } from './reportTier';
 import { MOCK_STRATEGY_REPORT, SCORE_MAX } from './strategy.mock';
@@ -11,11 +12,12 @@ import './StrategyPage.css';
 export default function StrategyPage() {
   // TODO: reportApi 구현 후 실제 리포트 데이터로 교체합니다.
   const { activitySummaryLines, scores, advices } = MOCK_STRATEGY_REPORT;
-  const { recommendations } = useMockRecommendationResult();
+  const result = useMockRecommendationResult();
+  const { recommendations } = result;
   // 추천 카드의 구간(BE 값)별 장수. 0장인 구간은 표시하지 않아요.
   const applications = countByTier(recommendations);
 
-  if (recommendations.length === 0) {
+  if (isNoCandidates(result)) {
     return (
       <div className="report-page">
         <header className="report-header">

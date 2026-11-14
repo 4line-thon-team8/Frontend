@@ -3,6 +3,7 @@ import BottomNavigation from '../../components/common/BottomNavigation';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
 import ReportPagination from '../../components/report/ReportPagination';
 import clipboard from '../../assets/icons/clipboard.svg';
+import { isNoCandidates } from '../../components/report/resultWarnings';
 import { useMockRecommendationResult } from './recommendation.mock';
 import { MOCK_REPORT_SUMMARY, type RichTextPart } from './reportSummary.mock';
 import './ReportPage.css';
@@ -15,7 +16,7 @@ function RichLine({ parts }: { parts: RichTextPart[] }) {
 export default function ReportSummaryPage() {
   // TODO: reportApi 구현 후 실제 리포트 데이터로 교체합니다.
   const { profileLines, overallLines } = MOCK_REPORT_SUMMARY;
-  const { recommendations } = useMockRecommendationResult();
+  const result = useMockRecommendationResult();
 
   // 공통 주의사항: FE 고정 문구. TODO: 추정 대상 학년도 문구는 확정되면 추가합니다.
   const header = (
@@ -29,7 +30,7 @@ export default function ReportSummaryPage() {
   );
 
   // 추천 0장: 리포트 대신 조건 수정 안내
-  if (recommendations.length === 0) {
+  if (isNoCandidates(result)) {
     return (
       <div className="report-page">
         {header}

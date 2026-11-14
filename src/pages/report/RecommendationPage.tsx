@@ -2,7 +2,7 @@ import BottomNavigation from '../../components/common/BottomNavigation';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
 import ReportPagination from '../../components/report/ReportPagination';
 import ResultNotices from '../../components/report/ResultNotices';
-import { getCardWarnings } from '../../components/report/resultWarnings';
+import { getCardWarnings, isNoCandidates } from '../../components/report/resultWarnings';
 import clipboard from '../../assets/icons/clipboard.svg';
 import { useMockRecommendationResult } from './recommendation.mock';
 import { TIER_LABELS, tierClassName } from './reportTier';
@@ -11,7 +11,8 @@ import './RecommendationPage.css';
 
 export default function RecommendationPage() {
   // TODO: reportApi 구현 후 실제 추천 원서 데이터로 교체합니다.
-  const { recommendations, warnings } = useMockRecommendationResult();
+  const result = useMockRecommendationResult();
+  const { recommendations, warnings } = result;
 
   return (
     <div className="report-page">
@@ -22,7 +23,7 @@ export default function RecommendationPage() {
         </h1>
       </header>
 
-      {recommendations.length === 0 ? <RecommendationEmpty /> : (
+      {isNoCandidates(result) ? <RecommendationEmpty /> : (
         <>
           <ResultNotices count={recommendations.length} warnings={warnings} />
 
@@ -37,7 +38,7 @@ export default function RecommendationPage() {
                     {item.university} {item.major} · {item.admission}
                   </h2>
                   <span className="recommendation-card__tier">{TIER_LABELS[item.tier]}</span>
-                  <p className="recommendation-card__reason">{item.reason}</p>
+                  <p className="recommendation-card__reason">{item.reason.text}</p>
                   {cardWarnings.map(warning => (
                     <p key={`${warning.code}-${warning.message}`} className="recommendation-card__warning">{warning.message}</p>
                   ))}

@@ -1,31 +1,47 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import AuthField from '../../components/auth/AuthField';
 import AuthImageButton from '../../components/auth/AuthImageButton';
 import logo from '../../assets/images/logo.svg';
 import loginButton from '../../assets/icons/login-button.svg';
 import loginButtonBefore from '../../assets/icons/login-button-before.svg';
-import { PASSWORD_MAX_LENGTH, validateEmail, validatePassword } from './authValidation';
+import { getErrorCode, getReturnTo, login } from '../../services/authApi';
+import { PASSWORD_MAX_LENGTH, validateEmail, validateLoginPassword } from './authValidation';
 import './AuthPage.css';
 
-type LoginErrors = { email?: string; password?: string };
+type LoginErrors = { email?: string; password?: string; form?: string };
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [submitting, setSubmitting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<LoginErrors>({});
   // 이메일·비밀번호를 모두 입력하기 전에는 회색(비활성) 버튼을 보여줍니다.
-  const canSubmit = email.trim() !== '' && password !== '';
+  const canSubmit = email.trim() !== '' && password !== '' && !submitting;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const nextErrors: LoginErrors = { email: validateEmail(email), password: validatePassword(password) };
+    if (submitting) return;
+    const nextErrors: LoginErrors = { email: validateEmail(email), password: validateLoginPassword(password) };
     setErrors(nextErrors);
     if (nextErrors.email || nextErrors.password) return;
 
-    // TODO: authApi 의 로그인(POST /api/auth/login) 구현 후 연동합니다.
-    navigate('/grade/input', { replace: true });
+    setSubmitting(true);
+    try {
+      await login({ email: email.trim(), password });
+      // 세션 만료로 왔다면 원래 화면(예: S-03)으로, 아니면 성적 입력으로 이동해요.
+      navigate(getReturnTo(location.state) ?? '/grade/input', { replace: true });
+    } catch (error) {
+      setErrors({
+        form: getErrorCode(error) === 'AUTHENTICATION_FAILED'
+          ? '이메일 또는 비밀번호를 확인해 주세요.'
+          : '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -54,11 +70,12 @@ export default function LoginPage() {
             name="password"
             autoComplete="current-password"
             maxLength={PASSWORD_MAX_LENGTH}
-            placeholder={`${PASSWORD_MAX_LENGTH}자 이내로 작성해 주세요.`}
+            placeholder="비밀번호를 입력해 주세요."
             value={password}
             onChange={e => setPassword(e.target.value)}
             error={errors.password}
           />
+          {errors.form && <p className="auth-field__error" role="alert">{errors.form}</p>}
         </div>
 
         <div className="auth-actions">
