@@ -56,7 +56,10 @@ export default function PdfUploadPage() {
       <h1 id="pdf-upload-title">정부24 PDF 업로드</h1>
       <div className="pdf-upload-card">
         <img src={clipboard} alt="" width="36" height="40" />
-        <p>정부24에서 발급받은 성적증명서 PDF를 선택해 주세요.</p>
+        <p className="pdf-upload-instructions">
+          정부24에서 발급받은 성적증명서 PDF를<br />
+          <span>선택해 주세요.</span>
+        </p>
         <p className="pdf-upload-hint">PDF · 최대 {MAX_PDF_BYTES / (1024 * 1024)}MB</p>
         <input ref={inputRef} type="file" accept="application/pdf,.pdf" hidden onChange={selectPdf} />
         <Button onClick={() => inputRef.current?.click()}>
