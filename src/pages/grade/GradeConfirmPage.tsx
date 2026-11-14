@@ -129,7 +129,7 @@ export default function GradeConfirmPage() {
       </header>
       <section className="grade-confirm-intro" aria-labelledby="grade-confirm-title">
         <h1 id="grade-confirm-title">읽어온 값이 맞는지 확인하고,<br />틀리면 고쳐주세요.</h1>
-        <p>2022 개정 교육과정의 5등급제 성적을 확인해 주세요. 현재 성적은 예시입니다.</p>
+        <p>2022 개정 교육과정의 5등급제 성적을 확인해 주세요. 예시 성적이 표시되면 실제 성적으로 수정해 주세요.</p>
       </section>
       <form onSubmit={submit} noValidate>
         <section className="grade-confirm-grades" aria-labelledby="grade-confirm-subject-title">
