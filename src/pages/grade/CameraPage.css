@@ -28,6 +28,9 @@
 .grade-camera-flash { position: absolute; bottom: 16px; right: 16px; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgb(26 26 26 / 65%); color: #fff; }
 .grade-camera-flash[aria-pressed='true'] { color: #ffe898; }
 .grade-camera-feedback { min-height: 28px; padding: 4px 20px; font-size: 12px; line-height: 20px; text-align: center; color: #ffe7b2; }
+.grade-camera-ocr { margin: 0 20px; padding: 12px; border-radius: 8px; background: #1f3029; font-size: 14px; }
+.grade-camera-ocr progress { width: 100%; accent-color: #84c2ae; }
+.grade-camera-ocr pre { max-height: 30dvh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 12px 0 0; }
 .grade-camera-controls { display: grid; grid-template-columns: 1fr 80px 1fr; align-items: center; justify-items: center; gap: 24px; padding: 12px max(24px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
 .grade-camera-icon-button { width: 48px; height: 48px; display: grid; place-items: center; border: 0; border-radius: 50%; background: #1f3029; color: #fefefe; }
 .grade-camera-shutter { width: 80px; height: 80px; border: 7px solid #2f5d50; border-radius: 50%; background: #fefefe; box-shadow: inset 0 0 0 2px #1a1a1a; }
