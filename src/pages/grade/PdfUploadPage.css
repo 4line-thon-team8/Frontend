@@ -34,6 +34,17 @@
   font-size: 14px;
 }
 
+.pdf-upload-instructions {
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.pdf-upload-instructions span {
+  display: inline-block;
+  max-width: 100%;
+}
+
 .pdf-upload-card .button {
   min-height: 44px;
   width: 100%;
