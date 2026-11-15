@@ -18,17 +18,10 @@ export const ADMISSION_OPTIONS: { id: AdmissionPreference; name: string }[] = [
   { id: 'any', name: '상관없음' },
 ];
 
-export function createMockGradeConfirmDraft(): GradeConfirmDraft {
+export function createInitialGradeConfirmDraft(): GradeConfirmDraft {
   return {
     curriculum: '2022',
-    subjects: [
-      { id: 'korean', name: '공통국어1', grade: '2' },
-      { id: 'math', name: '공통수학1', grade: '3' },
-      { id: 'english', name: '공통영어1', grade: '2' },
-      { id: 'inquiry-1', name: '통합사회1', grade: '1' },
-      { id: 'inquiry-2', name: '통합과학1', grade: '2' },
-      { id: 'history', name: '한국사1', grade: '1' },
-    ],
+    subjects: [],
     majorIds: ['computer', 'statistics'],
     admissions: ['school-record'],
     includeReach: true,

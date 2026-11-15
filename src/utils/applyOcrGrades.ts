@@ -12,3 +12,16 @@ export function applyOcrGrades(draft: GradeConfirmDraft, subjects: ConfirmSubjec
   if (!confirmed || !reviewOcrGrades(subjects, draft.curriculum).valid) return draft;
   return { ...draft, subjects };
 }
+
+export function getOcrSubjectsForReview(draft: GradeConfirmDraft, pending: ConfirmSubject[] | null, hasConfirmedGrades: boolean) {
+  if (!pending || !hasConfirmedGrades || draft.subjects.length !== pending.length) return pending;
+  const existing = reviewOcrGrades(draft.subjects, draft.curriculum);
+  const incoming = reviewOcrGrades(pending, draft.curriculum);
+  if (!existing.valid || !incoming.valid) return pending;
+
+  const gradesByCode = new Map(existing.reviews.flatMap(review =>
+    review.status === 'included' ? [[review.subjectCode, review.gradeValue] as const] : []));
+  const sameGrades = incoming.reviews.every(review =>
+    review.status === 'included' && gradesByCode.get(review.subjectCode) === review.gradeValue);
+  return sameGrades ? null : pending;
+}

@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { SimulationSubjectRow } from '../services/simulationApi';
-import type { GradeConfirmDraft } from '../types/gradeConfirm';
+import type { ConfirmSubject, GradeConfirmDraft } from '../types/gradeConfirm';
 
 type AnalysisPreferences = Pick<
   GradeConfirmDraft,
@@ -16,6 +16,10 @@ export interface GradeAnalysisSnapshot {
 }
 
 interface GradeAnalysisState {
+  hasConfirmedGrades: boolean;
+  setHasConfirmedGrades: Dispatch<SetStateAction<boolean>>;
+  pendingOcrSubjects: ConfirmSubject[] | null;
+  setPendingOcrSubjects: Dispatch<SetStateAction<ConfirmSubject[] | null>>;
   draft: GradeConfirmDraft;
   setDraft: Dispatch<SetStateAction<GradeConfirmDraft>>;
   snapshot: GradeAnalysisSnapshot | null;

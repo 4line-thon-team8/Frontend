@@ -19,3 +19,9 @@ export function identifySubject(name: string, curriculum: string) {
 export function isAverageSubject(subject: (typeof catalog.subjects)[number]) {
   return subject.mvpApiAllowed && subject.includedInMvpAverage && allowedCodes.has(subject.code);
 }
+
+export function searchAllowedSubjects(curriculum: string | null, query: string) {
+  const search = query.normalize('NFKC').replace(/\s/gu, '').toLowerCase();
+  return catalog.subjects.filter(subject => subject.curriculum === curriculum && isAverageSubject(subject) &&
+    subject.name.normalize('NFKC').replace(/\s/gu, '').toLowerCase().includes(search));
+}

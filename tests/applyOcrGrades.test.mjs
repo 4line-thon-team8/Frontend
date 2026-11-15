@@ -9,10 +9,22 @@ test('maps exact names and only replaces the S-03 draft after explicit confirmat
     server: { middlewareMode: true, ws: false },
   });
   try {
-    const { applyOcrGrades, reviewOcrGrades } = await server.ssrLoadModule('/src/utils/applyOcrGrades.ts');
+    const { applyOcrGrades, getOcrSubjectsForReview, reviewOcrGrades } = await server.ssrLoadModule('/src/utils/applyOcrGrades.ts');
     const existing = [{ id: 'manual', name: '공통수학1', grade: '4' }];
     const draft = { curriculum: '2022', subjects: existing, majorIds: ['existing-major'] };
     const candidates = [{ id: 'ocr-1', name: '국어', grade: '1' }];
+    const { searchAllowedSubjects } = await server.ssrLoadModule('/src/utils/subjectCatalog.ts');
+    const { createInitialGradeConfirmDraft } = await server.ssrLoadModule('/src/pages/grade/gradeConfirm.mock.ts');
+    const firstVisit = createInitialGradeConfirmDraft();
+    assert.deepEqual(firstVisit.subjects, []);
+    const choices = searchAllowedSubjects('2022', '');
+    assert.equal(choices.length, 72);
+    const [choice] = searchAllowedSubjects('2022', '공통 국어1');
+    assert.equal(choice.name, '공통국어1');
+    assert.equal(reviewOcrGrades([{ ...candidates[0], name: choice.name }], '2022').reviews[0].subjectCode, choice.code);
+    const recognized = [{ ...candidates[0], name: choice.name }];
+    assert.equal(applyOcrGrades(firstVisit, recognized, false), firstVisit);
+    assert.deepEqual(applyOcrGrades(firstVisit, recognized, true), { ...firstVisit, subjects: recognized });
     assert.equal(reviewOcrGrades(candidates, draft.curriculum).valid, false);
     assert.equal(applyOcrGrades(draft, candidates, true), draft);
 
@@ -27,6 +39,21 @@ test('maps exact names and only replaces the S-03 draft after explicit confirmat
     assert.equal(applyOcrGrades(draft, [...edited, { ...edited[0], id: 'ocr-2' }], true), draft);
     assert.deepEqual(applyOcrGrades(draft, edited, true), { ...draft, subjects: edited });
     assert.equal(draft.subjects, existing);
+
+    const firstUpload = [...edited, existing[0]];
+    assert.equal(getOcrSubjectsForReview(firstVisit, firstUpload, false), firstUpload);
+    const confirmedDraft = applyOcrGrades(firstVisit, firstUpload, true);
+    assert.equal(getOcrSubjectsForReview(confirmedDraft, null, true), null);
+    const sameUpload = [
+      { id: 'another-1', name: '공통 국어1', grade: '2' },
+      { id: 'another-2', name: '공통수학1', grade: '4' },
+    ];
+    assert.equal(getOcrSubjectsForReview(confirmedDraft, sameUpload, true), null);
+    assert.equal(getOcrSubjectsForReview(confirmedDraft, [...sameUpload].reverse(), true), null);
+    const differentUpload = [{ ...sameUpload[0], grade: '3' }, sameUpload[1]];
+    assert.equal(getOcrSubjectsForReview(confirmedDraft, differentUpload, true), differentUpload);
+    assert.equal(applyOcrGrades(confirmedDraft, differentUpload, false), confirmedDraft);
+    assert.deepEqual(applyOcrGrades(confirmedDraft, differentUpload, true), { ...confirmedDraft, subjects: differentUpload });
   } finally {
     await server.close();
   }
