@@ -1,3 +1,5 @@
+import type { ConfirmSubject } from '../types/gradeConfirm';
+
 export type ImageTextProgress = { kind: 'recognizing'; progress: number };
 export interface ImageTextWord {
   text: string;
@@ -8,6 +10,7 @@ export interface ImageTextWord {
 export interface ImageTextResult {
   text: string;
   words: ImageTextWord[];
+  tableSubjects: ConfirmSubject[];
 }
 
 type ImageTextWorkerMessage = ImageTextProgress

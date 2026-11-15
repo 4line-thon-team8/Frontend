@@ -100,3 +100,4 @@
   .grade-confirm-subject-fields { gap: 8px; }
   .grade-confirm-major-chip, .grade-confirm-add-major { padding-inline: 20px; }
 }
+.grade-confirm-ocr-actions { display: grid; gap: 8px; margin-top: 12px; }

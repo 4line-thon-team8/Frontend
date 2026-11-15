@@ -12,6 +12,8 @@ import { clearGradeImage, getGradeImage } from '../../utils/gradeImageStore';
 import { reviewSubject, toggleAdmission, validateGradeConfirm } from '../../utils/gradeConfirmValidation';
 import { ADMISSION_OPTIONS, MOCK_MAJOR_LIMIT, MOCK_MAJORS } from './gradeConfirm.mock';
 import { toSimulationSubjectRows } from '../../services/simulationApi';
+import { applyOcrGrades, getOcrSubjectsForReview, reviewOcrGrades } from '../../utils/applyOcrGrades';
+import { searchAllowedSubjects } from '../../utils/subjectCatalog';
 import './GradeConfirmPage.css';
 
 const rules = {
@@ -22,13 +24,31 @@ const rules = {
 
 export default function GradeConfirmPage() {
   const navigate = useNavigate();
-  const { draft, setDraft, setSnapshot, reset } = useGradeAnalysis();
+  const { draft, setDraft, setSnapshot, reset, pendingOcrSubjects, setPendingOcrSubjects, hasConfirmedGrades, setHasConfirmedGrades } = useGradeAnalysis();
+  const [ocrSubjects, setOcrSubjects] = useState(() =>
+    getOcrSubjectsForReview(draft, pendingOcrSubjects, hasConfirmedGrades));
+  const subjects = ocrSubjects ?? draft.subjects;
+  const ocrReview = ocrSubjects && reviewOcrGrades(ocrSubjects, draft.curriculum);
+  const needsReplacement = ocrSubjects !== null && hasConfirmedGrades && draft.subjects.length > 0;
+  const analysisDraft = ocrSubjects ? { ...draft, subjects: ocrSubjects } : draft;
   const [editing, setEditing] = useState(false);
   const [dialogKind, setDialogKind] = useState<'majors' | 'reset' | null>(null);
-  // 원본 이미지를 추가 저장/표시하지 않고 기존 입력 출처만 읽습니다. 성적은 명시적인 목업입니다.
   const [imageSource] = useState(() => getGradeImage()?.source ?? null);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const errors = validateGradeConfirm(draft, rules);
+  const errors = validateGradeConfirm(analysisDraft, rules);
+  const analysisBlocked = needsReplacement || editing || errors.length > 0 || (ocrReview !== null && !ocrReview.valid);
+
+  useEffect(() => {
+    setPendingOcrSubjects(null);
+  }, [setPendingOcrSubjects]);
+
+  function updateSubjects(update: (current: ConfirmSubject[]) => ConfirmSubject[]) {
+    if (ocrSubjects) {
+      setOcrSubjects(current => current === null ? null : update(current));
+    } else {
+      setDraft(current => ({ ...current, subjects: update(current.subjects) }));
+    }
+  }
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -42,24 +62,21 @@ export default function GradeConfirmPage() {
   }, [dialogKind]);
 
   function updateSubject(id: string, field: 'name' | 'grade', value: string) {
-    setDraft(current => ({ ...current, subjects: current.subjects.map(subject => subject.id === id
-      ? { ...subject, [field]: value } : subject) }));
+    updateSubjects(current => current.map(subject => subject.id === id
+      ? { ...subject, [field]: value } : subject));
   }
 
   function addSubject() {
-    setDraft(current => {
-      const usedIds = new Set(current.subjects.map(subject => subject.id));
-      let sequence = current.subjects.length + 1;
+    updateSubjects(current => {
+      const usedIds = new Set(current.map(subject => subject.id));
+      let sequence = current.length + 1;
       while (usedIds.has(`added-${sequence}`)) sequence++;
-      return {
-        ...current,
-        subjects: [...current.subjects, { id: `added-${sequence}`, name: '', grade: '' }],
-      };
+      return [...current, { id: `added-${sequence}`, name: '', grade: '' }];
     });
   }
 
   function removeSubject(id: string) {
-    setDraft(current => ({ ...current, subjects: current.subjects.filter(subject => subject.id !== id) }));
+    updateSubjects(current => current.filter(subject => subject.id !== id));
   }
 
   function finishEditing() {
@@ -74,9 +91,14 @@ export default function GradeConfirmPage() {
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (editing || errors.length) return;
-    const subjects = toSimulationSubjectRows(draft);
+    if (analysisBlocked) return;
+    const subjects = toSimulationSubjectRows(analysisDraft);
     if (!subjects) return;
+    if (ocrSubjects) {
+      setDraft(current => applyOcrGrades(current, ocrSubjects, true));
+      setOcrSubjects(null);
+    }
+    setHasConfirmedGrades(true);
     setSnapshot({
       subjects,
       preferences: {
@@ -106,7 +128,7 @@ export default function GradeConfirmPage() {
         <div className="grade-confirm-subject-fields">
           <div className="grade-confirm-subject-name">
             <img src={subjectBook} alt="" width="24" height="24" />
-            {editing ? <input aria-label={`${index + 1}번째 과목명`} value={subject.name} maxLength={40} onChange={event => updateSubject(subject.id, 'name', event.target.value)} placeholder="과목명" aria-describedby={statusId} aria-invalid={needsReview && !('subjectCode' in review)} /> : <span>{'subjectName' in review ? review.subjectName : subject.name}</span>}
+            {editing ? <input aria-label={`${index + 1}번째 과목명`} list={ocrSubjects ? 'ocr-confirm-subject-names' : undefined} value={subject.name} maxLength={40} onChange={event => updateSubject(subject.id, 'name', event.target.value)} placeholder="과목명" aria-describedby={statusId} aria-invalid={needsReview && !('subjectCode' in review)} /> : <span>{'subjectName' in review ? review.subjectName : subject.name}</span>}
           </div>
           <div className="grade-confirm-subject-grade">
             {editing ? <><input type="text" maxLength={8} aria-label={`${subject.name || `${index + 1}번째 과목`} 등급`} value={subject.grade} onChange={event => updateSubject(subject.id, 'grade', event.target.value)} aria-describedby={statusId} aria-invalid={needsReview && 'subjectCode' in review} /><span>등급</span>
@@ -129,7 +151,7 @@ export default function GradeConfirmPage() {
       </header>
       <section className="grade-confirm-intro" aria-labelledby="grade-confirm-title">
         <h1 id="grade-confirm-title">읽어온 값이 맞는지 확인하고,<br />틀리면 고쳐주세요.</h1>
-        <p>2022 개정 교육과정의 5등급제 성적을 확인해 주세요. 예시 성적이 표시되면 실제 성적으로 수정해 주세요.</p>
+        <p>2022 개정 교육과정의 5등급제 성적을 확인해 주세요.</p>
       </section>
       <form onSubmit={submit} noValidate>
         <section className="grade-confirm-grades" aria-labelledby="grade-confirm-subject-title">
@@ -138,8 +160,29 @@ export default function GradeConfirmPage() {
             {!editing && <button type="button" className="grade-confirm-edit" onClick={() => setEditing(true)}><img src={editPencil} alt="" width="12" height="12" />수정하기</button>}
           </div>
           <p className="grade-confirm-field-hint">국수영사과(한국사 포함) 참고 평균의 반영 여부를 확인해 주세요. 대학별 반영 방식과 다를 수 있습니다.</p>
-          <ul className="grade-confirm-subjects">{draft.subjects.map(subjectRow)}</ul>
+          {ocrSubjects && <>
+            {needsReplacement && <details>
+              <summary>기존 성적 {draft.subjects.length}개 보기</summary>
+              <ul>{draft.subjects.map(subject => <li key={subject.id}>{subject.name} · {subject.grade} 등급</li>)}</ul>
+            </details>}
+            <datalist id="ocr-confirm-subject-names">{searchAllowedSubjects(draft.curriculum, '').map(subject =>
+              <option key={subject.code} value={subject.name} />)}</datalist>
+          </>}
+          <ul className="grade-confirm-subjects" aria-label={ocrSubjects ? '확정 전 OCR 성적' : undefined}>{subjects.map(subjectRow)}</ul>
           {editing && <><button type="button" className="grade-confirm-add-subject" onClick={addSubject}>+ 과목 추가</button><p className="grade-confirm-field-hint">성적표의 과목명과 석차등급(1~5)을 입력해 주세요. 성취도만 기록된 경우 A~E 또는 P를 입력해 주세요.</p><Button type="button" className="grade-confirm-finish" onClick={finishEditing}>수정 완료</Button></>}
+          {ocrReview?.duplicate && <p>중복 과목을 확인하고 한 행만 남겨 주세요.</p>}
+          {needsReplacement && <div className="grade-confirm-ocr-actions">
+            <Button type="button" disabled={editing || !ocrReview?.valid} onClick={() => {
+              if (editing || !ocrReview?.valid) return;
+              setDraft(current => applyOcrGrades(current, ocrSubjects, true));
+              setSnapshot(null);
+              setOcrSubjects(null);
+            }}>이 성적으로 변경하기</Button>
+            <Button type="button" onClick={() => {
+              setOcrSubjects(null);
+              setEditing(false);
+            }}>취소하고 기존 성적 보기</Button>
+          </div>}
         </section>
         <section className="grade-confirm-directions" aria-labelledby="grade-confirm-direction-title">
           <div className="grade-confirm-direction-heading"><h2 id="grade-confirm-direction-title">지원 방향</h2><span>희망 학과 (1~3)</span></div>
@@ -160,8 +203,12 @@ export default function GradeConfirmPage() {
             <label><span>비슷한 학과로 확대</span><input role="switch" type="checkbox" checked={draft.expandSimilarMajors} onChange={event => { setDraft(current => ({ ...current, expandSimilarMajors: event.target.checked })); }} /></label>
           </div>
           <div className="grade-confirm-submit">
-            <Button type="submit" className="grade-confirm-analyze" disabled={editing || errors.length > 0} aria-describedby="grade-confirm-validation">분석하기</Button>
-            <div id="grade-confirm-validation" className="grade-confirm-validation" aria-live="polite">{errors.map(error => <p key={error}>{error}</p>)}</div>
+            <Button type="submit" className="grade-confirm-analyze" disabled={analysisBlocked} aria-describedby="grade-confirm-validation">분석하기</Button>
+            <div id="grade-confirm-validation" className="grade-confirm-validation" aria-live="polite">
+              {needsReplacement && <p>새 성적으로 변경할지 선택해 주세요.</p>}
+              {ocrReview && !ocrReview.valid && <p>인식된 과목과 석차등급을 확인해 주세요.</p>}
+              {errors.map(error => <p key={error}>{error}</p>)}
+            </div>
           </div>
         </section>
       </form>
