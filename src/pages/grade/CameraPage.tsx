@@ -7,16 +7,13 @@ import { setGradeImage } from '../../utils/gradeImageStore';
 import type { GradeImage } from '../../utils/gradeImageStore';
 import { extractImageText } from '../../utils/extractImageText';
 import { parseOcrGrades } from '../../utils/parseOcrGrades';
-import { searchAllowedSubjects } from '../../utils/subjectCatalog';
-import { reviewOcrGrades } from '../../utils/applyOcrGrades';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import type { ConfirmSubject } from '../../types/gradeConfirm';
 import './CameraPage.css';
 
 type OcrState =
   | { kind: 'idle' | 'preparing' | 'empty' | 'error' }
-  | { kind: 'recognizing'; progress: number }
-  | { kind: 'success'; subjects: ConfirmSubject[] };
+  | { kind: 'recognizing'; progress: number };
 
 function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
   return (
@@ -30,8 +27,7 @@ function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
 
 export default function CameraPage() {
   const navigate = useNavigate();
-  const { draft, setPendingOcrSubjects } = useGradeAnalysis();
-  const [subjectSearch, setSubjectSearch] = useState<{ id: string; query: string } | null>(null);
+  const { setPendingOcrSubjects } = useGradeAnalysis();
   const [photo, setPhoto] = useState<GradeImage | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [message, setMessage] = useState('');
@@ -116,7 +112,6 @@ export default function CameraPage() {
   }
 
   function retake() {
-    setSubjectSearch(null);
     activeOcr.current?.abort();
     activeOcr.current = null;
     setOcr({ kind: 'idle' });
@@ -133,18 +128,16 @@ export default function CameraPage() {
     activeOcr.current = request;
     setOcr({ kind: 'preparing' });
     try {
-      const { text, words, tableSubjects } = await extractImageText(photo.file, request.signal, progress => {
+      const { words, tableSubjects } = await extractImageText(photo.file, request.signal, progress => {
         if (!request.signal.aborted) setOcr(progress);
       });
       if (!request.signal.aborted) {
-        const subjects = tableSubjects.some(subject => subject.grade) ? tableSubjects : parseOcrGrades(words);
-        if (reviewOcrGrades(subjects, draft.curriculum).valid) {
+        const subjects = tableSubjects.length ? tableSubjects : parseOcrGrades(words);
+        if (subjects.length) {
           openGradeConfirm(subjects);
           return;
         }
-        setOcr(text.trim() || tableSubjects.length
-          ? { kind: 'success', subjects }
-          : { kind: 'empty' });
+        setOcr({ kind: 'empty' });
       }
     } catch {
       if (!request.signal.aborted) setOcr({ kind: 'error' });
@@ -153,33 +146,11 @@ export default function CameraPage() {
     }
   }
 
-  const { reviews, duplicate, valid } = reviewOcrGrades(ocr.kind === 'success' ? ocr.subjects : [], draft.curriculum);
-  const codeCounts = new Map<string, number>();
-  for (const review of reviews) {
-    if (review.status === 'included') codeCounts.set(review.subjectCode, (codeCounts.get(review.subjectCode) ?? 0) + 1);
-  }
-  const rowErrors = reviews.map(review => review.status === 'excluded' ? '분석 대상 아님'
-    : review.status === 'review' ? ('subjectCode' in review ? '등급 1~5 확인' : '공식 과목명 확인')
-    : (codeCounts.get(review.subjectCode) ?? 0) > 1 ? '중복 과목' : '');
-  const needsReview = rowErrors.filter(Boolean).length;
-  const hasCandidates = ocr.kind === 'success' && ocr.subjects.length > 0;
-  const matchingSubjects = subjectSearch ? searchAllowedSubjects(draft.curriculum, subjectSearch.query) : [];
-
   function openGradeConfirm(subjects: ConfirmSubject[] | null = null) {
     if (!photo) return;
     setPendingOcrSubjects(subjects);
     setGradeImage(photo);
-    navigate('/grade/confirm');
-  }
-
-  function editCandidate(id: string, change?: Partial<Pick<ConfirmSubject, 'name' | 'grade'>>) {
-    setSubjectSearch(null);
-    setOcr(current => current.kind === 'success' ? {
-      ...current,
-      subjects: change
-        ? current.subjects.map(subject => subject.id === id ? { ...subject, ...change } : subject)
-        : current.subjects.filter(subject => subject.id !== id),
-    } : current);
+    navigate('/grade/confirm', { replace: true });
   }
 
   return (
@@ -205,65 +176,22 @@ export default function CameraPage() {
           <div role="status">
             {ocr.kind === 'preparing' && '인식 엔진과 언어 데이터를 준비하고 있어요.'}
             {ocr.kind === 'recognizing' && '사진에서 텍스트를 읽고 있어요.'}
-            {ocr.kind === 'empty' && '읽을 수 있는 텍스트가 없어요. 다시 시도하거나 촬영해 주세요.'}
+            {ocr.kind === 'empty' && '사진에서 과목과 등급을 찾지 못했어요.'}
             {ocr.kind === 'error' && '텍스트를 읽지 못했어요. 네트워크를 확인하고 다시 시도하거나 촬영해 주세요.'}
           </div>
           {ocr.kind === 'recognizing' && <progress aria-label="텍스트 인식 진행률" max={1} value={ocr.progress} />}
-          {(ocr.kind === 'empty' || (ocr.kind === 'success' && ocr.subjects.length === 0)) &&
+          {ocr.kind === 'empty' &&
             <p role="status">사진 속 성적을 반영하지 못했어요. 기존 성적이 유지되며, 성적 확인 화면에서 직접 수정할 수 있어요.</p>}
           {ocr.kind === 'empty' && <button type="button" onClick={() => void recognizePhoto()}>다시 시도</button>}
-          {ocr.kind === 'success' && ocr.subjects.length > 0 && <>
-            <h2>인식한 성적 확인</h2>
-            <p aria-live="polite">인식된 과목 {ocr.subjects.length}개 · 확인 필요 {needsReview}개</p>
-            <p>사진과 대조해 과목명과 석차등급을 확인하고, 필요한 행은 수정하거나 제외해 주세요.</p>
-            {duplicate && <p>같은 과목이 여러 번 있어요. 성적표를 확인하고 적용할 행만 남겨 주세요.</p>}
-            <div className="grade-camera-candidate-row" aria-hidden="true"><span>공식 과목명</span><span>석차등급</span><span /></div>
-            <ul className="grade-camera-candidates" aria-label="인식한 과목 목록">
-              {ocr.subjects.map((subject, index) => {
-                const review = reviews[index];
-                const error = rowErrors[index];
-                const errorId = error ? `${subject.id}-error` : undefined;
-                return <li key={subject.id} className="grade-camera-candidate-row">
-                  <div className="grade-camera-subject-field"><input aria-label={`${index + 1}번째 공식 과목명`} aria-describedby={errorId}
-                    aria-invalid={Boolean(error && review && (!('subjectCode' in review) || review.status !== 'review'))}
-                    value={subject.name} maxLength={40} onChange={event => editCandidate(subject.id, { name: event.target.value })} />
-                  <button type="button" aria-label={`${index + 1}번째 공식 과목 검색`} aria-expanded={subjectSearch?.id === subject.id}
-                    onClick={() => setSubjectSearch(current => current?.id === subject.id ? null : { id: subject.id, query: '' })}>검색</button></div>
-                  <input aria-label={`${index + 1}번째 석차등급`} aria-describedby={errorId} aria-invalid={!/^[1-5]$/u.test(subject.grade)}
-                    value={subject.grade} inputMode="numeric" maxLength={1} onChange={event => editCandidate(subject.id, { grade: event.target.value })} />
-                  <button type="button" aria-label={`${index + 1}번째 행 제외`} onClick={() => editCandidate(subject.id)}>제외</button>
-                  {error && <span className="grade-camera-candidate-error" id={errorId}>{error}</span>}
-                  {subjectSearch?.id === subject.id && <div className="grade-camera-subject-search">
-                    <input type="search" aria-label="공식 과목명 검색어" placeholder="공식 과목명 검색" value={subjectSearch.query}
-                      onChange={event => setSubjectSearch({ id: subject.id, query: event.target.value })} />
-                    <select aria-label="공식 과목 선택" value="" onChange={event => {
-                      const match = matchingSubjects.find(item => item.code === event.target.value);
-                      if (match) editCandidate(subject.id, { name: match.name });
-                    }}>
-                      <option value="">공식 과목 선택</option>
-                      {matchingSubjects.map(item =>
-                        <option key={item.code} value={item.code}>{item.name}</option>)}
-                    </select>
-                    {!matchingSubjects.length && <p role="status">검색 결과가 없어요.</p>}
-                  </div>}
-                </li>;
-              })}
-            </ul>
-          </>}
         </div>}
         {ocr.kind === 'error' && <button type="button" className="grade-camera-retake" onClick={() => openGradeConfirm()}>성적 확인으로 이동</button>}
-        {photo ? <div className={hasCandidates ? 'grade-camera-apply-bar' : undefined}>
-          <div className="grade-camera-review-actions">
+        {photo ? <div className="grade-camera-review-actions">
           <button type="button" className="grade-camera-retake" onClick={retake}>다시 촬영하기</button>
-          {ocr.kind === 'success' && ocr.subjects.length > 0
-            ? <button type="button" className="grade-camera-use" disabled={!valid} onClick={() => openGradeConfirm(ocr.subjects)}>성적 확인으로 이동</button>
-            : ocr.kind === 'success' || ocr.kind === 'empty'
+          {ocr.kind === 'empty'
             ? <button type="button" className="grade-camera-use" onClick={() => openGradeConfirm()}>성적 확인으로 이동</button>
             : <button type="button" className="grade-camera-use" onClick={() => void recognizePhoto()} disabled={!previewUrl || recognizing}>
               {ocr.kind === 'error' ? '다시 시도' : '사진 사용'}
             </button>}
-          </div>
-          {hasCandidates && <button type="button" className="grade-camera-skip" onClick={() => openGradeConfirm()}>적용 없이 성적 확인으로 이동</button>}
         </div> : <div className="grade-camera-controls">
           <button type="button" className="grade-camera-icon-button" aria-label="갤러리에서 사진 선택" disabled={busy} onClick={() => inputRef.current?.click()}><CameraIcon kind="gallery" /></button>
           <button type="button" className="grade-camera-shutter" aria-label="성적표 촬영" disabled={status !== 'ready' || busy} onClick={() => void capture()} />
