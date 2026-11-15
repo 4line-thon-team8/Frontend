@@ -31,6 +31,7 @@ self.onmessage = async ({ data: file }: MessageEvent<File>) => {
     try {
       const bitmap = await createImageBitmap(file);
       let tables: Cell[][][] = [];
+      let layeredTables: Cell[][][] = [];
       try {
         const { width, height } = bitmap;
         if (width * height <= 12_000_000) {
@@ -39,18 +40,25 @@ self.onmessage = async ({ data: file }: MessageEvent<File>) => {
           if (!context) throw new Error('Canvas unavailable');
           context.drawImage(bitmap, 0, 0);
           const pixels = context.getImageData(0, 0, width, height).data;
-          tables = detectOcrTables(width, height, (x, y) => {
+          const dark = (threshold: number) => (x: number, y: number) => {
             const offset = (y * width + x) * 4;
-            return pixels[offset + 3]! > 200 && pixels[offset]! + pixels[offset + 1]! + pixels[offset + 2]! < 270;
-          });
+            return pixels[offset + 3]! > 200 && pixels[offset]! + pixels[offset + 1]! + pixels[offset + 2]! < threshold;
+          };
+          tables = detectOcrTables(width, height, dark(270));
+          layeredTables = detectOcrTables(width, height, dark(600), true);
         }
       } finally {
         bitmap.close();
       }
-      if (tables.length) {
+      if (tables.length || layeredTables.length) {
         const worker = engine;
         await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_LINE });
-        tableSubjects = await recognizeOcrTable(tables, async rectangle => (await worker.recognize(bytes, { rectangle })).data);
+        const read = async (rectangle: Cell) => (await worker.recognize(bytes, { rectangle })).data;
+        tableSubjects = await recognizeOcrTable(tables, read);
+        if (!tableSubjects.some(subject => subject.grade)) {
+          const fallback = await recognizeOcrTable(layeredTables, read, true);
+          if (fallback.length) tableSubjects = fallback;
+        }
       }
     } catch {
       // The full-image result remains available when grid recognition is unsupported.

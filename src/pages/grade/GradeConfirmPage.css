@@ -44,6 +44,8 @@
 }
 .grade-confirm-subject-name { display: flex; flex: 1; align-items: center; gap: 16px; min-width: 0; font-size: 16px; line-height: 24px; font-weight: 500; }
 .grade-confirm-subject-name img { flex-shrink: 0; }
+.grade-confirm-subject-edit-name { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 3px; }
+.grade-confirm-subject-check { color: #73562c; }
 .grade-confirm-subject-grade { display: flex; flex-shrink: 0; max-width: 50%; align-items: center; gap: 6px; color: var(--color-primary); font-size: 16px; line-height: 24px; font-weight: 600; white-space: nowrap; }
 .grade-confirm-subject-grade > span:only-child { white-space: normal; overflow-wrap: anywhere; }
 .grade-confirm-subject input { min-width: 0; max-width: 100%; border: 1px solid #c2c6c4; border-radius: 5px; padding: 8px 6px; font-size: 14px; background: #fff; color: #1a1a1a; }
@@ -88,9 +90,6 @@
 .grade-confirm-major-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
 .grade-confirm-major-options button { padding: 12px 6px; border: 1px solid #c2c6c4; border-radius: 20px; color: #2f5d50; background: #fff; font-size: 12px; }
 .grade-confirm-major-options button[aria-pressed='true'] { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-.grade-confirm-dialog-actions { display: flex; gap: 10px; margin-top: 24px; }
-.grade-confirm-dialog-actions button { flex: 1; min-height: 44px; font-size: 14px; }
-.grade-confirm-dialog .grade-confirm-dialog-cancel { background: #edf1ee; color: #2f5d50; }
 .grade-confirm-dialog-done { width: 100%; margin-top: 12px; }
 .grade-confirm-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 350px) {
@@ -100,4 +99,3 @@
   .grade-confirm-subject-fields { gap: 8px; }
   .grade-confirm-major-chip, .grade-confirm-add-major { padding-inline: 20px; }
 }
-.grade-confirm-ocr-actions { display: grid; gap: 8px; margin-top: 12px; }

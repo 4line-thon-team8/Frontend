@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import camera from '../../assets/icons/camera.svg';
 import chevron from '../../assets/icons/chevron-right.svg';
 import clipboard from '../../assets/icons/clipboard.svg';
@@ -10,6 +12,10 @@ import character from '../../assets/images/grade-character.svg';
 import './GradeInputPage.css';
 
 export default function GradeInputPage() {
+  const { reset } = useGradeAnalysis();
+  // Entering the upload screen ends the previous analysis session.
+  useEffect(() => { reset(); }, [reset]);
+
   return (
     <div className="grade-input-page">
       <div className="grade-input-content">
