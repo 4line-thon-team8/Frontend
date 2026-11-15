@@ -22,6 +22,9 @@ export default function SignupPage() {
   // 세 칸을 모두 입력하기 전에는 회색(비활성) 버튼을 보여줍니다.
   const canSubmit = email.trim() !== '' && password !== '' && passwordConfirm !== '' && !submitting;
 
+  // 다시 입력하기 시작하면 이전 제출 때 뜬 경고는 지웁니다.
+  const clearError = (field: keyof SignupErrors) => setErrors(current => ({ ...current, [field]: undefined, form: undefined }));
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting) return;
@@ -80,7 +83,7 @@ export default function SignupPage() {
             inputMode="email"
             placeholder="example@email.com"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => { setEmail(e.target.value); clearError('email'); }}
             error={errors.email}
           />
           <AuthField
@@ -91,7 +94,7 @@ export default function SignupPage() {
             maxLength={PASSWORD_MAX_LENGTH}
             placeholder={PASSWORD_PLACEHOLDER}
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={e => { setPassword(e.target.value); clearError('password'); clearError('passwordConfirm'); }}
             error={errors.password}
           />
           <AuthField
@@ -102,7 +105,7 @@ export default function SignupPage() {
             maxLength={PASSWORD_MAX_LENGTH}
             placeholder="비밀번호를 다시 입력해주세요."
             value={passwordConfirm}
-            onChange={e => setPasswordConfirm(e.target.value)}
+            onChange={e => { setPasswordConfirm(e.target.value); clearError('passwordConfirm'); }}
             error={errors.passwordConfirm}
           />
           {errors.form && <p className="auth-field__error" role="alert">{errors.form}</p>}

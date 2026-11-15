@@ -1,0 +1,109 @@
+/*
+ * Figma '개인정보 처리 안내' (390 기준). 페이지 틀은 AuthPage.css 의 .auth-page 를 함께 씁니다.
+ * 내용이 길어서 스크롤되고, '확인했어요' 버튼은 맨 아래에 있어요.
+ */
+.privacy-page {
+  overflow: visible;
+  padding-top: calc(48px + env(safe-area-inset-top));
+}
+
+.privacy-title {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+/* 한눈에 보기 */
+.privacy-summary {
+  margin-top: 29px;
+  padding: 26px 27px 25px;
+  border-radius: 6px;
+  background: var(--color-primary-sub-light);
+  color: #52625d;
+  word-break: keep-all;
+}
+
+.privacy-summary h2,
+.privacy-section h2 {
+  margin: 0 0 10px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.privacy-summary ul,
+.privacy-section__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+/* 줄바꿈된 줄도 글자에 맞춰 들여쓰는 '·' 목록 */
+.privacy-summary li,
+.privacy-section__list li {
+  position: relative;
+  padding-left: 9px;
+}
+
+.privacy-summary li::before,
+.privacy-section__list li::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+}
+
+.privacy-section__list--plain li { padding-left: 0; }
+.privacy-section__list--plain li::before { content: none; }
+
+/* 항목 카드 */
+.privacy-sections {
+  display: grid;
+  gap: 21px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.privacy-section {
+  padding: 21px 19px 23px 33px;
+  border: 1px solid #e3e8e6;
+  border-radius: 6px;
+  background: #f6f8f7;
+  color: #52625d;
+  word-break: keep-all;
+}
+
+.privacy-section h2 { margin-bottom: 12px; }
+
+.privacy-section strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* 확인 버튼: 350 × 49 */
+.privacy-actions {
+  margin-top: 33px;
+}
+
+.privacy-confirm {
+  width: 100%;
+  height: 49px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 8px #2f5d5033;
+  cursor: pointer;
+}
+
+.privacy-confirm:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }

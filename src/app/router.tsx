@@ -4,6 +4,7 @@ import SplashPage from '../pages/auth/SplashPage';
 import LoginPage from '../pages/auth/LoginPage';
 import SignupPage from '../pages/auth/SignupPage';
 import TermsPage from '../pages/auth/TermsPage';
+import PrivacyPage from '../pages/auth/PrivacyPage';
 import GradeInputPage from '../pages/grade/GradeInputPage';
 import CameraPage from '../pages/grade/CameraPage';
 import PdfUploadPage from '../pages/grade/PdfUploadPage';
@@ -27,6 +28,7 @@ export default function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/grade/input" element={<GradeInputPage />} />
         <Route path="/grade/camera" element={<CameraPage />} />
         <Route path="/grade/upload" element={<PdfUploadPage />} />
