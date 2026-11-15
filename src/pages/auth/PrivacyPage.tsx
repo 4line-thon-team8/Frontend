@@ -11,12 +11,11 @@ const SUMMARY = [
 ];
 
 type Item = { label?: string; text: string; strong?: string };
-type Section = { title: string; items: Item[]; plain?: boolean };
+type Section = { title: string; items: Item[] };
 
 const SECTIONS: Section[] = [
   {
-    title: '어떤 정보를 다루나요?',
-    plain: true,
+    title: '어떤 정보를 다루나요 ?',
     items: [
       { text: '회원 정보 : 이메일, 비밀번호 (복원할 수 없는 형태로 저장)' },
       { text: '성적표 원본(사진 · PDF) : 기기 안에서 글자를 읽는 데에만 사용' },
@@ -24,7 +23,7 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    title: '왜 사용하나요?',
+    title: '왜 사용하나요 ?',
     items: [
       { text: '성적을 바탕으로 원서 6장을 추천하고 설명하는 데에만 사용' },
       { text: '로그인한 회원의 리포트를 자동 저장하고 마이페이지에서 보여주는 데 사용' },
@@ -37,7 +36,7 @@ const SECTIONS: Section[] = [
       { label: '내부 서버로 보내요', text: '분석에 필요한 성적 숫자와 지원 방향 (따로 저장 안함)' },
       {
         label: '외부 AI로 보내요',
-        text: '설명 문장 작성을 위해 계산된 평균 등급, 희망 학과, 선호 전형, 추천 원서 목록과 근거 전달. 과목별 성적, 이름, 이메일, 계정 정보는 보내지 않음',
+        text: '설명 문장 작성을 위해 계산된 평균 등급, 희망 학과, 선호 전형, 추천 원서 목록과 근거 전달.\n과목별 성적, 이름, 이메일, 계정 정보는 보내지 않음',
       },
     ],
   },
@@ -50,7 +49,7 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    title: '얼마나 보관하나요?',
+    title: '얼마나 보관하나요 ?',
     items: [
       { text: '직접 삭제하거나 회원 탈퇴할 때까지 보관' },
       { text: '회원 탈퇴하면 저장된 리포트 · 추천 원서 · 로그인 토큰 삭제' },
@@ -59,7 +58,7 @@ const SECTIONS: Section[] = [
   {
     title: 'AI 설명 생성과 외부 전달',
     items: [
-      { text: '리포트의 설명 문장은 외부 AI 서비스(OpenAI API)가 작성. 계산과 추천은 AI가 아니라 서버가 작동' },
+      { text: '리포트의 설명 문장은 외부 AI 서비스(OpenAI API)가 작성\n계산과 추천은 AI가 아니라 서버가 작동' },
       { text: '해외 AI 서비스를 사용. 처리 국가는 확인 중' },
       {
         text: '전달한 정보는 공식 정책상 AI 모델 학습에 사용되지 않음(데이터 공유 미사용)',
@@ -110,10 +109,11 @@ export default function PrivacyPage() {
         {SECTIONS.map((section, index) => (
           <li key={section.title} className="privacy-section">
             <h2>{index + 1}. {section.title}</h2>
-            <ul className={section.plain ? 'privacy-section__list privacy-section__list--plain' : 'privacy-section__list'}>
+            <ul className="privacy-section__list">
               {section.items.map(item => (
                 <li key={item.text}>
-                  {item.label && <strong>{item.label} : </strong>}
+                  {/* Figma: 라벨만 600, 뒤의 ' : ' 부터는 400 */}
+                  {item.label && <><strong>{item.label}</strong> : </>}
                   {item.text}
                   {item.strong && <><br /><strong>{item.strong}</strong></>}
                 </li>

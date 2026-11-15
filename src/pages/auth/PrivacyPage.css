@@ -28,8 +28,9 @@
 .privacy-summary h2,
 .privacy-section h2 {
   margin: 0 0 10px;
-  color: var(--color-text);
-  font-size: 15px;
+  /* Figma: #1B312A · Pretendard 12px · 600 · line-height normal */
+  color: #1b312a;
+  font-size: 12px;
   font-weight: 600;
   line-height: normal;
 }
@@ -41,15 +42,19 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 12px;
-  line-height: 17px;
+  /* Figma: 2_메인컬러서브(#52625D) · Pretendard 10px · 400 · line-height normal, 앞의 '·' 만 600 */
+  color: #52625d;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: normal;
+  white-space: pre-line;
 }
 
 /* 줄바꿈된 줄도 글자에 맞춰 들여쓰는 '·' 목록 */
 .privacy-summary li,
 .privacy-section__list li {
   position: relative;
-  padding-left: 9px;
+  padding-left: 5px;
 }
 
 .privacy-summary li::before,
@@ -57,22 +62,22 @@
   content: '·';
   position: absolute;
   left: 0;
+  font-weight: 600;
 }
 
-.privacy-section__list--plain li { padding-left: 0; }
-.privacy-section__list--plain li::before { content: none; }
 
-/* 항목 카드 */
+/* 항목 카드: Figma 340px 폭(화면 왼쪽 19 · 오른쪽 31), 세로로 14px 간격 */
 .privacy-sections {
-  display: grid;
-  gap: 21px;
-  margin: 26px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 26px 11px 0 -1px;
   padding: 0;
   list-style: none;
 }
 
 .privacy-section {
-  padding: 21px 19px 23px 33px;
+  padding: 21px 19px;
   border: 1px solid #e3e8e6;
   border-radius: 6px;
   background: #f6f8f7;
@@ -83,7 +88,7 @@
 .privacy-section h2 { margin-bottom: 12px; }
 
 .privacy-section strong {
-  color: var(--color-text);
+  color: #52625d;
   font-weight: 600;
 }
 
