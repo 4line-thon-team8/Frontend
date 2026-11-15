@@ -13,7 +13,7 @@ const PROCESS_STEPS = ['① 성적 입력 (촬영 · PDF)', '② 확인 · 지�
 
 const PRIVACY_NOTICES = [
   '성적표 원본은 서버로 전송되지 않고, 처리 후 폐기돼요.',
-  '추천 원서·추천 이유·생성 시각은 로그인 계정에 저장돼요.',
+  '추천 원서·추천 이유·생성 시각은 로그인 계정에 저장되고, 회원 탈퇴 시 모두 폐기돼요.',
 ];
 
 export default function TermsPage() {
@@ -60,7 +60,7 @@ export default function TermsPage() {
             <img src={checkCircle} alt="" width="24" height="24" />
             <span>개인정보 처리 안내에 동의해요 (필수)</span>
           </label>
-          <a className="terms-agree__detail" href="#privacy-notice">개인정보 처리 안내 자세히 보기 &gt;</a>
+          <Link className="terms-agree__detail" to="/privacy">개인정보 처리 안내 자세히 보기 &gt;</Link>
         </div>
 
         <div className="auth-actions">

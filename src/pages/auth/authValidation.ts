@@ -2,7 +2,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // BE 기준: 비밀번호 15~64자
 export const PASSWORD_MIN_LENGTH = 15;
 export const PASSWORD_MAX_LENGTH = 64;
-export const PASSWORD_PLACEHOLDER = `${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자로 작성해 주세요.`;
+export const PASSWORD_PLACEHOLDER = `${PASSWORD_MIN_LENGTH}자 이상으로 작성해 주세요.`;
 
 export function validateEmail(email: string): string | undefined {
   if (!email.trim()) return '이메일을 입력해 주세요.';
@@ -13,9 +13,9 @@ export function validateEmail(email: string): string | undefined {
 /** 회원가입용: 길이까지 검사합니다. */
 export function validatePassword(password: string): string | undefined {
   if (!password) return '비밀번호를 입력해 주세요.';
-  if (password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
-    return `비밀번호는 ${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자로 입력해 주세요.`;
-  }
+  if (password.length < PASSWORD_MIN_LENGTH) return `비밀번호는 ${PASSWORD_MIN_LENGTH}자 이상으로 입력해 주세요.`;
+  // BE 상한(64자)은 그대로 검사하되, 안내 문구에는 넣지 않아요.
+  if (password.length > PASSWORD_MAX_LENGTH) return `비밀번호는 ${PASSWORD_MAX_LENGTH}자 이하로 입력해 주세요.`;
   return undefined;
 }
 
