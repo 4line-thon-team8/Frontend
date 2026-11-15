@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import AuthImageButton from '../../components/auth/AuthImageButton';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import checkCircle from '../../assets/icons/check-circle.svg';
@@ -16,9 +16,17 @@ const PRIVACY_NOTICES = [
   '추천 원서·추천 이유·생성 시각은 로그인 계정에 저장되고, 회원 탈퇴 시 모두 폐기돼요.',
 ];
 
+export type TermsState = { privacyConfirmed?: boolean };
+
+function isPrivacyConfirmed(state: unknown): boolean {
+  return typeof state === 'object' && state !== null && (state as TermsState).privacyConfirmed === true;
+}
+
 export default function TermsPage() {
   const navigate = useNavigate();
-  const [agreed, setAgreed] = useState(false);
+  const location = useLocation();
+  // 개인정보 처리 안내에서 '확인했어요'를 누르고 돌아오면 동의 체크가 된 상태로 시작합니다.
+  const [agreed, setAgreed] = useState(() => isPrivacyConfirmed(location.state));
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -60,7 +68,7 @@ export default function TermsPage() {
             <img src={checkCircle} alt="" width="24" height="24" />
             <span>개인정보 처리 안내에 동의해요 (필수)</span>
           </label>
-          <Link className="terms-agree__detail" to="/privacy">개인정보 처리 안내 자세히 보기 &gt;</Link>
+          <Link className="terms-agree__detail" to="/privacy" replace>개인정보 처리 안내 자세히 보기 &gt;</Link>
         </div>
 
         <div className="auth-actions">

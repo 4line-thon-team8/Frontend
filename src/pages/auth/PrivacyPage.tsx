@@ -1,4 +1,5 @@
-import { useLocation, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
+import type { TermsState } from './TermsPage';
 import './AuthPage.css';
 import './PrivacyPage.css';
 
@@ -86,12 +87,12 @@ const SECTIONS: Section[] = [
 
 export default function PrivacyPage() {
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // 약관 화면에서 들어왔으면 돌아가고, 주소로 바로 들어왔으면 약관 화면으로 보냅니다.
+  // 약관 화면으로 돌아가면서 동의 체크를 켭니다.
+  // 약관 → 안내 이동도 replace 라서, 뒤로가기 기록에 안내 화면이 쌓이지 않아요.
   const handleConfirm = () => {
-    if (location.key !== 'default') navigate(-1);
-    else navigate('/terms', { replace: true });
+    const state: TermsState = { privacyConfirmed: true };
+    navigate('/terms', { replace: true, state });
   };
 
   return (
