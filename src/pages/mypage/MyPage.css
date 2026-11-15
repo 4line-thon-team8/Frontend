@@ -142,7 +142,7 @@
 /*
  * 규칙 상자: 350 × 156, padding 21 19, #DFE6E3.
  * 각 줄: #52625D · 10px · line-height normal, 줄 사이 5px. 굵은 제목 600 / 설명 400.
- * Figma 처럼 한 줄씩 보이도록 줄바꿈하지 않습니다 (마지막 줄은 오른쪽 여백까지 살짝 넘어갑니다).
+ * 문안은 Figma 처럼 한 줄에 들어가는 길이로 맞췄고, 화면이 좁으면 상자 밖으로 넘치지 않고 줄바꿈돼요.
  */
 .mypage-rules ul {
   display: grid;
@@ -158,7 +158,7 @@
   list-style: none;
 }
 
-.mypage-rules li { white-space: nowrap; }
+.mypage-rules li { word-break: keep-all; }
 
 .mypage-rules strong { font-weight: 600; }
 
