@@ -49,3 +49,12 @@ export async function getTagMap(signal?: AbortSignal): Promise<TagMap> {
   }
   return { version, entries };
 }
+
+/** 응답 명세가 확정되면 서비스 계층에서 타입을 정의하고 검증합니다. */
+export function getUniversities(signal?: AbortSignal): Promise<unknown> {
+  return apiClient('/api/universities', {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    signal,
+  });
+}
