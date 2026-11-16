@@ -13,6 +13,8 @@ export interface GradeAnalysisSnapshot {
   preferences: {
     readonly [Key in keyof AnalysisPreferences]: Readonly<AnalysisPreferences[Key]>;
   };
+  /** 희망 학과 이름 (preferences.majorIds 와 같은 순서). 리포트 화면 표시용 */
+  majorNames: readonly string[];
   /** POST /api/simulations 중복 저장 방지 키. 같은 입력으로 다시 분석하면 같은 키를 써요. */
   idempotencyKey: string;
 }

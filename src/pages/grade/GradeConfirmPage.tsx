@@ -10,15 +10,10 @@ import type { ConfirmSubject } from '../../types/gradeConfirm';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import { getGradeImage } from '../../utils/gradeImageStore';
 import { reviewSubject, toggleAdmission, validateGradeConfirm } from '../../utils/gradeConfirmValidation';
-<<<<<<< HEAD
 import { ADMISSION_OPTIONS, MAJOR_LIMIT } from './gradeConfirm.mock';
 import { ApiError } from '../../services/apiClient';
 import { getMajors, type Major } from '../../services/lookupApi';
-import { toSimulationSubjectRows } from '../../services/simulationApi';
-=======
-import { ADMISSION_OPTIONS, MOCK_MAJOR_LIMIT, MOCK_MAJORS } from './gradeConfirm.mock';
 import { createIdempotencyKey, toSimulationSubjectRows } from '../../services/simulationApi';
->>>>>>> a225c4c (분석요청)
 import { applyOcrGrades, reviewOcrGrades } from '../../utils/applyOcrGrades';
 import { searchAllowedSubjects } from '../../utils/subjectCatalog';
 import './GradeConfirmPage.css';
@@ -152,7 +147,13 @@ export default function GradeConfirmPage() {
     // 입력이 바뀌었으면 새 분석이라 새 키를 만들어요.
     const sameRequest = snapshot !== null
       && JSON.stringify([snapshot.subjects, snapshot.preferences]) === JSON.stringify([subjects, preferences]);
-    setSnapshot({ subjects, preferences, idempotencyKey: sameRequest && snapshot ? snapshot.idempotencyKey : createIdempotencyKey() });
+    setSnapshot({
+      subjects,
+      preferences,
+      // 리포트 요약의 '희망 학과' 표시용 (학과 목록은 이 화면에서만 불러와요)
+      majorNames: preferences.majorIds.map(code => majorNames.get(code) ?? code),
+      idempotencyKey: sameRequest && snapshot ? snapshot.idempotencyKey : createIdempotencyKey(),
+    });
     setResult(null);
     setEditing(false);
     navigate('/grade/loading');

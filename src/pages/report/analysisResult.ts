@@ -1,7 +1,6 @@
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import { USE_MOCK_AUTH } from '../../services/authApi';
 import type { ReportSection, SaveStatus, SimulationResult, SimulationWarning } from '../../services/simulationApi';
-import { MOCK_MAJORS } from '../grade/gradeConfirm.mock';
 import { createMockSimulationResult, useMockRecommendationResult } from './recommendation.mock';
 import type { Recommendation, RecommendationResult, ResultWarning } from './recommendation.mock';
 import { toApplicationTier } from './reportTier';
@@ -74,7 +73,7 @@ export function useReportView(): ReportView | null {
   const mockRecommendations = useMockRecommendationResult();
 
   const preferences = snapshot?.preferences;
-  const majorNames = preferences?.majorIds.map(id => MOCK_MAJORS.find(major => major.id === id)?.name ?? id) ?? [];
+  const majorNames = snapshot?.majorNames ?? [];
   const admissions = preferences?.admissions.map(id => ADMISSION_LABELS[id] ?? id) ?? [];
   const profileLines = [
     majorNames.length ? `${majorNames.join(' · ')} 희망` : '',
