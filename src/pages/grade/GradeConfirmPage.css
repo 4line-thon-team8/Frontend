@@ -87,6 +87,7 @@
 .grade-confirm-dialog::backdrop { background: #0006; }
 .grade-confirm-dialog h2 { word-break: keep-all; margin: 0; color: var(--color-primary); font-size: 18px; line-height: 28px; }
 .grade-confirm-dialog > p { font-size: 12px; line-height: 20px; color: #737e78; }
+.grade-confirm-major-search { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid #c2c6c4; border-radius: 12px; font: inherit; font-size: 16px; }
 .grade-confirm-major-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
 .grade-confirm-major-options button { padding: 12px 6px; border: 1px solid #c2c6c4; border-radius: 20px; color: #2f5d50; background: #fff; font-size: 12px; }
 .grade-confirm-major-options button[aria-pressed='true'] { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
