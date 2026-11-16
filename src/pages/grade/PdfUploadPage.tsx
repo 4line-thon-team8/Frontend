@@ -3,7 +3,9 @@ import type { ChangeEvent } from 'react';
 import { Link } from 'react-router';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import clipboard from '../../assets/icons/clipboard.svg';
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import Button from '../../components/common/Button';
+import { analyzeNarrative } from '../../utils/holistic/analyzeNarrative';
 import { extractPdfText, MAX_PDF_BYTES } from '../../utils/extractPdfText';
 import type { PdfExtractionResult } from '../../utils/extractPdfText';
 import './PdfUploadPage.css';
@@ -24,6 +26,7 @@ type UploadStatus =
 export default function PdfUploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const activeRequest = useRef<AbortController | null>(null);
+  const { setNarrative } = useGradeAnalysis();
   const [status, setStatus] = useState<UploadStatus>({ kind: 'idle' });
 
   useEffect(() => () => activeRequest.current?.abort(), []);
@@ -42,8 +45,11 @@ export default function PdfUploadPage() {
     if (request.signal.aborted) return;
     activeRequest.current = null;
     if (result.ok) {
+      // 페이지를 이어 붙여 분석해요(영역이 페이지 경계에서 끊기는 경우 대비). 전문은 여기서만 쓰고 저장하지 않아요.
+      setNarrative(analyzeNarrative(result.pages.map(page => page.text).join('\n')));
       setStatus({ kind: 'success', pageCount: result.pages.length });
     } else if (result.reason !== 'cancelled') {
+      setNarrative(null);
       setStatus({ kind: 'error', message: errorMessages[result.reason] });
     }
   }
