@@ -269,3 +269,11 @@
 .mypage-detail-row__tier.is-unrated { background: #7d8783; }
 
 .mypage-detail-delete { margin-top: 49px; }
+
+/* 로그아웃 실패 안내 (로그인 화면 에러 문구와 같은 색) */
+.mypage-logout-error {
+  margin: 8px 0 0;
+  color: #b34a40;
+  font-size: 12px;
+  text-align: center;
+}

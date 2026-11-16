@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
-import { logout } from '../../services/authApi';
+import { isNetworkError, logout, NETWORK_ERROR_MESSAGE } from '../../services/authApi';
 import { APPLICATION_TIERS, TIER_LABELS } from '../report/reportTier';
 import { MOCK_SAVED_REPORTS, SYSTEM_RULES, type SavedReport } from './mypage.mock';
 import './MyPage.css';
@@ -31,9 +31,20 @@ export default function MyPage() {
     setReports(current => current.filter(report => report.id !== id));
   };
 
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string>();
+
   const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
+    if (loggingOut) return; // 중복 클릭 방지
+    setLoggingOut(true);
+    setLogoutError(undefined);
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      setLoggingOut(false);
+      setLogoutError(isNetworkError(error) ? NETWORK_ERROR_MESSAGE : '로그아웃하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    }
   };
 
   return (
@@ -74,7 +85,10 @@ export default function MyPage() {
         </ul>
       </section>
 
-      <button type="button" className="mypage-primary-button mypage-logout" onClick={() => void handleLogout()}>로그아웃</button>
+      <button type="button" className="mypage-primary-button mypage-logout" onClick={() => void handleLogout()} disabled={loggingOut}>
+        {loggingOut ? '로그아웃 중…' : '로그아웃'}
+      </button>
+      {logoutError && <p className="mypage-logout-error" role="alert">{logoutError}</p>}
       <p className="mypage-note">*회원 탈퇴 시 저장된 리포트가 모두 삭제돼요.</p>
 
       <BottomNavigation />
