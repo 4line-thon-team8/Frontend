@@ -12,7 +12,11 @@ export type Credentials = { email: string; password: string };
 type LoginResponse = { accessToken: string; expiresAt: string };
 
 function postJson(body: unknown): RequestInit {
-  return { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  return {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  };
 }
 
 function isLoginResponse(body: unknown): body is LoginResponse {
@@ -37,16 +41,29 @@ export async function login(credentials: Credentials): Promise<void> {
   setAccessToken(body.accessToken, body.expiresAt);
 }
 
-/** 204. 현재 토큰만 폐기돼요. 서버 요청이 실패해도 이 기기에서는 로그아웃 처리합니다. */
+/**
+ * POST /api/auth/logout → 204, 본문 없음. 서버가 현재 토큰만 폐기해요.
+ * 명세: FE 메모리에서 지우는 것만으로 폐기 성공으로 보지 않아요. 그래서 서버 응답을 보고 나서 지웁니다.
+ * - 204: 폐기 완료 → 메모리 토큰 삭제
+ * - 401: 이미 만료·폐기된 토큰 → 서버에서도 쓸 수 없으니 로그아웃된 것으로 처리
+ * - 그 외(네트워크·5xx): 토큰을 남겨두고 에러를 던져요. 화면에서 다시 시도하게 안내합니다.
+ */
 export async function logout(): Promise<void> {
   const token = getAccessToken();
-  clearAccessToken();
-  if (USE_MOCK_AUTH || !token) return;
-  try {
-    await apiClient('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-  } catch {
-    // 토큰은 이미 메모리에서 지웠고, 만료되면 서버에서도 쓸 수 없어요.
+  // 토큰이 없거나 이미 만료됐으면 서버에서도 쓸 수 없는 토큰이라 요청할 필요가 없어요.
+  if (USE_MOCK_AUTH || !token) {
+    clearAccessToken();
+    return;
   }
+  try {
+    await apiClient('/api/auth/logout', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError && error.status === 401)) throw error;
+  }
+  clearAccessToken();
 }
 
 /** BE 에러 본문 { code, message } 의 code */
@@ -62,6 +79,24 @@ export function getErrorCode(error: unknown): string | undefined {
  */
 export function isSessionExpiredError(error: unknown): boolean {
   return error instanceof ApiError && error.status === 401 && getErrorCode(error) !== 'AUTHENTICATION_FAILED';
+}
+
+/** 서버에 닿지 못한 경우(BE 꺼짐·주소 오류·CORS 차단·오프라인). fetch 는 이때 TypeError 를 던져요. */
+export function isNetworkError(error: unknown): boolean {
+  return error instanceof TypeError;
+}
+
+export const NETWORK_ERROR_MESSAGE = '서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.';
+
+/** 회원가입 실패를 어느 칸에 어떤 문구로 보여줄지 정합니다. */
+export function getSignupErrorMessage(error: unknown): { email?: string; form?: string } {
+  if (isNetworkError(error)) return { form: NETWORK_ERROR_MESSAGE };
+  if (!(error instanceof ApiError)) return { form: '회원가입하지 못했어요. 잠시 후 다시 시도해 주세요.' };
+  // 확정 계약: 409 EMAIL_ALREADY_EXISTS. 상태 코드만 와도 같은 안내를 보여줘요.
+  if (getErrorCode(error) === 'EMAIL_ALREADY_EXISTS' || error.status === 409) return { email: '이미 가입된 이메일이에요.' };
+  // 400: 서버 검증 실패(형식·길이). 메시지에는 입력값이 담기지 않아요.
+  if (error.status === 400) return { form: '이메일 형식과 비밀번호(15~64자)를 다시 확인해 주세요.' };
+  return { form: '회원가입하지 못했어요. 잠시 후 다시 시도해 주세요.' };
 }
 
 export const SESSION_EXPIRED_PATH = '/error/session-expired';

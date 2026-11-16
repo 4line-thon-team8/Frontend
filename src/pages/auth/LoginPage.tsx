@@ -5,7 +5,7 @@ import AuthImageButton from '../../components/auth/AuthImageButton';
 import logo from '../../assets/images/logo.svg';
 import loginButton from '../../assets/icons/login-button.svg';
 import loginButtonBefore from '../../assets/icons/login-button-before.svg';
-import { getErrorCode, getReturnTo, login } from '../../services/authApi';
+import { getErrorCode, getReturnTo, isNetworkError, login, NETWORK_ERROR_MESSAGE } from '../../services/authApi';
 import { PASSWORD_MAX_LENGTH, validateEmail, validateLoginPassword } from './authValidation';
 import './AuthPage.css';
 
@@ -37,7 +37,7 @@ export default function LoginPage() {
       setErrors({
         form: getErrorCode(error) === 'AUTHENTICATION_FAILED'
           ? '이메일 또는 비밀번호를 확인해 주세요.'
-          : '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.',
+          : isNetworkError(error) ? NETWORK_ERROR_MESSAGE : '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.',
       });
     } finally {
       setSubmitting(false);

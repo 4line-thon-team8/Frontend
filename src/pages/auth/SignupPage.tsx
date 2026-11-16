@@ -6,7 +6,7 @@ import arrowBack from '../../assets/icons/arrow-back.svg';
 import logo from '../../assets/images/logo.svg';
 import signupButton from '../../assets/icons/signup-button.svg';
 import signupButtonBefore from '../../assets/icons/signup-button-before.svg';
-import { getErrorCode, login, signup } from '../../services/authApi';
+import { getSignupErrorMessage, login, signup } from '../../services/authApi';
 import { PASSWORD_MAX_LENGTH, PASSWORD_PLACEHOLDER, validateEmail, validatePassword } from './authValidation';
 import './AuthPage.css';
 
@@ -44,8 +44,7 @@ export default function SignupPage() {
       await signup(credentials);
     } catch (error) {
       setSubmitting(false);
-      if (getErrorCode(error) === 'EMAIL_ALREADY_EXISTS') setErrors({ email: '이미 가입된 이메일이에요.' });
-      else setErrors({ form: '회원가입하지 못했어요. 잠시 후 다시 시도해 주세요.' });
+      setErrors(getSignupErrorMessage(error));
       return;
     }
 

@@ -87,6 +87,12 @@
 
 .privacy-section h2 { margin-bottom: 12px; }
 
+/* Figma 처럼 한 줄 유지: 오른쪽 안쪽 여백(19px)까지 쓰고, 그보다 좁은 화면에서만 줄바꿈돼요. */
+.privacy-section__item--nowrap { margin-right: -19px; }
+@media (min-width: 375px) {
+  .privacy-section__item--nowrap { white-space: pre; }
+}
+
 .privacy-section strong {
   color: #52625d;
   font-weight: 600;

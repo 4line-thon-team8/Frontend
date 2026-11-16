@@ -11,7 +11,8 @@ const SUMMARY = [
   '회원 탈퇴를 하면 저장된 리포트·추천 원서·로그인 토큰이 삭제돼요.',
 ];
 
-type Item = { label?: string; text: string; strong?: string };
+// nowrap: Figma 에서 한 줄로 보이는 긴 문장. 카드 안쪽 여백까지 써서라도 줄바꿈하지 않아요.
+type Item = { label?: string; text: string; strong?: string; nowrap?: boolean };
 type Section = { title: string; items: Item[] };
 
 const SECTIONS: Section[] = [
@@ -53,7 +54,7 @@ const SECTIONS: Section[] = [
   {
     title: '얼마나 보관하나요 ?',
     items: [
-      { text: '직접 삭제하거나 회원 탈퇴할 때까지 보관. 별도 보관 기간과 자동 삭제는 없음' },
+      { text: '직접 삭제하거나 회원 탈퇴할 때까지 보관. 별도 보관 기간과 자동 삭제는 없음', nowrap: true },
       { text: '회원 탈퇴하면 저장된 리포트 · 추천 원서 · 로그인 토큰 삭제' },
     ],
   },
@@ -64,6 +65,7 @@ const SECTIONS: Section[] = [
       { text: '해외 AI 서비스를 사용. 처리 국가는 확인 중' },
       {
         text: '전달한 정보는 공식 정책상 AI 모델 학습에 사용되지 않음(데이터 공유 미사용)',
+        nowrap: true,
         strong: '다만 악용 방지를 위해 최대 30일 보관 가능',
       },
     ],
@@ -113,7 +115,7 @@ export default function PrivacyPage() {
             <h2>{index + 1}. {section.title}</h2>
             <ul className="privacy-section__list">
               {section.items.map(item => (
-                <li key={item.text}>
+                <li key={item.text} className={item.nowrap ? 'privacy-section__item--nowrap' : undefined}>
                   {/* Figma: 라벨만 600, 뒤의 ' : ' 부터는 400 */}
                   {item.label && <><strong>{item.label}</strong> : </>}
                   {item.text}
