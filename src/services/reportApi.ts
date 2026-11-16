@@ -145,7 +145,11 @@ export async function deleteReport(reportId: string): Promise<void> {
 }
 
 /** 삭제 전 확인 문구 (F-16: 삭제하면 복구할 수 없다는 안내는 FE 가 보여줘요) */
-export const DELETE_REPORT_CONFIRM = '이 리포트를 삭제할까요?\n삭제하면 복구할 수 없어요.';
+export const DELETE_REPORT_CONFIRM = {
+  title: '이 리포트를 삭제할까요?',
+  description: '삭제한 리포트는 다시 복구할 수 없어요.',
+  confirmLabel: '삭제하기',
+} as const;
 
 /** 삭제 실패 문구. 401 은 화면에서 세션 만료로 따로 처리해요. */
 export function getDeleteReportErrorMessage(error: unknown): string {

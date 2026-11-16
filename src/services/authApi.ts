@@ -103,7 +103,11 @@ export async function withdraw(): Promise<void> {
 }
 
 /** S-06 #13: 탈퇴 전 복구 불가 안내와 최종 확인 */
-export const WITHDRAW_CONFIRM = '정말 탈퇴할까요?\n계정과 저장된 리포트가 모두 삭제되고, 복구할 수 없어요.';
+export const WITHDRAW_CONFIRM = {
+  title: '정말 탈퇴할까요?',
+  description: '계정과 저장된 리포트가 모두 삭제되고, 복구할 수 없어요.',
+  confirmLabel: '탈퇴하기',
+} as const;
 
 /** S-06 #13 고정 문구 */
 export const WITHDRAW_ERROR_MESSAGE = '탈퇴를 완료하지 못했어요. 다시 시도해 주세요.';

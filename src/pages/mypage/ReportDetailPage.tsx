@@ -7,6 +7,7 @@ import {
   type SavedReportDetail,
 } from '../../services/reportApi';
 import BottomNavigation from '../../components/common/BottomNavigation';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import { APPLICATION_TIERS, TIER_LABELS, tierClassName, type ApplicationTier } from '../report/reportTier';
 import './MyPage.css';
@@ -59,9 +60,11 @@ export default function ReportDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string>();
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const handleDelete = async () => {
+    setConfirmOpen(false);
     if (!reportId || deleting) return;
-    if (!window.confirm(DELETE_REPORT_CONFIRM)) return;
     setDeleting(true);
     setDeleteError(undefined);
     try {
@@ -114,12 +117,20 @@ export default function ReportDetailPage() {
             ))}
           </ol>
 
-          <button type="button" className="mypage-primary-button mypage-detail-delete" onClick={() => void handleDelete()} disabled={deleting}>
+          <button type="button" className="mypage-primary-button mypage-detail-delete" onClick={() => setConfirmOpen(true)} disabled={deleting}>
             {deleting ? '삭제 중…' : '이 리포트 삭제'}
           </button>
           {deleteError && <p className="mypage-logout-error" role="alert">{deleteError}</p>}
         </>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        {...DELETE_REPORT_CONFIRM}
+        destructive
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setConfirmOpen(false)}
+      />
 
       <BottomNavigation />
     </div>
