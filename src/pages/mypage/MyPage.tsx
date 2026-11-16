@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import {
   isNetworkError, isSessionExpiredError, logout, NETWORK_ERROR_MESSAGE, SESSION_EXPIRED_PATH, withdraw, WITHDRAW_CONFIRM, WITHDRAW_ERROR_MESSAGE,
@@ -87,9 +88,12 @@ export default function MyPage() {
     navigate(SESSION_EXPIRED_PATH, { replace: true, state: { from: '/mypage' } });
   };
 
+  /** 삭제 확인 창을 띄운 리포트 */
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string>();
+
   const handleDelete = async (id: string) => {
+    setConfirmDeleteId(undefined);
     if (deletingId) return; // 중복 클릭 방지
-    if (!window.confirm(DELETE_REPORT_CONFIRM)) return;
     setDeletingId(id);
     setDeleteError(undefined);
     try {
@@ -112,9 +116,11 @@ export default function MyPage() {
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string>();
 
+  const [confirmWithdrawOpen, setConfirmWithdrawOpen] = useState(false);
+
   const handleWithdraw = async () => {
+    setConfirmWithdrawOpen(false);
     if (withdrawing || loggingOut) return; // 중복 클릭 방지
-    if (!window.confirm(WITHDRAW_CONFIRM)) return;
     setWithdrawing(true);
     setWithdrawError(undefined);
     try {
@@ -178,7 +184,7 @@ export default function MyPage() {
               </Link>
             </h2>
             {report.counts && <p>{formatReportCounts(report.counts)}</p>}
-            <button type="button" className="mypage-report-card__delete" onClick={() => void handleDelete(report.id)} disabled={deletingId !== undefined} aria-label={`${report.createdAt} 리포트 삭제`}>
+            <button type="button" className="mypage-report-card__delete" onClick={() => setConfirmDeleteId(report.id)} disabled={deletingId !== undefined} aria-label={`${report.createdAt} 리포트 삭제`}>
               <TrashIcon />
               {deletingId === report.id ? '삭제 중…' : '삭제'}
             </button>
@@ -205,10 +211,26 @@ export default function MyPage() {
       {logoutError && <p className="mypage-logout-error" role="alert">{logoutError}</p>}
       <p className="mypage-note">*회원 탈퇴 시 저장된 리포트가 모두 삭제돼요.</p>
       {/* TODO: Figma 에 탈퇴 버튼 디자인이 없어 임시로 작은 텍스트 버튼을 둡니다. */}
-      <button type="button" className="mypage-withdraw" onClick={() => void handleWithdraw()} disabled={withdrawing || loggingOut}>
+      <button type="button" className="mypage-withdraw" onClick={() => setConfirmWithdrawOpen(true)} disabled={withdrawing || loggingOut}>
         {withdrawing ? '탈퇴 처리 중…' : '회원 탈퇴'}
       </button>
       {withdrawError && <p className="mypage-logout-error" role="alert">{withdrawError}</p>}
+
+      <ConfirmDialog
+        open={confirmDeleteId !== undefined}
+        {...DELETE_REPORT_CONFIRM}
+        destructive
+        onConfirm={() => { if (confirmDeleteId) void handleDelete(confirmDeleteId); }}
+        onCancel={() => setConfirmDeleteId(undefined)}
+      />
+
+      <ConfirmDialog
+        open={confirmWithdrawOpen}
+        {...WITHDRAW_CONFIRM}
+        destructive
+        onConfirm={() => void handleWithdraw()}
+        onCancel={() => setConfirmWithdrawOpen(false)}
+      />
 
       <BottomNavigation />
     </div>
