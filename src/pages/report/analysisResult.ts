@@ -19,6 +19,7 @@ const WARNING_MESSAGES: Record<string, string> = {
   UNDECLARED_USED: '자율전공·무전공 학과로 채운 카드예요.',
   UNRATED_CARD: '입결 자료가 없어 구간을 판단하기 어려워요.',
   LOW_CONFIDENCE_CARD: '참고할 입결 자료가 적어 결과가 불확실해요.',
+  HOLISTIC_SKIPPED: '생기부 서술은 이번 결과에 반영하지 못해 성적만으로 추천했어요.',
 };
 
 function toWarnings(warnings: SimulationWarning[]): ResultWarning[] {

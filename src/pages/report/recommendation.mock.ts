@@ -87,12 +87,15 @@ export const MOCK_RECOMMENDATIONS = MOCK_FULL.recommendations;
 export function createMockSimulationResult(): SimulationResult {
   return {
     conversion: { overallGrade: 2.5, isAssumed: false, assumptionReasons: [] },
+    holistic: { status: 'NOT_PROVIDED', skipReason: null },
     recommendations: MOCK_FULL.recommendations.map(item => ({
       rank: item.rank,
       university: item.university,
       department: item.major,
       admissionType: item.admission,
       category: item.tier,
+      overallCategory: null,
+      documentFit: null,
       reason: { text: item.reason.text, generationMethod: 'template' },
       evidence: null,
     })),
