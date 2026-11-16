@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { SimulationResult, SimulationSubjectRow } from '../services/simulationApi';
 import type { ConfirmSubject, GradeConfirmDraft } from '../types/gradeConfirm';
-import type { NarrativeAnalysisResult } from '../utils/holistic/types';
+import type { HolisticAnalysisPayload, NarrativeAnalysisResult } from '../utils/holistic/types';
 
 type AnalysisPreferences = Pick<
   GradeConfirmDraft,
@@ -16,6 +16,8 @@ export interface GradeAnalysisSnapshot {
   };
   /** 희망 학과 이름 (preferences.majorIds 와 같은 순서). 리포트 화면 표시용 */
   majorNames: readonly string[];
+  /** 서술 분석 결과(신호·가린 구절). 읽지 않았거나 분석하지 못했으면 null. 서술 전문은 담지 않아요. */
+  holisticAnalysis: HolisticAnalysisPayload | null;
   /** POST /api/simulations 중복 저장 방지 키. 같은 입력으로 다시 분석하면 같은 키를 써요. */
   idempotencyKey: string;
 }

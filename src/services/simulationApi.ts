@@ -63,6 +63,8 @@ function toRequestBody(snapshot: GradeAnalysisSnapshot) {
     },
     // 분석하기 버튼을 누른 것 = 분석 동의 (false 면 서버가 400 으로 거부)
     analysisConsent: true,
+    // 서술 분석은 읽었을 때만 보내요. 키를 빼면 성적만으로 분석해요. 서술 전문은 보내지 않아요.
+    ...(snapshot.holisticAnalysis ? { holisticAnalysis: snapshot.holisticAnalysis } : {}),
   };
 }
 
@@ -81,11 +83,30 @@ export type SimulationRecommendation = {
   university: string;
   department: string;
   admissionType: string;
-  /** SAFE·MATCH·REACH·FAR·OVER·UNRATED (필수 여부 미정이라 없으면 null) */
+  /** 성적만으로 본 구간. SAFE·MATCH·REACH·FAR·OVER·UNRATED (필수 여부 미정이라 없으면 null) */
   category: string | null;
+  /** 서류를 반영해 조정한 구간(SAFE·MATCH·REACH). 서류 보정을 적용한 카드만 값이 있어요. */
+  overallCategory: string | null;
+  /** 서류 적합도. 학종 후보에 서류 입력이 있을 때만 값이 있어요. */
+  documentFit: DocumentFit | null;
   reason: ReportSection;
   /** 근거 지표. 필드가 아직 초안이라 받은 그대로 둬요. */
   evidence: Record<string, unknown> | null;
+};
+
+export type DocumentFitLevel = 'HIGH' | 'MID' | 'LOW';
+
+export type DocumentFit = {
+  level: DocumentFitLevel;
+  /** 판단에 크게 작용한 평가요소(ACADEMIC·MAJOR_FIT·COMMUNITY). 최대 2개 */
+  basis: string[];
+};
+
+/** 서술 분석 반영 결과. 보내지 않았으면 NOT_PROVIDED. 서버에 저장되지 않는 값이에요. */
+export type HolisticResult = {
+  status: 'APPLIED' | 'SKIPPED' | 'NOT_PROVIDED';
+  /** SKIPPED 일 때: DISABLED·RULES_OUTDATED·TOO_SHORT·INSUFFICIENT_SIGNALS */
+  skipReason: string | null;
 };
 
 /** 추천 안내. 서버는 code·rank 만 보내고, 화면 문구는 FE 가 정해요. */
@@ -100,6 +121,7 @@ export type SimulationResult = {
     assumptionReasons: { code: string; message: string; subjectRef: string | null }[];
   };
   recommendations: SimulationRecommendation[];
+  holistic: HolisticResult;
   report: {
     greetingSummary: ReportSection | null;
     overallAssessment: ReportSection | null;
@@ -129,9 +151,25 @@ function toRecommendation(item: unknown, index: number): SimulationRecommendatio
     department: item.department,
     admissionType: str(item.admissionType),
     category: typeof item.category === 'string' && item.category ? item.category : null,
+    overallCategory: typeof item.overallCategory === 'string' && item.overallCategory ? item.overallCategory : null,
+    documentFit: toDocumentFit(item.documentFit),
     reason: toSection(item.reason) ?? { text: '', generationMethod: '' },
     evidence: isObject(item.evidence) ? item.evidence : null,
   };
+}
+
+const FIT_LEVELS: readonly string[] = ['HIGH', 'MID', 'LOW'];
+
+function toDocumentFit(value: unknown): DocumentFit | null {
+  if (!isObject(value) || typeof value.level !== 'string' || !FIT_LEVELS.includes(value.level)) return null;
+  const basis = Array.isArray(value.basis) ? value.basis.filter((item): item is string => typeof item === 'string') : [];
+  return { level: value.level as DocumentFitLevel, basis };
+}
+
+function toHolistic(value: unknown): HolisticResult {
+  if (!isObject(value)) return { status: 'NOT_PROVIDED', skipReason: null };
+  const status = value.status === 'APPLIED' || value.status === 'SKIPPED' ? value.status : 'NOT_PROVIDED';
+  return { status, skipReason: status === 'SKIPPED' && typeof value.skipReason === 'string' ? value.skipReason : null };
 }
 
 function toWarnings(value: unknown): SimulationWarning[] {
@@ -169,6 +207,7 @@ export function parseSimulationResult(body: unknown): SimulationResult {
       isAssumed: conversion.isAssumed === true,
       assumptionReasons: toAssumptionReasons(conversion.assumptionReasons),
     },
+    holistic: toHolistic(body.holistic),
     // 카드 순서·rank 는 서버 결과 그대로 (지망 순서로만 정렬)
     recommendations: body.recommendations
       .map(toRecommendation)

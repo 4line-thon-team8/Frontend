@@ -27,7 +27,7 @@ type MajorLookup =
 
 export default function GradeConfirmPage() {
   const navigate = useNavigate();
-  const { draft, setDraft, snapshot, setSnapshot, setResult, pendingOcrSubjects, setPendingOcrSubjects, setHasConfirmedGrades } = useGradeAnalysis();
+  const { draft, setDraft, snapshot, setSnapshot, setResult, narrative, pendingOcrSubjects, setPendingOcrSubjects, setHasConfirmedGrades } = useGradeAnalysis();
   const ocrSubjects = pendingOcrSubjects;
   const subjects = ocrSubjects ?? draft.subjects;
   const ocrReview = ocrSubjects && reviewOcrGrades(ocrSubjects, draft.curriculum);
@@ -143,15 +143,19 @@ export default function GradeConfirmPage() {
       includeReach: draft.includeReach,
       expandSimilarMajors: draft.expandSimilarMajors,
     };
+    // 서술을 읽어 분석에 성공했을 때만 보내요. 서술이 짧거나 구분하지 못했으면 성적만으로 분석해요.
+    const holisticAnalysis = narrative?.ok ? narrative.payload : null;
     // 입력이 그대로면(예: 세션 만료 후 재로그인해서 다시 분석) 같은 Idempotency-Key 로 재시도하고,
-    // 입력이 바뀌었으면 새 분석이라 새 키를 만들어요.
+    // 입력이 바뀌었으면 새 분석이라 새 키를 만들어요. 서술 분석도 요청 내용이라 함께 비교해요.
     const sameRequest = snapshot !== null
-      && JSON.stringify([snapshot.subjects, snapshot.preferences]) === JSON.stringify([subjects, preferences]);
+      && JSON.stringify([snapshot.subjects, snapshot.preferences, snapshot.holisticAnalysis])
+        === JSON.stringify([subjects, preferences, holisticAnalysis]);
     setSnapshot({
       subjects,
       preferences,
       // 리포트 요약의 '희망 학과' 표시용 (학과 목록은 이 화면에서만 불러와요)
       majorNames: preferences.majorIds.map(code => majorNames.get(code) ?? code),
+      holisticAnalysis,
       idempotencyKey: sameRequest && snapshot ? snapshot.idempotencyKey : createIdempotencyKey(),
     });
     setResult(null);

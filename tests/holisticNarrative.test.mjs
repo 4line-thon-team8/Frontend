@@ -197,3 +197,33 @@ test('라벨 코퍼스에서 BE 와 같은 정밀도·재현율을 낸다', asyn
   assert.ok(tp / (tp + fp) >= 0.9, `정밀도 ${tp}/${tp + fp}`);
   assert.ok(tp / (tp + fn) >= 0.9, `재현율 ${tp}/${tp + fn}`);
 });
+
+test('페이지마다 반복되는 머리글·바닥글 줄은 서술에 섞이지 않는다', async t => {
+  const server = await createServer({
+    configFile: false,
+    optimizeDeps: { noDiscovery: true, include: [] },
+    server: { middlewareMode: true, ws: false },
+  });
+  t.after(() => server.close());
+  const { splitSections } = await server.ssrLoadModule('/src/utils/holistic/splitSections.ts');
+
+  // 가상의 머리글·바닥글. 이름·학교·번호는 실제 값이 아니다.
+  const text = [
+    '동아리활동',
+    '1학년',
+    '성명: 김가상',
+    '한빛고등학교',
+    '3학년 2반 14번 김가상',
+    '파이썬으로 교내 설문 자료를 분석하며 통계 처리를 익혔다.',
+    '- 12 -',
+    '3 / 40',
+    '분석 과정에서 표본의 한계를 인식하고 보완했다.',
+  ].join('\n');
+
+  const [block] = splitSections(text);
+  const joined = block.entries.join(' ');
+  for (const leaked of ['김가상', '한빛고등학교', '14번', '- 12 -', '3 / 40']) {
+    assert.ok(!joined.includes(leaked), `머리글·바닥글이 남음: ${leaked}`);
+  }
+  assert.ok(joined.includes('파이썬으로') && joined.includes('보완했다'), '서술은 그대로 남는다');
+});
