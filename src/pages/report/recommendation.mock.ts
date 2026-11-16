@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router';
 import type { ApplicationTier } from './reportTier';
+import type { SimulationResult } from '../../services/simulationApi';
 
 // UI 목업 전용 데이터. 리포트 API(GET /api/reports/{report_id}) 명세가 정해지면 응답으로 교체합니다.
 // 카드 순서·rank·구간은 BE 응답을 그대로 사용합니다.
@@ -19,7 +20,8 @@ export type Recommendation = {
   major: string;
   /** 전형 (예: 교과) */
   admission: string;
-  tier: ApplicationTier;
+  /** BE category. 아직 안 오거나 모르는 값이면 null (구간 배지를 숨겨요) */
+  tier: ApplicationTier | null;
   /** BE 응답: recommendations[].reason.text */
   reason: { text: string };
   /** 추천 근거. 실제 응답의 evidence 객체(evidence.isNewOrMergedDepartment 등)로 교체 예정 */
@@ -80,3 +82,28 @@ export function useMockRecommendationResult(): RecommendationResult {
 }
 
 export const MOCK_RECOMMENDATIONS = MOCK_FULL.recommendations;
+
+/** BE 주소가 없을 때(시연 모드) 분석 응답 대신 쓰는 목업 */
+export function createMockSimulationResult(): SimulationResult {
+  return {
+    conversion: { overallGrade: 2.5, isAssumed: false, assumptionReasons: [] },
+    recommendations: MOCK_FULL.recommendations.map(item => ({
+      rank: item.rank,
+      university: item.university,
+      department: item.major,
+      admissionType: item.admission,
+      category: item.tier,
+      reason: { text: item.reason.text, generationMethod: 'template' },
+      evidence: null,
+    })),
+    report: {
+      greetingSummary: { text: '컴퓨터공학 · 통계학 희망, 학생부교과 선호 방향을 바탕으로 안내드릴게요.', generationMethod: 'template' },
+      overallAssessment: { text: '수학이 상대적으로 낮아 안정·적정 위주로 구성했어요.\n+ 소신 1장 포함', generationMethod: 'template' },
+      applicationStrategy: { text: '추천 전형의 공개 모집요강을 함께 확인해 주세요.', generationMethod: 'template' },
+      closing: { text: '지원 전 최신 모집요강과 지원 자격을 확인해 주세요.', generationMethod: 'template' },
+    },
+    warnings: [],
+    saveStatus: 'SAVED',
+    reportId: null,
+  };
+}

@@ -1,18 +1,19 @@
+import { Navigate } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
 import ReportPagination from '../../components/report/ReportPagination';
 import ResultNotices from '../../components/report/ResultNotices';
 import { getCardWarnings, isNoCandidates } from '../../components/report/resultWarnings';
 import clipboard from '../../assets/icons/clipboard.svg';
-import { useMockRecommendationResult } from './recommendation.mock';
+import { useReportView } from './analysisResult';
 import { TIER_LABELS, tierClassName } from './reportTier';
 import './ReportPage.css';
 import './RecommendationPage.css';
 
 export default function RecommendationPage() {
-  // TODO: reportApi 구현 후 실제 추천 원서 데이터로 교체합니다.
-  const result = useMockRecommendationResult();
-  const { recommendations, warnings } = result;
+  const view = useReportView();
+  if (!view) return <Navigate to="/grade/input" replace />;
+  const { recommendations, warnings } = view;
 
   return (
     <div className="report-page">
@@ -23,7 +24,7 @@ export default function RecommendationPage() {
         </h1>
       </header>
 
-      {isNoCandidates(result) ? <RecommendationEmpty /> : (
+      {isNoCandidates(view) ? <RecommendationEmpty /> : (
         <>
           <ResultNotices count={recommendations.length} warnings={warnings} />
 
@@ -35,14 +36,14 @@ export default function RecommendationPage() {
                 <li key={item.rank} className={`report-fold-card recommendation-card ${tierClassName(item.tier)}`}>
                   <h2>
                     <span className="recommendation-card__rank">{item.rank}지망</span>
-                    {item.university} {item.major} · {item.admission}
+                    {item.university} {item.major}{item.admission && ` · ${item.admission}`}
                   </h2>
-                  <span className="recommendation-card__tier">{TIER_LABELS[item.tier]}</span>
-                  <p className="recommendation-card__reason">{item.reason.text}</p>
+                  {item.tier && <span className="recommendation-card__tier">{TIER_LABELS[item.tier]}</span>}
+                  {item.reason.text && <p className="recommendation-card__reason">{item.reason.text}</p>}
                   {cardWarnings.map(warning => (
                     <p key={`${warning.code}-${warning.message}`} className="recommendation-card__warning">{warning.message}</p>
                   ))}
-                  <p className="recommendation-card__evidence">근거 : {item.evidence}</p>
+                  {item.evidence && <p className="recommendation-card__evidence">근거 : {item.evidence}</p>}
                 </li>
               );
             })}

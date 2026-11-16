@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import type { SimulationSubjectRow } from '../services/simulationApi';
+import type { SimulationResult, SimulationSubjectRow } from '../services/simulationApi';
 import type { ConfirmSubject, GradeConfirmDraft } from '../types/gradeConfirm';
 
 type AnalysisPreferences = Pick<
@@ -13,6 +13,10 @@ export interface GradeAnalysisSnapshot {
   preferences: {
     readonly [Key in keyof AnalysisPreferences]: Readonly<AnalysisPreferences[Key]>;
   };
+  /** 희망 학과 이름 (preferences.majorIds 와 같은 순서). 리포트 화면 표시용 */
+  majorNames: readonly string[];
+  /** POST /api/simulations 중복 저장 방지 키. 같은 입력으로 다시 분석하면 같은 키를 써요. */
+  idempotencyKey: string;
 }
 
 interface GradeAnalysisState {
@@ -24,6 +28,9 @@ interface GradeAnalysisState {
   setDraft: Dispatch<SetStateAction<GradeConfirmDraft>>;
   snapshot: GradeAnalysisSnapshot | null;
   setSnapshot: Dispatch<SetStateAction<GradeAnalysisSnapshot | null>>;
+  /** 분석 응답 전체 (리포트 화면에서 사용). 새 분석을 시작하면 비워요. */
+  result: SimulationResult | null;
+  setResult: Dispatch<SetStateAction<SimulationResult | null>>;
   reset: () => void;
 }
 

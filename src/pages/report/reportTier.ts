@@ -11,12 +11,16 @@ export const TIER_LABELS: Record<ApplicationTier, string> = {
   UNRATED: '판단 자료 부족',
 };
 
-export const tierClassName = (tier: ApplicationTier) => `is-${tier.toLowerCase()}`;
+export const tierClassName = (tier: ApplicationTier | null) => (tier ? `is-${tier.toLowerCase()}` : '');
+
+export function toApplicationTier(value: unknown): ApplicationTier | null {
+  return (APPLICATION_TIERS as readonly unknown[]).includes(value) ? value as ApplicationTier : null;
+}
 
 export type TierCount = { tier: ApplicationTier; label: string; count: number };
 
 /** 구간별 카드 수 (0장인 구간은 빼고, 구간 순서대로) */
-export function countByTier(items: readonly { tier: ApplicationTier }[]): TierCount[] {
+export function countByTier(items: readonly { tier: ApplicationTier | null }[]): TierCount[] {
   return APPLICATION_TIERS
     .map(tier => ({ tier, label: TIER_LABELS[tier], count: items.filter(item => item.tier === tier).length }))
     .filter(item => item.count > 0);
