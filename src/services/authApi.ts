@@ -52,8 +52,9 @@ export async function login(credentials: Credentials): Promise<void> {
  */
 export function getLoginErrorMessage(error: unknown): string {
   if (isNetworkError(error)) return NETWORK_ERROR_MESSAGE;
-  if (error instanceof ApiError && error.status === 401) return '이메일 또는 비밀번호를 확인해 주세요.';
-  if (error instanceof ApiError && error.status === 400) return '이메일 형식을 확인해 주세요.';
+  // 400 도 같은 문구: 서버는 비밀번호 길이(15~64자)가 안 맞아도 400 INVALID_REQUEST 를 줘요.
+  // 이메일 형식은 화면에서 먼저 검사하니, 여기까지 온 400 은 대부분 비밀번호 때문이에요.
+  if (error instanceof ApiError && (error.status === 401 || error.status === 400)) return '이메일 또는 비밀번호를 확인해 주세요.';
   return '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.';
 }
 
