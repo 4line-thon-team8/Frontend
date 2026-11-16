@@ -10,10 +10,15 @@ import type { ConfirmSubject } from '../../types/gradeConfirm';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import { getGradeImage } from '../../utils/gradeImageStore';
 import { reviewSubject, toggleAdmission, validateGradeConfirm } from '../../utils/gradeConfirmValidation';
+<<<<<<< HEAD
 import { ADMISSION_OPTIONS, MAJOR_LIMIT } from './gradeConfirm.mock';
 import { ApiError } from '../../services/apiClient';
 import { getMajors, type Major } from '../../services/lookupApi';
 import { toSimulationSubjectRows } from '../../services/simulationApi';
+=======
+import { ADMISSION_OPTIONS, MOCK_MAJOR_LIMIT, MOCK_MAJORS } from './gradeConfirm.mock';
+import { createIdempotencyKey, toSimulationSubjectRows } from '../../services/simulationApi';
+>>>>>>> a225c4c (분석요청)
 import { applyOcrGrades, reviewOcrGrades } from '../../utils/applyOcrGrades';
 import { searchAllowedSubjects } from '../../utils/subjectCatalog';
 import './GradeConfirmPage.css';
@@ -27,7 +32,7 @@ type MajorLookup =
 
 export default function GradeConfirmPage() {
   const navigate = useNavigate();
-  const { draft, setDraft, setSnapshot, pendingOcrSubjects, setPendingOcrSubjects, setHasConfirmedGrades } = useGradeAnalysis();
+  const { draft, setDraft, snapshot, setSnapshot, setResult, pendingOcrSubjects, setPendingOcrSubjects, setHasConfirmedGrades } = useGradeAnalysis();
   const ocrSubjects = pendingOcrSubjects;
   const subjects = ocrSubjects ?? draft.subjects;
   const ocrReview = ocrSubjects && reviewOcrGrades(ocrSubjects, draft.curriculum);
@@ -137,15 +142,18 @@ export default function GradeConfirmPage() {
       setPendingOcrSubjects(null);
     }
     setHasConfirmedGrades(true);
-    setSnapshot({
-      subjects,
-      preferences: {
-        majorIds: [...draft.majorIds],
-        admissions: [...draft.admissions],
-        includeReach: draft.includeReach,
-        expandSimilarMajors: draft.expandSimilarMajors,
-      },
-    });
+    const preferences = {
+      majorIds: [...draft.majorIds],
+      admissions: [...draft.admissions],
+      includeReach: draft.includeReach,
+      expandSimilarMajors: draft.expandSimilarMajors,
+    };
+    // 입력이 그대로면(예: 세션 만료 후 재로그인해서 다시 분석) 같은 Idempotency-Key 로 재시도하고,
+    // 입력이 바뀌었으면 새 분석이라 새 키를 만들어요.
+    const sameRequest = snapshot !== null
+      && JSON.stringify([snapshot.subjects, snapshot.preferences]) === JSON.stringify([subjects, preferences]);
+    setSnapshot({ subjects, preferences, idempotencyKey: sameRequest && snapshot ? snapshot.idempotencyKey : createIdempotencyKey() });
+    setResult(null);
     setEditing(false);
     navigate('/grade/loading');
   }

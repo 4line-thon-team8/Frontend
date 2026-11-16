@@ -3,21 +3,27 @@ import ReportPagination from '../../components/report/ReportPagination';
 import clipboard from '../../assets/icons/clipboard.svg';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
 import { isNoCandidates } from '../../components/report/resultWarnings';
-import { useMockRecommendationResult } from './recommendation.mock';
+import { Navigate } from 'react-router';
+import { USE_MOCK_AUTH } from '../../services/authApi';
+import { sectionLines, useReportView } from './analysisResult';
 import { countByTier, tierClassName } from './reportTier';
-import { MOCK_STRATEGY_REPORT, SCORE_MAX } from './strategy.mock';
+import { MOCK_STRATEGY_REPORT, SCORE_MAX, type StrategyReport } from './strategy.mock';
 import './ReportPage.css';
 import './StrategyPage.css';
 
+const EMPTY_STRATEGY: StrategyReport = { activitySummaryLines: [], scores: [], advices: [] };
+
 export default function StrategyPage() {
-  // TODO: reportApi 구현 후 실제 리포트 데이터로 교체합니다.
-  const { activitySummaryLines, scores, advices } = MOCK_STRATEGY_REPORT;
-  const result = useMockRecommendationResult();
-  const { recommendations } = result;
+  const view = useReportView();
+  if (!view) return <Navigate to="/grade/input" replace />;
+  // 활동 요약·역량 점수·학과별 조언은 3단계 기능이라 분석 응답에 없어요. 시연 모드에서만 목업을 보여줘요.
+  const { activitySummaryLines, scores, advices }: StrategyReport = USE_MOCK_AUTH ? MOCK_STRATEGY_REPORT : EMPTY_STRATEGY;
+  const strategyLines = sectionLines(view.report.applicationStrategy);
+  const { recommendations } = view;
   // 추천 카드의 구간(BE 값)별 장수. 0장인 구간은 표시하지 않아요.
   const applications = countByTier(recommendations);
 
-  if (isNoCandidates(result)) {
+  if (isNoCandidates(view)) {
     return (
       <div className="report-page">
         <header className="report-header">
@@ -42,6 +48,7 @@ export default function StrategyPage() {
         <p>*활동 입력 내용은 저장되지 않아요.</p>
       </header>
 
+      {activitySummaryLines.length > 0 && <>
       <section className="report-fold-card strategy-activity" aria-label="입력한 활동 요약">
         {activitySummaryLines.map(line => <p key={line}>{line}</p>)}
       </section>
@@ -80,6 +87,7 @@ export default function StrategyPage() {
       </section>
 
       <hr className="report-divider" />
+      </>}
 
       <section className="strategy-applications" aria-labelledby="strategy-applications-title">
         <h2 id="strategy-applications-title" className="report-section-label">나의 지원 전략</h2>
@@ -91,6 +99,12 @@ export default function StrategyPage() {
             </li>
           ))}
         </ul>
+        {/* BE report.applicationStrategy (근거 기반 지원 방향 안내) */}
+        {strategyLines.length > 0 && (
+          <div className="report-fold-card strategy-advice">
+            {strategyLines.map((line, index) => <p key={index}>{line}</p>)}
+          </div>
+        )}
       </section>
 
       <div className="report-pagination-slot">

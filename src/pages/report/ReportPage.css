@@ -52,6 +52,10 @@
   line-height: 16px;
 }
 
+/* 자동 저장 결과 안내 (Figma 미정: 안내 문구와 같은 크기, 본문 색) */
+.report-header p.report-save-status { color: #52625d; }
+.report-header p.report-save-status--failed { color: #c0392b; }
+
 /* 안내 문구 아래 41px 에 오는 첫 카드 */
 .report-header + * { margin-top: 41px; }
 
