@@ -29,10 +29,20 @@ function authHeaders(): Record<string, string> {
 
 function toReportSummary(item: unknown): ReportSummary | null {
   if (typeof item !== 'object' || item === null) return null;
-  const { reportId, createdAt } = item as Record<string, unknown>;
+  // 명세는 reportId 지만, 서버가 id 로 줄 때도 받아요.
+  const { reportId = (item as Record<string, unknown>).id, createdAt } = item as Record<string, unknown>;
   const id = typeof reportId === 'string' || typeof reportId === 'number' ? String(reportId) : '';
-  if (!id || typeof createdAt !== 'string' || Number.isNaN(Date.parse(createdAt))) return null;
-  return { reportId: id, createdAt };
+  // 시각을 읽을 수 없어도 리포트는 보여줘요(목록에서 사라지는 것보다 나아요). 표시는 화면에서 처리해요.
+  if (!id) return null;
+  return { reportId: id, createdAt: typeof createdAt === 'string' ? createdAt : '' };
+}
+
+/** 목록 배열 찾기: 명세 { reports: [...] }. 배열을 바로 주거나 content/items 로 감싼 경우도 받아요. */
+function findReportList(body: unknown): unknown[] | undefined {
+  if (Array.isArray(body)) return body;
+  if (typeof body !== 'object' || body === null) return undefined;
+  const { reports, content, items } = body as Record<string, unknown>;
+  return [reports, content, items].find(Array.isArray);
 }
 
 /** GET /api/reports → { reports: ReportSummary[] }. 서버가 최신순으로 정렬해서 줘요. */
@@ -41,8 +51,9 @@ export async function getReports(): Promise<ReportSummary[]> {
     return MOCK_SAVED_REPORTS.map(report => ({ reportId: report.id, createdAt: report.createdAtIso }));
   }
   const body = await apiClient('/api/reports', { headers: authHeaders() });
-  const reports = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).reports : undefined;
-  if (!Array.isArray(reports)) throw new Error('리포트 목록 응답 형식이 올바르지 않아요.');
+  const reports = findReportList(body);
+  if (import.meta.env.DEV) console.info('[리포트 목록 응답]', body);
+  if (!reports) throw new Error('리포트 목록 응답 형식이 올바르지 않아요.');
   // 형식이 어긋난 항목 하나 때문에 목록 전체가 안 보이지 않도록 건너뛰어요.
   return reports.map(toReportSummary).filter((report): report is ReportSummary => report !== null);
 }
@@ -145,6 +156,7 @@ export function getDeleteReportErrorMessage(error: unknown): string {
 
 /** 화면 표기: 한국 시간 기준 YYYY.MM.DD */
 export function formatReportDate(iso: string): string {
+  if (Number.isNaN(Date.parse(iso))) return '날짜 확인 중';
   const parts = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
     .formatToParts(new Date(iso));
   const get = (type: string) => parts.find(part => part.type === type)?.value ?? '';
@@ -153,5 +165,6 @@ export function formatReportDate(iso: string): string {
 
 /** 화면 표기: 한국 시간 기준 오전/오후 h:mm */
 export function formatReportTime(iso: string): string {
+  if (Number.isNaN(Date.parse(iso))) return '저장된 리포트';
   return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
 }
