@@ -5,7 +5,7 @@ import AuthImageButton from '../../components/auth/AuthImageButton';
 import logo from '../../assets/images/logo.svg';
 import loginButton from '../../assets/icons/login-button.svg';
 import loginButtonBefore from '../../assets/icons/login-button-before.svg';
-import { getErrorCode, getReturnTo, isNetworkError, login, NETWORK_ERROR_MESSAGE } from '../../services/authApi';
+import { getLoginErrorMessage, getReturnTo, login } from '../../services/authApi';
 import { PASSWORD_MAX_LENGTH, validateEmail, validateLoginPassword } from './authValidation';
 import './AuthPage.css';
 
@@ -34,11 +34,7 @@ export default function LoginPage() {
       // 세션 만료로 왔다면 원래 화면(예: S-03)으로, 아니면 성적 입력으로 이동해요.
       navigate(getReturnTo(location.state) ?? '/grade/input', { replace: true });
     } catch (error) {
-      setErrors({
-        form: getErrorCode(error) === 'AUTHENTICATION_FAILED'
-          ? '이메일 또는 비밀번호를 확인해 주세요.'
-          : isNetworkError(error) ? NETWORK_ERROR_MESSAGE : '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.',
-      });
+      setErrors({ form: getLoginErrorMessage(error) });
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +57,7 @@ export default function LoginPage() {
             inputMode="email"
             placeholder="example@email.com"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => { setEmail(e.target.value); setErrors(current => ({ ...current, email: undefined, form: undefined })); }}
             error={errors.email}
           />
           <AuthField
@@ -72,7 +68,7 @@ export default function LoginPage() {
             maxLength={PASSWORD_MAX_LENGTH}
             placeholder="비밀번호를 입력해 주세요."
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={e => { setPassword(e.target.value); setErrors(current => ({ ...current, password: undefined, form: undefined })); }}
             error={errors.password}
           />
           {errors.form && <p className="auth-field__error" role="alert">{errors.form}</p>}

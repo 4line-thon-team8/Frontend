@@ -277,3 +277,18 @@
   font-size: 12px;
   text-align: center;
 }
+
+/* 회원 탈퇴: 임시 텍스트 버튼 (Figma 디자인 없음) */
+.mypage-withdraw {
+  display: block;
+  margin: 6px auto 0;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  color: #8a9893;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.mypage-withdraw:disabled { opacity: 0.5; cursor: default; }

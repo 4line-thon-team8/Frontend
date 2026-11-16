@@ -1,5 +1,5 @@
 // FE2: POST /api/auth/signup, /api/auth/login, /api/auth/logout
-// TODO: DELETE /api/users/me (회원 탈퇴)는 명세 확정 후 추가합니다.
+// DELETE /api/users/me (회원 탈퇴)
 import { ApiError, apiClient } from './apiClient';
 import { clearAccessToken, getAccessToken, setAccessToken } from './authToken';
 
@@ -9,7 +9,8 @@ export const USE_MOCK_AUTH = !import.meta.env.VITE_API_BASE_URL;
 const TOKEN_LIFETIME_MS = 2 * 60 * 60 * 1000;
 
 export type Credentials = { email: string; password: string };
-type LoginResponse = { accessToken: string; expiresAt: string };
+/** 200 응답. expiresAt 필수 여부는 명세상 아직 미정이라 없을 수도 있어요. */
+type LoginResponse = { accessToken: string; expiresAt?: string };
 
 function postJson(body: unknown): RequestInit {
   return {
@@ -22,7 +23,7 @@ function postJson(body: unknown): RequestInit {
 function isLoginResponse(body: unknown): body is LoginResponse {
   if (typeof body !== 'object' || body === null) return false;
   const { accessToken, expiresAt } = body as Record<string, unknown>;
-  return typeof accessToken === 'string' && accessToken !== '' && typeof expiresAt === 'string';
+  return typeof accessToken === 'string' && accessToken !== '' && (expiresAt === undefined || typeof expiresAt === 'string');
 }
 
 /** 201, 본문 없음. 가입 후 자동 로그인은 없어서 이어서 login() 을 호출해야 해요. */
@@ -38,7 +39,22 @@ export async function login(credentials: Credentials): Promise<void> {
   }
   const body = await apiClient('/api/auth/login', postJson(credentials));
   if (!isLoginResponse(body)) throw new Error('로그인 응답 형식이 올바르지 않아요.');
-  setAccessToken(body.accessToken, body.expiresAt);
+  // expiresAt 이 없거나 읽을 수 없으면 합의된 2시간 만료로 계산해요. (서버도 만료를 따로 검사해요)
+  const expiresAt = body.expiresAt && !Number.isNaN(Date.parse(body.expiresAt))
+    ? body.expiresAt
+    : new Date(Date.now() + TOKEN_LIFETIME_MS).toISOString();
+  setAccessToken(body.accessToken, expiresAt);
+}
+
+/**
+ * 로그인 실패 문구. 로그인 요청 자체의 401 은 code 와 관계없이 로그인 실패로 안내해요
+ * (보호 API 의 401 = 세션 만료와 구분). 계정 존재 여부가 드러나지 않게 같은 문구를 써요.
+ */
+export function getLoginErrorMessage(error: unknown): string {
+  if (isNetworkError(error)) return NETWORK_ERROR_MESSAGE;
+  if (error instanceof ApiError && error.status === 401) return '이메일 또는 비밀번호를 확인해 주세요.';
+  if (error instanceof ApiError && error.status === 400) return '이메일 형식을 확인해 주세요.';
+  return '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.';
 }
 
 /**
@@ -65,6 +81,31 @@ export async function logout(): Promise<void> {
   }
   clearAccessToken();
 }
+
+/**
+ * DELETE /api/users/me → 204, 본문 없음. 계정·저장 리포트를 모두 지우고 모든 토큰을 폐기해요. 복구할 수 없어요.
+ * 성공했을 때만 메모리 토큰을 지워요. 401 은 화면에서 세션 만료로 보내고, 그 외 실패는 그대로 던집니다.
+ */
+export async function withdraw(): Promise<void> {
+  if (USE_MOCK_AUTH) {
+    clearAccessToken();
+    return;
+  }
+  const token = getAccessToken();
+  // 토큰이 없으면 서버가 401 을 주는 것과 같아요. 세션 만료 흐름으로 보내도록 401 로 맞춰 던집니다.
+  if (!token) throw new ApiError(401, { code: 'UNAUTHORIZED' });
+  await apiClient('/api/users/me', {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  clearAccessToken();
+}
+
+/** S-06 #13: 탈퇴 전 복구 불가 안내와 최종 확인 */
+export const WITHDRAW_CONFIRM = '정말 탈퇴할까요?\n계정과 저장된 리포트가 모두 삭제되고, 복구할 수 없어요.';
+
+/** S-06 #13 고정 문구 */
+export const WITHDRAW_ERROR_MESSAGE = '탈퇴를 완료하지 못했어요. 다시 시도해 주세요.';
 
 /** BE 에러 본문 { code, message } 의 code */
 export function getErrorCode(error: unknown): string | undefined {

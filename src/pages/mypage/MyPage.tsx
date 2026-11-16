@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
-import { isNetworkError, logout, NETWORK_ERROR_MESSAGE } from '../../services/authApi';
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
+import {
+  isNetworkError, isSessionExpiredError, logout, NETWORK_ERROR_MESSAGE, SESSION_EXPIRED_PATH, withdraw, WITHDRAW_CONFIRM, WITHDRAW_ERROR_MESSAGE,
+} from '../../services/authApi';
+import { clearAccessToken } from '../../services/authToken';
 import { APPLICATION_TIERS, TIER_LABELS } from '../report/reportTier';
 import { MOCK_SAVED_REPORTS, SYSTEM_RULES, type SavedReport } from './mypage.mock';
 import './MyPage.css';
@@ -31,7 +35,31 @@ export default function MyPage() {
     setReports(current => current.filter(report => report.id !== id));
   };
 
+  const { reset: resetGradeAnalysis } = useGradeAnalysis();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string>();
+
+  const handleWithdraw = async () => {
+    if (withdrawing || loggingOut) return; // 중복 클릭 방지
+    if (!window.confirm(WITHDRAW_CONFIRM)) return;
+    setWithdrawing(true);
+    setWithdrawError(undefined);
+    try {
+      await withdraw();
+      resetGradeAnalysis(); // 사용자별 화면 상태 정리
+      navigate('/login', { replace: true });
+    } catch (error) {
+      setWithdrawing(false);
+      // 401: 공통 인증 오류 → 세션 만료 화면 → 재로그인 후 마이페이지로 돌아와요.
+      if (isSessionExpiredError(error)) {
+        clearAccessToken();
+        navigate(SESSION_EXPIRED_PATH, { replace: true, state: { from: '/mypage' } });
+        return;
+      }
+      setWithdrawError(isNetworkError(error) ? NETWORK_ERROR_MESSAGE : WITHDRAW_ERROR_MESSAGE);
+    }
+  };
   const [logoutError, setLogoutError] = useState<string>();
 
   const handleLogout = async () => {
@@ -40,6 +68,7 @@ export default function MyPage() {
     setLogoutError(undefined);
     try {
       await logout();
+      resetGradeAnalysis(); // 다음 사용자에게 입력값이 남지 않도록 화면 상태도 비워요.
       navigate('/login', { replace: true });
     } catch (error) {
       setLoggingOut(false);
@@ -90,6 +119,11 @@ export default function MyPage() {
       </button>
       {logoutError && <p className="mypage-logout-error" role="alert">{logoutError}</p>}
       <p className="mypage-note">*회원 탈퇴 시 저장된 리포트가 모두 삭제돼요.</p>
+      {/* TODO: Figma 에 탈퇴 버튼 디자인이 없어 임시로 작은 텍스트 버튼을 둡니다. */}
+      <button type="button" className="mypage-withdraw" onClick={() => void handleWithdraw()} disabled={withdrawing || loggingOut}>
+        {withdrawing ? '탈퇴 처리 중…' : '회원 탈퇴'}
+      </button>
+      {withdrawError && <p className="mypage-logout-error" role="alert">{withdrawError}</p>}
 
       <BottomNavigation />
     </div>
