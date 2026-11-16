@@ -270,6 +270,16 @@
 
 .mypage-detail-delete { margin-top: 49px; }
 
+/* 추천 이유: 학교·학과 아래 작은 글씨 (Figma 에 없어 임시 스타일) */
+.mypage-detail-row__reason {
+  display: block;
+  margin-top: 4px;
+  color: #52625d;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
 /* 로그아웃 실패 안내 (로그인 화면 에러 문구와 같은 색) */
 .mypage-logout-error {
   margin: 8px 0 0;
