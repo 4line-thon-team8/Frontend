@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
@@ -6,6 +6,9 @@ import {
   isNetworkError, isSessionExpiredError, logout, NETWORK_ERROR_MESSAGE, SESSION_EXPIRED_PATH, withdraw, WITHDRAW_CONFIRM, WITHDRAW_ERROR_MESSAGE,
 } from '../../services/authApi';
 import { clearAccessToken } from '../../services/authToken';
+import {
+  DELETE_REPORT_CONFIRM, deleteReport, formatReportDate, formatReportTime, getDeleteReportErrorMessage, getReports, NoTokenError,
+} from '../../services/reportApi';
 import { APPLICATION_TIERS, TIER_LABELS } from '../report/reportTier';
 import { MOCK_SAVED_REPORTS, SYSTEM_RULES, type SavedReport } from './mypage.mock';
 import './MyPage.css';
@@ -19,20 +22,89 @@ function TrashIcon() {
 }
 
 /** 예: 추천 원서 4장 · 적정 2 / 도전 부담이 큰 후보 1 / 판단 자료 부족 1 (0장 구간은 빼요) */
-function formatReportCounts(counts: SavedReport['counts']) {
+function formatReportCounts(counts: NonNullable<SavedReport['counts']>) {
   const tiers = APPLICATION_TIERS.filter(tier => (counts[tier] ?? 0) > 0);
   const total = tiers.reduce((sum, tier) => sum + (counts[tier] ?? 0), 0);
   return `추천 원서 ${total}장 · ${tiers.map(tier => `${TIER_LABELS[tier]} ${counts[tier]}`).join(' / ')}`;
 }
 
+type ReportCard = { id: string; createdAt: string; title: string; counts?: SavedReport['counts'] };
+
+/**
+ * 목록 API 는 reportId·createdAt 만 줘요. 학과 이름·구간별 장수는 명세에 없어서 생성 시각으로 제목을 대신합니다.
+ * (목업 모드에서는 Figma 처럼 학과·장수까지 보여줘요.)
+ */
+function toReportCard(summary: { reportId: string; createdAt: string }): ReportCard {
+  const mock = MOCK_SAVED_REPORTS.find(report => report.id === summary.reportId);
+  return {
+    id: summary.reportId,
+    createdAt: formatReportDate(summary.createdAt),
+    title: mock?.title ?? `${formatReportTime(summary.createdAt)} 생성`,
+    counts: mock?.counts,
+  };
+}
+
 export default function MyPage() {
   const navigate = useNavigate();
-  // TODO: reportApi(GET /api/reports) 구현 후 실제 저장된 리포트로 교체합니다.
-  const [reports, setReports] = useState(MOCK_SAVED_REPORTS);
+  const [reports, setReports] = useState<ReportCard[]>([]);
+  const [listState, setListState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [listError, setListError] = useState<string>();
 
-  const handleDelete = (id: string) => {
-    // TODO: DELETE /api/reports/{report_id} 연동 후 성공했을 때만 목록에서 지웁니다.
-    setReports(current => current.filter(report => report.id !== id));
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let ignore = false; // 화면을 떠난 뒤 도착한 응답은 무시해요.
+    getReports()
+      .then(summaries => {
+        if (ignore) return;
+        setReports(summaries.map(toReportCard));
+        setListState('ready');
+      })
+      .catch((error: unknown) => {
+        if (ignore) return;
+        // 토큰 없음·만료(401) → 세션 만료 화면 → 재로그인 후 마이페이지로 돌아와요.
+        if (error instanceof NoTokenError || isSessionExpiredError(error)) {
+          clearAccessToken();
+          navigate(SESSION_EXPIRED_PATH, { replace: true, state: { from: '/mypage' } });
+          return;
+        }
+        setListError(isNetworkError(error) ? NETWORK_ERROR_MESSAGE : '저장된 리포트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        setListState('error');
+      });
+    return () => { ignore = true; };
+  }, [navigate, reloadKey]);
+
+  const retryLoadReports = () => {
+    setListState('loading');
+    setReloadKey(key => key + 1);
+  };
+
+  const [deletingId, setDeletingId] = useState<string>();
+  const [deleteError, setDeleteError] = useState<string>();
+
+  const goSessionExpired = () => {
+    clearAccessToken();
+    navigate(SESSION_EXPIRED_PATH, { replace: true, state: { from: '/mypage' } });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (deletingId) return; // 중복 클릭 방지
+    if (!window.confirm(DELETE_REPORT_CONFIRM)) return;
+    setDeletingId(id);
+    setDeleteError(undefined);
+    try {
+      await deleteReport(id);
+      // 서버에서 지워진 뒤에만 목록에서 빼요.
+      setReports(current => current.filter(report => report.id !== id));
+    } catch (error) {
+      if (error instanceof NoTokenError || isSessionExpiredError(error)) {
+        goSessionExpired();
+        return;
+      }
+      setDeleteError(getDeleteReportErrorMessage(error));
+    } finally {
+      setDeletingId(undefined);
+    }
   };
 
   const { reset: resetGradeAnalysis } = useGradeAnalysis();
@@ -83,6 +155,19 @@ export default function MyPage() {
         <h1>저장된 리포트</h1>
       </header>
 
+      {listState === 'loading' && <p className="mypage-reports-status" role="status">저장된 리포트를 불러오고 있어요.</p>}
+      {listState === 'error' && (
+        <div className="mypage-reports-status" role="alert">
+          <p>{listError}</p>
+          <button type="button" className="mypage-reports-retry" onClick={retryLoadReports}>다시 불러오기</button>
+        </div>
+      )}
+      {listState === 'ready' && reports.length === 0 && (
+        <p className="mypage-reports-status">아직 저장된 리포트가 없어요.<br />성적을 입력하고 분석하면 자동으로 저장돼요.</p>
+      )}
+
+      {deleteError && <p className="mypage-reports-status mypage-reports-status--error" role="alert">{deleteError}</p>}
+
       <ul className="mypage-reports">
         {reports.map(report => (
           <li key={report.id} className="mypage-report-card">
@@ -92,10 +177,10 @@ export default function MyPage() {
                 {report.title}
               </Link>
             </h2>
-            <p>{formatReportCounts(report.counts)}</p>
-            <button type="button" className="mypage-report-card__delete" onClick={() => handleDelete(report.id)} aria-label={`${report.createdAt} 리포트 삭제`}>
+            {report.counts && <p>{formatReportCounts(report.counts)}</p>}
+            <button type="button" className="mypage-report-card__delete" onClick={() => void handleDelete(report.id)} disabled={deletingId !== undefined} aria-label={`${report.createdAt} 리포트 삭제`}>
               <TrashIcon />
-              삭제
+              {deletingId === report.id ? '삭제 중…' : '삭제'}
             </button>
           </li>
         ))}

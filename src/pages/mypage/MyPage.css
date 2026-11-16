@@ -292,3 +292,28 @@
 }
 
 .mypage-withdraw:disabled { opacity: 0.5; cursor: default; }
+
+/* 저장 리포트 목록 상태 (불러오는 중 · 실패 · 없음) */
+.mypage-reports-status {
+  margin: 19px 0 0;
+  color: #52625d;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.mypage-reports-status p { margin: 0; }
+
+.mypage-reports-retry {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: 1px solid #c3cfca;
+  border-radius: 6px;
+  background: #fff;
+  color: #2f5d50;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mypage-reports-status--error { color: #b34a40; }
+.mypage-report-card__delete:disabled { opacity: 0.5; cursor: default; }
