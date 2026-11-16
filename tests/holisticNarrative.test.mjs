@@ -65,8 +65,8 @@ test('서술을 분석해 서버 요청 모양의 값을 만든다', async t => 
   const byId = Object.fromEntries(payload.indicatorSignals.map(signal => [signal.id, signal]));
   assert.ok(byId.A3 && byId.A3.count >= 3, '탐구력 신호');
   assert.ok(byId.B3 && byId.B3.count >= 1, '진로 탐색 신호');
-  // 행동특성의 "역할을 분담"은 C1 규칙의 영역(자율·동아리·세특)이 아니라서 세지 않는다.
-  assert.equal(byId.C1?.count, 1, '협업 신호');
+  // C1 은 자율·동아리·세특·행동특성에서 본다(분류 체계 §4). 자율활동과 행동특성의 "역할을 나누/분담" 두 곳.
+  assert.equal(byId.C1?.count, 2, '협업 신호');
   assert.ok(byId.D4 && byId.D4.count >= 1, '심화·확장 신호');
   for (const signal of payload.indicatorSignals) {
     assert.ok(signal.years.length >= 1 && signal.years.every(year => [1, 2, 3].includes(year)));
@@ -165,4 +165,35 @@ test('규칙 정규식이 잘못돼도 나머지 규칙으로 분석을 이어 �
   const { payload } = analyzeNarrative(SAMPLE, { rules: { ...BUNDLED_RULES, rules: [broken, ...BUNDLED_RULES.rules] } });
 
   assert.ok(payload.indicatorSignals.length > 0);
+});
+
+// BE 의 src/test/resources/holistic/corpus.tsv 와 같은 파일이다.
+// 두 저장소가 같은 문장에서 같은 지표를 찾는지(정밀도·재현율이 BE 테스트와 같은지)만 본다.
+test('라벨 코퍼스에서 BE 와 같은 정밀도·재현율을 낸다', async t => {
+  const { readFileSync } = await import('node:fs');
+  const { BUNDLED_RULES, compileRules, matchRule } = await load(t);
+  const compiled = compileRules(BUNDLED_RULES.rules);
+  const lines = readFileSync('tests/fixtures/holistic-corpus.tsv', 'utf8')
+    .split('\n')
+    .filter(line => line.trim() && !line.startsWith('#'));
+
+  let tp = 0;
+  let fp = 0;
+  let fn = 0;
+  for (const line of lines) {
+    const [section, text, expectedRaw = ''] = line.split('\t');
+    const expected = new Set(expectedRaw.split(',').map(s => s.trim()).filter(Boolean));
+    const got = new Set(
+      compiled
+        .filter(rule => rule.rule.sections.includes(section) && matchRule(rule, text))
+        .map(rule => rule.rule.indicator),
+    );
+    for (const id of new Set([...got, ...expected])) {
+      if (got.has(id) && expected.has(id)) tp += 1;
+      else if (got.has(id)) fp += 1;
+      else fn += 1;
+    }
+  }
+  assert.ok(tp / (tp + fp) >= 0.9, `정밀도 ${tp}/${tp + fp}`);
+  assert.ok(tp / (tp + fn) >= 0.9, `재현율 ${tp}/${tp + fn}`);
 });
