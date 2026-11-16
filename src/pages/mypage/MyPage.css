@@ -305,7 +305,7 @@
 
 /* 저장 리포트 목록 상태 (불러오는 중 · 실패 · 없음) */
 .mypage-reports-status {
-  margin: 19px 0 0;
+  margin: 32px 0 0;
   color: #52625d;
   font-size: 12px;
   line-height: 1.5;

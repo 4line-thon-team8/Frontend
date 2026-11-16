@@ -186,7 +186,7 @@ export default function MyPage() {
         ))}
       </ul>
 
-      <Link className="mypage-add" to="/grade/input">+ 추가</Link>
+      <Link className="mypage-add" to="/grade/input">리포트 만들러가기</Link>
 
       <hr className="mypage-divider" />
 
