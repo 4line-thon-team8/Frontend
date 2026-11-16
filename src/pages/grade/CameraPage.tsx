@@ -6,6 +6,7 @@ import { useCamera } from '../../hooks/useCamera';
 import { setGradeImage } from '../../utils/gradeImageStore';
 import type { GradeImage } from '../../utils/gradeImageStore';
 import { extractImageText } from '../../utils/extractImageText';
+import { analyzeNarrative } from '../../utils/holistic/analyzeNarrative';
 import { parseOcrGrades } from '../../utils/parseOcrGrades';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import type { ConfirmSubject } from '../../types/gradeConfirm';
@@ -27,7 +28,7 @@ function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
 
 export default function CameraPage() {
   const navigate = useNavigate();
-  const { setPendingOcrSubjects } = useGradeAnalysis();
+  const { setPendingOcrSubjects, setNarrative } = useGradeAnalysis();
   const [photo, setPhoto] = useState<GradeImage | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [message, setMessage] = useState('');
@@ -128,10 +129,12 @@ export default function CameraPage() {
     activeOcr.current = request;
     setOcr({ kind: 'preparing' });
     try {
-      const { words, tableSubjects } = await extractImageText(photo.file, request.signal, progress => {
+      const { text, words, tableSubjects } = await extractImageText(photo.file, request.signal, progress => {
         if (!request.signal.aborted) setOcr(progress);
       });
       if (!request.signal.aborted) {
+        // OCR 전문은 서술 분석에만 쓰고 저장하지 않아요.
+        setNarrative(analyzeNarrative(text));
         const subjects = tableSubjects.length ? tableSubjects : parseOcrGrades(words);
         if (subjects.length) {
           openGradeConfirm(subjects);
