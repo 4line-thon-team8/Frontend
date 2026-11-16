@@ -1,0 +1,98 @@
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
+import { USE_MOCK_AUTH } from '../../services/authApi';
+import type { ReportSection, SaveStatus, SimulationResult, SimulationWarning } from '../../services/simulationApi';
+import { MOCK_MAJORS } from '../grade/gradeConfirm.mock';
+import { createMockSimulationResult, useMockRecommendationResult } from './recommendation.mock';
+import type { Recommendation, RecommendationResult, ResultWarning } from './recommendation.mock';
+import { toApplicationTier } from './reportTier';
+
+/**
+ * 추천 안내 코드 → 화면 문구. 서버는 code·rank 만 보내고 문구는 기획·FE 가 정해요.
+ * 목록에 없는 코드는 화면에 띄우지 않아요(코드 문자열이 그대로 보이지 않도록).
+ * FEWER_THAN_SIX_CARDS·NO_CANDIDATES 는 장수 안내·0장 화면으로 따로 보여줘요.
+ */
+const WARNING_MESSAGES: Record<string, string> = {
+  NO_CANDIDATES: '현재 조건에서 추천 가능한 후보가 없어요.',
+  FEWER_THAN_SIX_CARDS: '현재 조건에서 추천 가능한 후보가 6장보다 적어요.',
+  REACH_CARD_NOT_AVAILABLE: '상향 지원 카드로 넣을 후보를 찾지 못했어요.',
+  SIMILAR_MAJOR_USED: '희망 학과와 비슷한 학과로 채운 카드예요.',
+  OTHER_TRACK_USED: '선호 전형이 아닌 전형으로 채운 카드예요.',
+  UNDECLARED_USED: '자율전공·무전공 학과로 채운 카드예요.',
+  UNRATED_CARD: '입결 자료가 없어 구간을 판단하기 어려워요.',
+  LOW_CONFIDENCE_CARD: '참고할 입결 자료가 적어 결과가 불확실해요.',
+};
+
+function toWarnings(warnings: SimulationWarning[]): ResultWarning[] {
+  return warnings.flatMap(warning => {
+    const message = WARNING_MESSAGES[warning.code];
+    return message ? [{ code: warning.code, message, rank: warning.rank }] : [];
+  });
+}
+
+/** 근거 지표(초안 필드)를 한 줄로. 값이 없으면 빈 문자열 → 화면에서 근거 줄을 숨겨요. */
+function toEvidenceText(evidence: Record<string, unknown> | null): string {
+  if (!evidence) return '';
+  const parts: string[] = [];
+  if (typeof evidence.quota === 'number') parts.push(`모집 인원 ${evidence.quota}명`);
+  if (typeof evidence.competitionRate === 'number') parts.push(`경쟁률 ${evidence.competitionRate}:1`);
+  if (typeof evidence.basisYears === 'number' && evidence.basisYears > 0) parts.push(`최근 ${evidence.basisYears}개년 입결 기준`);
+  if (evidence.isNewOrMergedDepartment === true || evidence.newOrMergedDepartment === true) parts.push('신설·통합 학과');
+  return parts.join(' · ');
+}
+
+function toRecommendationResult(result: SimulationResult): RecommendationResult {
+  return {
+    recommendations: result.recommendations.map((item): Recommendation => ({
+      rank: item.rank,
+      university: item.university,
+      major: item.department,
+      admission: item.admissionType,
+      tier: toApplicationTier(item.category),
+      reason: { text: item.reason.text },
+      evidence: toEvidenceText(item.evidence),
+    })),
+    warnings: toWarnings(result.warnings),
+  };
+}
+
+export type ReportView = RecommendationResult & {
+  report: SimulationResult['report'];
+  saveStatus: SaveStatus | null;
+  /** 요약 카드: 희망 학과 / 선호 전형 (분석에 보낸 값 그대로) */
+  profileLines: string[];
+};
+
+const ADMISSION_LABELS: Record<string, string> = { 'school-record': '학생부교과', comprehensive: '학생부종합', any: '상관없음' };
+
+/**
+ * 리포트 화면 데이터. 분석 응답(GradeAnalysisProvider.result)을 화면 모양으로 바꿔요.
+ * - 분석 결과가 없으면 null → 화면에서 성적 입력으로 보내요.
+ * - BE 주소가 없는 시연 모드에서는 목업을 보여줘요 (?mock=partial / ?mock=empty 지원).
+ */
+export function useReportView(): ReportView | null {
+  const { result, snapshot } = useGradeAnalysis();
+  const mockRecommendations = useMockRecommendationResult();
+
+  const preferences = snapshot?.preferences;
+  const majorNames = preferences?.majorIds.map(id => MOCK_MAJORS.find(major => major.id === id)?.name ?? id) ?? [];
+  const admissions = preferences?.admissions.map(id => ADMISSION_LABELS[id] ?? id) ?? [];
+  const profileLines = [
+    majorNames.length ? `${majorNames.join(' · ')} 희망` : '',
+    admissions.length ? `${admissions.join(' · ')} 선호` : '',
+  ].filter(Boolean);
+
+  if (result) return { ...toRecommendationResult(result), report: result.report, saveStatus: result.saveStatus, profileLines };
+  if (!USE_MOCK_AUTH) return null;
+  const mock = createMockSimulationResult();
+  return {
+    ...mockRecommendations,
+    report: mock.report,
+    saveStatus: mockRecommendations.recommendations.length ? 'SAVED' : 'NOT_SAVED',
+    profileLines: profileLines.length ? profileLines : ['컴퓨터공학 · 통계학 희망', '학생부교과 선호'],
+  };
+}
+
+/** 리포트 문장: \n 을 줄 단위로 나눠요. */
+export function sectionLines(section: ReportSection | null): string[] {
+  return section ? section.text.split('\n').filter(line => line.trim()) : [];
+}
