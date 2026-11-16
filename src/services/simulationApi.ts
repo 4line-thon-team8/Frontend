@@ -33,17 +33,20 @@ export function toSimulationSubjectRows(draft: GradeConfirmDraft): SimulationSub
 /* ---------- 요청 ---------- */
 
 /**
- * 선호 전형 → preferredTrack 코드. 명세상 코드 값 이름이 아직 미정이에요.
- * 서버는 정의되지 않은 값을 400 으로 거부하니, 확정 전에는 보내지 않아요(= 서버 기본값 '상관없음').
- * TODO: BE 코드 값이 정해지면 채워 주세요. 예) 'school-record': 'SCHOOL_RECORD'
+ * 선호 전형 → preferredTrack 코드 (BE 재원님 확인, 2026-11-16).
+ * 정시 코드는 BE·기획 확인 중이에요. 화면에 정시 선택지가 없어서 지금은 보낼 일이 없고,
+ * 정시가 추가돼 400 이 나면 확정 전까지 ANY 로 보내기로 했어요.
  */
-const TRACK_CODES: Partial<Record<AdmissionPreference, string>> = {};
+const TRACK_CODES: Record<AdmissionPreference, string> = {
+  'school-record': 'SUBJECT',
+  comprehensive: 'HOLISTIC',
+  any: 'ANY',
+};
 
-function toPreferredTrack(admissions: readonly AdmissionPreference[]): string | undefined {
-  // 교과·학종을 둘 다 고르면 상관없음과 같아요.
+function toPreferredTrack(admissions: readonly AdmissionPreference[]): string {
+  // 교과·학종을 둘 다 고르면(또는 아무것도 없으면) 상관없음과 같아요.
   const [only] = admissions;
-  if (admissions.length !== 1 || !only) return undefined;
-  return TRACK_CODES[only];
+  return admissions.length === 1 && only ? TRACK_CODES[only] : TRACK_CODES.any;
 }
 
 function toRequestBody(snapshot: GradeAnalysisSnapshot) {
@@ -54,7 +57,7 @@ function toRequestBody(snapshot: GradeAnalysisSnapshot) {
     subjects: snapshot.subjects.map(({ subjectRef, subjectCode, gradeValue }) => ({ subjectRef, subjectCode, gradeValue })),
     applicationPreference: {
       desiredMajorCodes: [...preferences.majorIds],
-      ...(preferredTrack ? { preferredTrack } : {}),
+      preferredTrack,
       includeReachCard: preferences.includeReach,
       allowSimilarMajors: preferences.expandSimilarMajors,
     },

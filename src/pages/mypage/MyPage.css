@@ -304,8 +304,9 @@
 .mypage-withdraw:disabled { opacity: 0.5; cursor: default; }
 
 /* 저장 리포트 목록 상태 (불러오는 중 · 실패 · 없음) */
-.mypage-reports-status {
-  margin: 32px 0 0;
+/* .mypage-page p { margin: 0 } 보다 우선하도록 .mypage-page 를 붙였어요. */
+.mypage-page .mypage-reports-status {
+  margin: 40px 0 0;
   color: #52625d;
   font-size: 12px;
   line-height: 1.5;
