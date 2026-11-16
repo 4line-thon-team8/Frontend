@@ -6,15 +6,17 @@ export type SavedReport = {
   id: string;
   /** 생성일 (YYYY.MM.DD) */
   createdAt: string;
-  /** 대표 학과 + 나머지 개수 (예: 컴퓨터공학 외 5개) */
-  title: string;
-  /** 구간별 장수 (BE 값). 0장 결과는 저장되지 않아요. */
-  counts: Partial<Record<ApplicationTier, number>>;
+  /** 생성 시각 원본 (BE createdAt 형식, ISO-8601) */
+  createdAtIso: string;
+  /** 대표 학과 + 나머지 개수 (예: 컴퓨터공학 외 5개). 목록 API 에는 없어서 목업에서만 보여요. */
+  title?: string;
+  /** 구간별 장수. 목록 API 에는 없어서 목업에서만 보여요. 0장 결과는 저장되지 않아요. */
+  counts?: Partial<Record<ApplicationTier, number>>;
 };
 
 export const MOCK_SAVED_REPORTS: SavedReport[] = [
-  { id: '20261028', createdAt: '2026.10.28', title: '컴퓨터공학 외 5개', counts: { SAFE: 3, MATCH: 2, REACH: 1 } },
-  { id: '20261020', createdAt: '2026.10.20', title: '통계학 외 3개', counts: { MATCH: 2, FAR: 1, UNRATED: 1 } },
+  { id: '20261028', createdAt: '2026.10.28', createdAtIso: '2026-10-28T09:00:00+09:00', title: '컴퓨터공학 외 5개', counts: { SAFE: 3, MATCH: 2, REACH: 1 } },
+  { id: '20261020', createdAt: '2026.10.20', createdAtIso: '2026-10-20T09:00:00+09:00', title: '통계학 외 3개', counts: { MATCH: 2, FAR: 1, UNRATED: 1 } },
 ];
 
 /** 시스템 규칙: 굵은 제목 - 설명. Figma 문안(한 줄씩 들어가는 짧은 버전)이에요. */

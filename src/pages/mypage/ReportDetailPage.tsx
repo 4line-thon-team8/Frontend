@@ -1,4 +1,8 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { isSessionExpiredError, SESSION_EXPIRED_PATH } from '../../services/authApi';
+import { clearAccessToken } from '../../services/authToken';
+import { DELETE_REPORT_CONFIRM, deleteReport, getDeleteReportErrorMessage, NoTokenError } from '../../services/reportApi';
 import BottomNavigation from '../../components/common/BottomNavigation';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import { MOCK_RECOMMENDATIONS } from '../report/recommendation.mock';
@@ -13,9 +17,27 @@ export default function ReportDetailPage() {
   const report = MOCK_SAVED_REPORTS.find(item => item.id === reportId);
   const recommendations = MOCK_RECOMMENDATIONS;
 
-  const handleDelete = () => {
-    // TODO: DELETE /api/reports/{report_id} 연동 후 성공했을 때만 이동합니다.
-    navigate('/mypage', { replace: true });
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string>();
+
+  const handleDelete = async () => {
+    if (!reportId || deleting) return;
+    if (!window.confirm(DELETE_REPORT_CONFIRM)) return;
+    setDeleting(true);
+    setDeleteError(undefined);
+    try {
+      await deleteReport(reportId);
+      // 서버에서 지워진 뒤에만 목록으로 돌아가요.
+      navigate('/mypage', { replace: true });
+    } catch (error) {
+      if (error instanceof NoTokenError || isSessionExpiredError(error)) {
+        clearAccessToken();
+        navigate(SESSION_EXPIRED_PATH, { replace: true, state: { from: `/mypage/reports/${reportId}` } });
+        return;
+      }
+      setDeleting(false);
+      setDeleteError(getDeleteReportErrorMessage(error));
+    }
   };
 
   return (
@@ -40,7 +62,10 @@ export default function ReportDetailPage() {
             ))}
           </ol>
 
-          <button type="button" className="mypage-primary-button mypage-detail-delete" onClick={handleDelete}>이 리포트 삭제</button>
+          <button type="button" className="mypage-primary-button mypage-detail-delete" onClick={() => void handleDelete()} disabled={deleting}>
+            {deleting ? '삭제 중…' : '이 리포트 삭제'}
+          </button>
+          {deleteError && <p className="mypage-logout-error" role="alert">{deleteError}</p>}
         </>
       ) : (
         <p className="mypage-detail-created">리포트를 찾을 수 없어요.</p>
