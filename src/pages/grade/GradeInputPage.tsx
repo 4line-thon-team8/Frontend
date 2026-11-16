@@ -51,7 +51,7 @@ export default function GradeInputPage() {
         <section className="grade-input-reports" aria-labelledby="grade-input-reports-title">
           <div className="grade-input-reports-heading">
             <h2 id="grade-input-reports-title">나의 리포트</h2>
-            <Link to="/mypage/reports">전체 보기<img src={chevron} alt="" width="6" height="10" /></Link>
+            <Link to="/mypage">전체 보기<img src={chevron} alt="" width="6" height="10" /></Link>
           </div>
           <div className="grade-input-empty">
             <img src={report} alt="" width="36" height="36" />
