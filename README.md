@@ -94,7 +94,8 @@ src/
 
 ## API 및 추후 개발
 
-- `.env.local`에 `VITE_API_BASE_URL=http://localhost:8000`을 설정합니다. 생략하면 현재 origin을 사용합니다. 개발 프록시는 설정하지 않았습니다.
+- 로컬 개발은 `.env.example`을 `.env.local`로 복사한 뒤 Vite를 시작합니다. `VITE_API_BASE_URL=/`이면 브라우저가 같은 오리진으로 요청하고, Vite가 `/api` 요청을 `API_PROXY_TARGET`의 배포 서버로 전달합니다.
+- Vercel 배포 환경에는 `VITE_API_BASE_URL=https://fivegrade.duckdns.org`를 설정합니다. 서비스 코드가 `/api` 경로를 붙입니다. 환경 변수 변경은 이후 빌드에 반영됩니다.
 - `VITE_` 환경 변수는 브라우저에 공개됩니다. 비밀키나 토큰을 넣지 마세요. `.env.example`만 Git에 포함합니다.
 - apiClient는 요청 옵션을 Fetch에 전달하고 JSON/텍스트/빈 응답을 처리합니다. HTTP 실패는 ApiError(status, body)로 전달하며 네트워크·취소 오류는 그대로 전달합니다.
 - 응답은 unknown입니다. API 명세 확정 후 공통 타입과 런타임 검증을 서비스 계층에 추가하세요. 서비스 파일에는 담당 API 메모만 있으며 임의 payload나 가짜 응답은 없습니다.

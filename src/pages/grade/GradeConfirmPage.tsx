@@ -10,17 +10,20 @@ import type { ConfirmSubject } from '../../types/gradeConfirm';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import { getGradeImage } from '../../utils/gradeImageStore';
 import { reviewSubject, toggleAdmission, validateGradeConfirm } from '../../utils/gradeConfirmValidation';
-import { ADMISSION_OPTIONS, MOCK_MAJOR_LIMIT, MOCK_MAJORS } from './gradeConfirm.mock';
+import { ADMISSION_OPTIONS, MAJOR_LIMIT } from './gradeConfirm.mock';
+import { ApiError } from '../../services/apiClient';
+import { getMajors, type Major } from '../../services/lookupApi';
 import { toSimulationSubjectRows } from '../../services/simulationApi';
 import { applyOcrGrades, reviewOcrGrades } from '../../utils/applyOcrGrades';
 import { searchAllowedSubjects } from '../../utils/subjectCatalog';
 import './GradeConfirmPage.css';
 
-const rules = {
-  maxMajors: MOCK_MAJOR_LIMIT,
-  allowedMajorIds: MOCK_MAJORS.map(major => major.id),
-  allowedAdmissions: ADMISSION_OPTIONS.map(option => option.id),
-};
+const allowedAdmissions = ADMISSION_OPTIONS.map(option => option.id);
+
+type MajorLookup =
+  | { status: 'loading' }
+  | { status: 'ready'; majors: Major[] }
+  | { status: 'error'; message: string };
 
 export default function GradeConfirmPage() {
   const navigate = useNavigate();
@@ -32,9 +35,21 @@ export default function GradeConfirmPage() {
   const [editing, setEditing] = useState(false);
   const focusSubjectId = useRef<string | null>(null);
   const [majorDialogOpen, setMajorDialogOpen] = useState(false);
+  const [majorLookup, setMajorLookup] = useState<MajorLookup>({ status: 'loading' });
+  const [majorAttempt, setMajorAttempt] = useState(0);
+  const [majorQuery, setMajorQuery] = useState('');
   const [imageSource] = useState(() => getGradeImage()?.source ?? null);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const errors = validateGradeConfirm(analysisDraft, rules);
+  const majors = majorLookup.status === 'ready' ? majorLookup.majors : [];
+  const majorNames = new Map(majors.map(({ code, name }) => [code, name]));
+  const selectedMajors = draft.majorIds.filter(code => majorNames.has(code));
+  const query = majorQuery.trim().toLowerCase();
+  const visibleMajors = majors.filter(major => major.name.toLowerCase().includes(query));
+  const errors = validateGradeConfirm(analysisDraft, {
+    maxMajors: MAJOR_LIMIT,
+    allowedMajorIds: [...majorNames.keys()],
+    allowedAdmissions,
+  });
   const analysisBlocked = editing || errors.length > 0 || (ocrReview !== null && !ocrReview.valid);
 
   function updateSubjects(update: (current: ConfirmSubject[]) => ConfirmSubject[]) {
@@ -44,6 +59,29 @@ export default function GradeConfirmPage() {
       setDraft(current => ({ ...current, subjects: update(current.subjects) }));
     }
   }
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void getMajors(controller.signal).then(majors => {
+      if (controller.signal.aborted) return;
+      const codes = new Set(majors.map(major => major.code));
+      setDraft(current => {
+        const majorIds = current.majorIds.filter(code => codes.has(code));
+        return majorIds.length === current.majorIds.length ? current : { ...current, majorIds };
+      });
+      setMajorLookup({ status: 'ready', majors });
+    }).catch((error: unknown) => {
+      if (controller.signal.aborted) return;
+      let message = '학과 목록 응답을 읽을 수 없어요.';
+      if (error instanceof ApiError) {
+        message = `학과 목록을 불러오지 못했어요. (HTTP ${error.status})`;
+      } else if (error instanceof TypeError) {
+        message = '네트워크 연결을 확인한 후 다시 시도해 주세요.';
+      }
+      setMajorLookup({ status: 'error', message });
+    });
+    return () => controller.abort();
+  }, [majorAttempt, setDraft]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -78,10 +116,15 @@ export default function GradeConfirmPage() {
     setEditing(false);
   }
 
-  function toggleMajor(id: string) {
-    setDraft(current => ({ ...current, majorIds: current.majorIds.includes(id)
-      ? current.majorIds.filter(value => value !== id)
-      : current.majorIds.length < MOCK_MAJOR_LIMIT ? [...current.majorIds, id] : current.majorIds }));
+  function toggleMajor(code: string) {
+    if (!majorNames.has(code)) return;
+    setDraft(current => {
+      if (current.majorIds.includes(code)) {
+        return { ...current, majorIds: current.majorIds.filter(value => value !== code) };
+      }
+      if (current.majorIds.length >= MAJOR_LIMIT) return current;
+      return { ...current, majorIds: [...current.majorIds, code] };
+    });
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -175,7 +218,7 @@ export default function GradeConfirmPage() {
         <section className="grade-confirm-directions" aria-labelledby="grade-confirm-direction-title">
           <div className="grade-confirm-direction-heading"><h2 id="grade-confirm-direction-title">지원 방향</h2><span>희망 학과 (1~3)</span></div>
           <div className="grade-confirm-major-chips" aria-label="선택한 희망 학과">
-            {draft.majorIds.map(id => <button type="button" key={id} className="grade-confirm-major-chip" aria-label={`${MOCK_MAJORS.find(major => major.id === id)?.name} 삭제`} onClick={() => toggleMajor(id)}>{MOCK_MAJORS.find(major => major.id === id)?.name}<span className="grade-confirm-sr-only"> 삭제</span></button>)}
+            {selectedMajors.map(code => <button type="button" key={code} className="grade-confirm-major-chip" onClick={() => toggleMajor(code)}>{majorNames.get(code)}<span className="grade-confirm-sr-only"> 삭제</span></button>)}
             <button type="button" className="grade-confirm-add-major" aria-label="희망 학과 추가" onClick={() => setMajorDialogOpen(true)}>+ 추가</button>
           </div>
           <fieldset className="grade-confirm-admissions">
@@ -201,9 +244,26 @@ export default function GradeConfirmPage() {
       </form>
       <dialog ref={dialogRef} className="grade-confirm-dialog" aria-labelledby="grade-confirm-dialog-title" onCancel={event => { event.preventDefault(); setMajorDialogOpen(false); }} onClick={event => { if (event.target === event.currentTarget) setMajorDialogOpen(false); }}>
           <h2 id="grade-confirm-dialog-title">희망 학과 선택</h2>
-          <p>임시 학과 목록입니다. 최대 3개까지 선택할 수 있어요.</p>
-          <div className="grade-confirm-major-options">{MOCK_MAJORS.map(major => <button type="button" key={major.id} aria-pressed={draft.majorIds.includes(major.id)} disabled={!draft.majorIds.includes(major.id) && draft.majorIds.length >= MOCK_MAJOR_LIMIT} onClick={() => toggleMajor(major.id)}>{major.name}</button>)}</div>
-          <p className="grade-confirm-major-count" aria-live="polite">{draft.majorIds.length} / {MOCK_MAJOR_LIMIT}개 선택</p>
+          <p>최대 {MAJOR_LIMIT}개까지 선택할 수 있어요.</p>
+          {majorLookup.status === 'loading' && <p role="status">학과 목록을 불러오고 있어요.</p>}
+          {majorLookup.status === 'error' && <>
+            <p role="alert">{majorLookup.message}</p>
+            <Button type="button" onClick={() => {
+              setMajorLookup({ status: 'loading' });
+              setMajorAttempt(attempt => attempt + 1);
+            }}>다시 시도</Button>
+          </>}
+          {majorLookup.status === 'ready' && (majors.length === 0
+            ? <p role="status">등록된 학과가 없어요.</p>
+            : <>
+              <input className="grade-confirm-major-search" type="search" aria-label="학과명 검색" placeholder="학과명 검색" value={majorQuery} onChange={event => setMajorQuery(event.target.value)} />
+              {visibleMajors.length === 0 ? <p role="status">검색 결과가 없어요.</p>
+                : <div className="grade-confirm-major-options">{visibleMajors.map(({ code, name }) => {
+                  const selected = draft.majorIds.includes(code);
+                  return <button type="button" key={code} aria-pressed={selected} disabled={!selected && selectedMajors.length >= MAJOR_LIMIT} onClick={() => toggleMajor(code)}>{name}</button>;
+                })}</div>}
+            </>)}
+          <p className="grade-confirm-major-count" aria-live="polite">{selectedMajors.length} / {MAJOR_LIMIT}개 선택</p>
           <Button className="grade-confirm-dialog-done" onClick={() => setMajorDialogOpen(false)}>완료</Button>
       </dialog>
     </div>
