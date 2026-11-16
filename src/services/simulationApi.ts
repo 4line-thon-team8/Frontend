@@ -207,5 +207,23 @@ export async function runSimulation(snapshot: GradeAnalysisSnapshot, signal?: Ab
     body: JSON.stringify(toRequestBody(snapshot)),
     signal,
   });
-  return parseSimulationResult(body);
+  const result = parseSimulationResult(body);
+  if (import.meta.env.DEV) logGenerationMethods(result);
+  return result;
+}
+
+/**
+ * 개발 서버에서만: 섹션별 generationMethod(llm/template)와 저장 결과를 콘솔에 보여줘요.
+ * BE 연동 테스트용이에요. 문장·성적 같은 내용은 찍지 않아요. 배포 빌드에서는 빠져요.
+ */
+function logGenerationMethods(result: SimulationResult) {
+  const { report } = result;
+  console.info('[분석 응답] 저장 결과:', result.saveStatus ?? '(응답에 없음)', '/ reportId:', result.reportId ?? '-');
+  console.table({
+    인사: report.greetingSummary?.generationMethod ?? '(없음)',
+    총평: report.overallAssessment?.generationMethod ?? '(없음)',
+    지원전략: report.applicationStrategy?.generationMethod ?? '(없음)',
+    마무리: report.closing?.generationMethod ?? '(없음)',
+    ...Object.fromEntries(result.recommendations.map(item => [`${item.rank}지망 이유`, item.reason.generationMethod || '(없음)'])),
+  });
 }
