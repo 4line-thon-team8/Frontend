@@ -1,5 +1,8 @@
 import { buildCoverage, buildEvidence, buildIndicatorSignals, buildInterestTags } from './buildPayload';
+import { createModelClassifier, isModelCompatible } from './holisticModel';
+import type { HolisticModel } from './holisticModel';
 import { compileRules, findClauseHits } from './matchRules';
+import { BUNDLED_MODEL } from './model';
 import { BUNDLED_RULES } from './rules';
 import { splitSections } from './splitSections';
 import type { HolisticRules, NarrativeAnalysisResult, TagKeyword } from './types';
@@ -9,6 +12,11 @@ interface AnalyzeOptions {
   rules?: HolisticRules;
   /** 전공 키워드 사전(GET /api/tag-map)의 entries. 없으면 관심 계열 태그를 비워서 보낸다. */
   tagKeywords?: readonly TagKeyword[];
+  /**
+   * 구절 분류 모델. 생략하면 앱에 포함된 모델을 쓰고, null 이면 규칙만 쓴다.
+   * 모델이 규칙 사전 버전과 맞지 않으면 자동으로 규칙만 쓴다.
+   */
+  model?: HolisticModel | null;
 }
 
 /**
@@ -25,7 +33,9 @@ export function analyzeNarrative(fullText: string, options: AnalyzeOptions = {})
   const totalChars = Object.values(coverage.sectionChars).reduce((sum, chars) => sum + chars, 0);
   if (totalChars < rules.limits.minNarrativeChars) return { ok: false, reason: 'too-short' };
 
-  const hits = findClauseHits(blocks, compileRules(rules.rules));
+  const model = options.model === undefined ? BUNDLED_MODEL : options.model;
+  const classifier = model && isModelCompatible(model, rules.rulesVersion) ? createModelClassifier(model, rules.rules) : null;
+  const hits = findClauseHits(blocks, compileRules(rules.rules), classifier);
   return {
     ok: true,
     payload: {

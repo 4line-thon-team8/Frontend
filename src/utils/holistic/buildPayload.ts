@@ -42,7 +42,7 @@ export function buildIndicatorSignals(hits: readonly ClauseHit[], limits: Holist
   type IndicatorState = { clauses: number; years: Array<NarrativeYear | null>; entries: Map<string, string> };
   const byIndicator = new Map<string, IndicatorState>();
   for (const hit of hits) {
-    for (const indicator of new Set(hit.matches.map(match => match.rule.indicator))) {
+    for (const indicator of new Set(hit.indicators)) {
       const state: IndicatorState = byIndicator.get(indicator) ?? { clauses: 0, years: [], entries: new Map() };
       state.clauses += 1;
       state.years.push(hit.year);
