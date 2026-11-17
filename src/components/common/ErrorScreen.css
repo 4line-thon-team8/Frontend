@@ -28,14 +28,17 @@
 .error-screen__message {
   position: absolute;
   top: calc(50% - 22px);
-  left: 50%;
-  transform: translate(-50%, -50%);
+  /* 좌우 여백을 박스에 줘서 폭을 화면 기준으로 정해요. (left: 50% + 내용 폭이면 이미지가 줄어들 때 왼쪽으로 쏠려요) */
+  left: 20px;
+  right: 20px;
+  transform: translateY(-50%);
 }
 
 .error-screen__message img {
   display: block;
-  max-width: calc(100% - 40px);
+  max-width: 100%;
   height: auto;
+  margin: 0 auto;
 }
 
 .error-screen__action {
