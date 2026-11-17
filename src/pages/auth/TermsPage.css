@@ -53,11 +53,11 @@
 .terms-box ul,
 .terms-box ol { margin: 0; }
 
-/* 진행 안내: 350 × 116, padding 13 63 23 18, gap 10 */
+/* 진행 안내: 350 × 116, padding 13 63 23 18, 제목과 단계 사이 15 */
 .terms-box--process {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
   min-height: 116px;
   padding: 13px 63px 23px 18px;
   line-height: 20px;
