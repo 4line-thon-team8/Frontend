@@ -38,6 +38,20 @@ test('maps exact names and only replaces the S-03 draft after explicit confirmat
     assert.equal(applyOcrGrades(draft, [{ ...edited[0], grade: '' }], true), draft);
     assert.equal(applyOcrGrades(draft, [...edited, { ...edited[0], id: 'ocr-2' }], true), draft);
     assert.deepEqual(applyOcrGrades(draft, edited, true), { ...draft, subjects: edited });
+
+    // 성취도만 있거나 석차등급을 산출하지 않는 과목(제외 과목)은 확인 화면을 막지 않아요.
+    const withExcluded = [
+      ...edited,
+      { id: 'ocr-exp', name: '과학탐구실험1', grade: '' },
+      { id: 'ocr-letter', name: '통합과학1', grade: 'A' },
+    ];
+    const excludedReview = reviewOcrGrades(withExcluded, draft.curriculum);
+    assert.deepEqual(excludedReview.reviews.map(review => review.status), ['included', 'excluded', 'excluded']);
+    assert.equal(excludedReview.valid, true);
+    assert.deepEqual(applyOcrGrades(draft, withExcluded, true), { ...draft, subjects: withExcluded });
+    // 제외 과목만 있으면 반영할 과목이 없어 막고, 못 읽은 행이 섞여 있어도 막아요.
+    assert.equal(reviewOcrGrades(withExcluded.slice(1), draft.curriculum).valid, false);
+    assert.equal(reviewOcrGrades([...withExcluded, { id: 'ocr-x', name: '', grade: '2' }], draft.curriculum).valid, false);
     assert.equal(draft.subjects, existing);
 
     const firstUpload = [...edited, existing[0]];
