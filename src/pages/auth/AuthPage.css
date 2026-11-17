@@ -178,7 +178,7 @@
 .auth-intro__logo {
   display: block;
   width: 57px;
-  height: 60px;
+  height: auto;
 }
 
 /* 제목: Figma 137 × 58, 1_메인 블랙 */
@@ -207,7 +207,16 @@
   }
 
   .auth-page--login .auth-hero {
-    height: clamp(120px, calc(100dvh - 400px), 427px);
+    height: auto;
+    margin: 0;
+    padding-block: clamp(16px, 4dvh, 32px);
+  }
+
+  .auth-hero__logo {
+    position: static;
+    display: block;
+    width: min(100%, 184px, 26dvh);
+    height: auto;
   }
 
   .auth-actions {
