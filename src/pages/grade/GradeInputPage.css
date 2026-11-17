@@ -29,12 +29,12 @@
 .grade-input-brand img { display: block; }
 .grade-input-brand-wordmark { width: 51px; height: 22px; object-fit: contain; flex-shrink: 0; }
 .grade-input-intro { position: relative; padding-top: 44px; padding-bottom: 66px; }
-.grade-input-intro h1 { margin: 0; font-size: 24px; line-height: 30px; font-weight: 700; letter-spacing: -0.6px; white-space: nowrap; }
-.grade-input-intro p { position: relative; z-index: 2; width: max-content; margin: 16px 0 0; font-size: 14px; font-weight: 400; line-height: 18px; color: #8a9893; }
+.grade-input-intro h1 { position: relative; z-index: 2; margin: 0; font-size: 24px; line-height: 30px; font-weight: 700; letter-spacing: -0.6px; }
+.grade-input-intro p { position: relative; z-index: 2; margin: 16px 0 0; font-size: 14px; font-weight: 400; line-height: 18px; color: #8a9893; }
 .grade-input-character { position: absolute; right: 8px; bottom: -4px; width: 168px; height: auto; z-index: 1; pointer-events: none; }
 .grade-input-options { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr); gap: 15px; }
-.grade-input-card { min-width: 0; display: flex; align-items: center; gap: 14px; height: 100px; min-height: 100px; padding: 27px 22px; border-radius: 8px; text-decoration: none; }
-.grade-input-card-camera { padding: 30px 26px; background: var(--color-primary); color: #fefefe; }
+.grade-input-card { min-width: 0; display: flex; align-items: center; gap: 14px; min-height: 100px; padding: 20px 22px; border-radius: 8px; text-decoration: none; }
+.grade-input-card-camera { padding: 20px 26px; background: var(--color-primary); color: #fefefe; }
 .grade-input-card-pdf { background: #dfe6e3; color: var(--color-primary); }
 .grade-input-card-icon { flex: 0 0 46px; width: 46px; height: 46px; object-fit: contain; }
 .grade-input-card-pdf .grade-input-card-icon { width: 36px; height: 40px; flex-basis: 36px; margin-inline: 5px; }
@@ -64,9 +64,9 @@
 .grade-input-empty { display: flex; min-height: 114px; padding: 16px 12px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #f1f1f1; border-radius: 8px; }
 .grade-input-empty p { margin: 0; color: var(--color-primary); font-size: 14px; font-weight: 600; font-style: normal; line-height: 30px; text-align: center; }
 @media (max-width: 360px) {
-  .grade-input-intro { padding-bottom: 104px; }
+  .grade-input-intro { padding-bottom: 128px; }
   .grade-input-character { width: 132px; right: 0; }
-  .grade-input-card { height: auto; gap: 10px; padding: 20px 14px; }
+  .grade-input-card { gap: 10px; padding-inline: 14px; }
   .grade-input-card-copy h2 { letter-spacing: -0.8px; }
   .grade-input-pdf-step { white-space: normal; }
 }
