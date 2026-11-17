@@ -58,3 +58,19 @@
 .pdf-upload-error {
   color: #a03333;
 }
+
+.pdf-upload-cancel {
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border: 1px solid #2f5d50;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.pdf-upload-status a {
+  color: inherit;
+  text-decoration: underline;
+}

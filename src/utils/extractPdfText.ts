@@ -1,18 +1,58 @@
+import type { PDFPageProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 
 export const MAX_PDF_BYTES = 20 * 1024 * 1024;
 
+// 글자 레이어가 이보다 짧은 페이지는 '글자가 없는 페이지'로 봐요. 스캔본에 섞여 있는 몇 글자짜리
+// 깨진 글자 레이어를 글자가 있는 PDF로 오해하지 않기 위한 기준이에요.
+const MIN_PAGE_TEXT_LENGTH = 30;
+// 스캔 페이지를 이미지로 그릴 때의 배율(약 180dpi)과 최대 화소 수예요. 작은 표 글씨를 읽으려면 이 정도가 필요해요.
+const OCR_RENDER_SCALE = 2.5;
+const OCR_MAX_PIXELS = 12_000_000;
+
 export interface PdfTextPage {
   pageNumber: number;
   text: string;
+  /** 'ocr'이면 글자 레이어가 없어 페이지 이미지를 OCR로 읽은 결과예요. */
+  source: 'text' | 'ocr';
 }
 
 export type PdfExtractionResult =
   | { ok: true; pages: PdfTextPage[] }
-  | { ok: false; reason: 'format' | 'size' | 'encrypted' | 'invalid' | 'no-text' | 'cancelled' };
+  | { ok: false; reason: 'format' | 'size' | 'encrypted' | 'invalid' | 'no-text' | 'ocr' | 'cancelled' };
+
+export interface PdfExtractionOptions {
+  /** 글자 레이어가 없는 페이지(스캔본)의 이미지를 받아 글자를 읽어요. 없으면 글자 레이어만 사용해요. */
+  recognizePage?: (image: Blob) => Promise<string>;
+  /** 페이지를 처리하기 시작할 때 불려요. scanned가 true면 OCR이 필요한 페이지예요. */
+  onProgress?: (progress: { pageNumber: number; pageCount: number; scanned: boolean }) => void;
+}
+
+async function renderPageImage(page: PDFPageProxy): Promise<Blob> {
+  const base = page.getViewport({ scale: 1 });
+  const scale = Math.min(OCR_RENDER_SCALE, Math.sqrt(OCR_MAX_PIXELS / (base.width * base.height)));
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+  try {
+    const canvasContext = canvas.getContext('2d');
+    if (!canvasContext) throw new Error('Canvas unavailable');
+    await page.render({ canvas, canvasContext, viewport }).promise;
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Page image unavailable')), 'image/png'));
+  } finally {
+    canvas.width = 0;
+    canvas.height = 0;
+  }
+}
 
 /** Reads a local PDF page by page without retaining or uploading the source file. */
-export async function extractPdfText(file: File, signal?: AbortSignal): Promise<PdfExtractionResult> {
+export async function extractPdfText(
+  file: File,
+  signal?: AbortSignal,
+  options: PdfExtractionOptions = {},
+): Promise<PdfExtractionResult> {
   if (!/\.pdf$/iu.test(file.name)) return { ok: false, reason: 'format' };
   if (file.size > MAX_PDF_BYTES) return { ok: false, reason: 'size' };
 
@@ -43,11 +83,26 @@ export async function extractPdfText(file: File, signal?: AbortSignal): Promise<
       for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
         const page = await document.getPage(pageNumber);
         const { items } = await page.getTextContent();
-        const text = items.map(item => 'str' in item ? item.str + (item.hasEOL ? '\n' : ' ') : '').join('').trim();
-        pages.push({ pageNumber, text });
+        let text = items.map(item => 'str' in item ? item.str + (item.hasEOL ? '\n' : ' ') : '').join('').trim();
+        let source: PdfTextPage['source'] = 'text';
+        const scanned = text.length < MIN_PAGE_TEXT_LENGTH;
+        options.onProgress?.({ pageNumber, pageCount: document.numPages, scanned: scanned && !!options.recognizePage });
+        if (scanned && options.recognizePage) {
+          try {
+            text = (await options.recognizePage(await renderPageImage(page))).trim();
+            source = 'ocr';
+          } catch (error) {
+            if (signal?.aborted) throw error;
+            return { ok: false, reason: 'ocr' };
+          } finally {
+            signal?.throwIfAborted();
+          }
+        }
+        pages.push({ pageNumber, text, source });
         page.cleanup();
       }
-      return pages.some(page => page.text) ? { ok: true, pages } : { ok: false, reason: 'no-text' };
+      return pages.some(page => page.text.length >= MIN_PAGE_TEXT_LENGTH)
+        ? { ok: true, pages } : { ok: false, reason: 'no-text' };
     } catch (error) {
       if (error instanceof PasswordException) return { ok: false, reason: 'encrypted' };
       throw error;
