@@ -1,8 +1,8 @@
-import bundled from '../../data/holistic/rules-0.3.0.json';
+import bundled from '../../data/holistic/rules-0.4.0.json';
 import type { HolisticRules, NarrativeSection } from './types';
 
 /**
- * 앱에 포함해 둔 규칙 사전. 서버 파일(rules-0.3.0.json)을 그대로 복사한 것이라
+ * 앱에 포함해 둔 규칙 사전. 서버 파일(rules-0.4.0.json)을 그대로 복사한 것이라
  * 네트워크가 없어도 분석할 수 있다. 서버 규칙 사전을 받아오면 그쪽을 우선 쓴다.
  * 서버가 규칙을 바꾸면 이 파일도 같이 갱신한다.
  */
