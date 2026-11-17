@@ -1,4 +1,5 @@
 import { maskPersonalInfo } from './maskPersonalInfo';
+import type { ModelClassifier } from './holisticModel';
 import type { HolisticRule, NarrativeBlock, NarrativeSection, NarrativeYear } from './types';
 
 /** 문장을 구절 단위로 자르는 경계. 구절 하나가 너무 길어지지 않게 한다. */
@@ -43,15 +44,25 @@ export interface ClauseHit {
   entryText: string;
   /** 개인정보를 가린 구절 전체 */
   clause: string;
+  /** 이 구절이 맞은 것으로 판정된 지표. 모델을 쓰면 모델 판정, 쓰지 않으면 규칙이 맞은 지표다. */
+  indicators: string[];
+  /** 근거 구절 후보. 판정된 지표의 규칙이 맞은 자리만 담으므로 모델만 맞힌 구절은 비어 있다. */
   matches: Array<{ rule: HolisticRule; index: number; length: number }>;
 }
 
-/** 모든 문단의 구절을 훑어 규칙이 맞은 구절만 돌려준다. */
-export function findClauseHits(blocks: readonly NarrativeBlock[], compiled: readonly CompiledRule[]): ClauseHit[] {
+/**
+ * 모든 문단의 구절을 훑어 지표가 맞은 구절만 돌려준다.
+ * classifier 가 없으면 규칙이 맞은 구절이고, 있으면 모델이 적중으로 본 구절이다(규칙은 근거 구절을 고르는 데만 쓴다).
+ */
+export function findClauseHits(
+  blocks: readonly NarrativeBlock[],
+  compiled: readonly CompiledRule[],
+  classifier?: Pick<ModelClassifier, 'predict'> | null,
+): ClauseHit[] {
   const hits: ClauseHit[] = [];
   blocks.forEach((block, blockIndex) => {
     const applicable = compiled.filter(({ rule }) => rule.sections.includes(block.section));
-    if (applicable.length === 0) return;
+    if (applicable.length === 0 && !classifier) return;
     block.entries.forEach((entry, entryIndex) => {
       const entryKey = `${blockIndex}:${entryIndex}`;
       for (const raw of entry.split(CLAUSE_SPLIT)) {
@@ -63,9 +74,19 @@ export function findClauseHits(blocks: readonly NarrativeBlock[], compiled: read
           const match = matchRule(item, clause);
           if (match) matches.push({ rule: item.rule, index: match.index, length: match[0].length });
         }
-        if (matches.length > 0) {
-          hits.push({ section: block.section, year: block.year, entryKey, entryText: entry, clause, matches });
-        }
+        const indicators = classifier
+          ? classifier.predict(block.section, clause).indicators
+          : [...new Set(matches.map(match => match.rule.indicator))];
+        if (indicators.length === 0) continue;
+        hits.push({
+          section: block.section,
+          year: block.year,
+          entryKey,
+          entryText: entry,
+          clause,
+          indicators,
+          matches: matches.filter(match => indicators.includes(match.rule.indicator)),
+        });
       }
     });
   });

@@ -12,7 +12,8 @@ async function load(t) {
   const analyze = await server.ssrLoadModule('/src/utils/holistic/analyzeNarrative.ts');
   const rules = await server.ssrLoadModule('/src/utils/holistic/rules.ts');
   const match = await server.ssrLoadModule('/src/utils/holistic/matchRules.ts');
-  return { ...analyze, ...rules, ...match };
+  const payload = await server.ssrLoadModule('/src/utils/holistic/buildPayload.ts');
+  return { ...analyze, ...rules, ...match, ...payload };
 }
 
 // 실제 학생 기록이 아닌 가상의 서술. 이름·학교는 가려지는지 보려고 일부러 넣었다.
@@ -49,9 +50,9 @@ test('규칙 사전의 모든 예시가 서버와 같은 결과를 낸다', asyn
   }
 });
 
-test('서술을 분석해 서버 요청 모양의 값을 만든다', async t => {
+test('서술을 분석해 서버 요청 모양의 값을 만든다 (규칙만 사용)', async t => {
   const { analyzeNarrative, BUNDLED_RULES } = await load(t);
-  const result = analyzeNarrative(SAMPLE);
+  const result = analyzeNarrative(SAMPLE, { model: null });
   assert.equal(result.ok, true);
   const { payload } = result;
 
@@ -277,4 +278,56 @@ test('서술 안의 시간·횟수 숫자 한 줄은 학년으로 오인하지 �
   const [block] = splitSections(text);
   assert.equal(block.year, 2);
   assert.ok(block.entries.join(' ').includes('이어서 후배를 도왔다'));
+});
+
+test('모델을 쓰는 분석도 같은 요청 모양이고 서버가 모르는 필드를 보내지 않는다', async t => {
+  const { analyzeNarrative, BUNDLED_RULES } = await load(t);
+  const result = analyzeNarrative(SAMPLE);
+  assert.equal(result.ok, true);
+  const { payload } = result;
+  // 서버 DTO 는 모르는 필드가 오면 400 으로 거절한다. modelVersion 같은 값을 넣으면 안 된다.
+  assert.deepEqual(Object.keys(payload).sort(),
+    ['coverage', 'evidence', 'indicatorSignals', 'interestTags', 'rulesVersion']);
+  assert.equal(payload.rulesVersion, BUNDLED_RULES.rulesVersion);
+  assert.ok(payload.indicatorSignals.length > 0 && payload.indicatorSignals.length <= BUNDLED_RULES.limits.indicatorSignalsMax);
+  for (const signal of payload.indicatorSignals) {
+    assert.deepEqual(Object.keys(signal).sort(), ['count', 'id', 'quality', 'years']);
+    assert.ok(Number.isInteger(signal.count) && signal.count >= 1 && signal.count <= 1000);
+    assert.ok(signal.years.length >= 1 && signal.quality >= 0 && signal.quality <= 1);
+  }
+  for (const phrase of payload.evidence) {
+    assert.ok(phrase.text.length >= 4 && phrase.text.length <= BUNDLED_RULES.limits.evidenceTextMaxChars);
+  }
+});
+
+test('규칙 사전 버전과 안 맞는 모델은 쓰지 않고 규칙만으로 분석한다', async t => {
+  const { analyzeNarrative, BUNDLED_MODEL } = await load(t);
+  const stale = { ...BUNDLED_MODEL, rulesVersion: '0.0.1' };
+  assert.deepEqual(analyzeNarrative(SAMPLE, { model: stale }), analyzeNarrative(SAMPLE, { model: null }));
+});
+
+test('모델이 있으면 모델이 지표를 정하고, 규칙은 근거 구절 후보로만 쓴다', async t => {
+  const { BUNDLED_RULES, compileRules, findClauseHits, buildEvidence } = await load(t);
+  const compiled = compileRules(BUNDLED_RULES.rules);
+  const blocks = [{
+    section: 'club',
+    year: 1,
+    entries: ['파이썬으로 설문 120명 자료를 분석하며 통계 처리를 익혔다. 학교 행사를 도왔다. 책을 읽었다.'],
+  }];
+
+  const ruleOnly = findClauseHits(blocks, compiled);
+  assert.ok(ruleOnly.length > 0);
+  assert.ok(ruleOnly.every(hit => hit.indicators.length > 0 && hit.matches.length > 0));
+
+  // 모든 구절을 C4 로 판정하는 가짜 모델: 규칙이 안 맞은 구절도 잡히고, 규칙이 맞은 지표라도 모델이 빼면 사라진다.
+  const fake = { modelVersion: 'fake', predict: () => ({ probabilities: {}, indicators: ['C4'] }) };
+  const withModel = findClauseHits(blocks, compiled, fake);
+  assert.ok(withModel.length >= 3, "모든 구절이 모델 판정으로 잡힌다");
+  assert.ok(withModel.every(hit => hit.indicators.length === 1 && hit.indicators[0] === 'C4'));
+  assert.ok(withModel.every(hit => hit.matches.every(match => match.rule.indicator === 'C4')));
+  // C4 규칙이 맞지 않은 구절은 근거 구절 후보가 없다
+  assert.ok(buildEvidence(withModel, BUNDLED_RULES.limits).every(phrase => phrase.text.length >= 4));
+
+  const none = findClauseHits(blocks, compiled, { modelVersion: 'none', predict: () => ({ probabilities: {}, indicators: [] }) });
+  assert.deepEqual(none, []);
 });
