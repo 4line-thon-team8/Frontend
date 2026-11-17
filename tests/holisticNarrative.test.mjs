@@ -227,3 +227,54 @@ test('페이지마다 반복되는 머리글·바닥글 줄은 서술에 섞이�
   }
   assert.ok(joined.includes('파이썬으로') && joined.includes('보완했다'), '서술은 그대로 남는다');
 });
+
+// pdf.js가 표를 읽으면 영역 제목·학년이 이런 모양으로 나온다. 모두 가상의 문장이다.
+async function loadSplit(t) {
+  const server = await createServer({
+    configFile: false,
+    optimizeDeps: { noDiscovery: true, include: [] },
+    server: { middlewareMode: true, ws: false },
+  });
+  t.after(() => server.close());
+  const { splitSections } = await server.ssrLoadModule('/src/utils/holistic/splitSections.ts');
+  return splitSections;
+}
+
+test('학년 숫자가 한 줄로만 나와도 뒤따르는 영역 제목의 학년으로 인식한다', async t => {
+  const splitSections = await loadSplit(t);
+  const text = ['1', '자율활동 34', '학급 회의에서 역할을 나누어 협업했다.', '2', '자율활동 30', '축제 준비를 주도하며 갈등을 조정했다.'].join('\n');
+  const blocks = splitSections(text);
+  assert.deepEqual(blocks.map(b => [b.section, b.year]), [['autonomy', 1], ['autonomy', 2]]);
+});
+
+test('영역 제목과 서술이 한 줄로 붙어 나와도 제목으로 인식하고 서술은 남긴다', async t => {
+  const splitSections = await loadSplit(t);
+  const text = ['1', '동아리활동 34 파이썬으로 교내 설문 자료를 분석하며 통계 처리를 익혔다.'].join('\n');
+  const [block] = splitSections(text);
+  assert.equal(block.section, 'club');
+  assert.equal(block.year, 1);
+  assert.ok(block.entries.join(' ').includes('통계 처리를 익혔다'));
+});
+
+test('학교·이름이 붙어 길어진 쪽 바닥글과 글자가 띄어진 표 머리줄은 버린다', async t => {
+  const splitSections = await loadSplit(t);
+  const text = [
+    '1', '동아리활동 34',
+    '과목 세 부 능 력 및 특 기 사 항',
+    '파이썬으로 교내 설문 자료를 분석하며 통계 처리를 익혔다.',
+    '한빛고등학교 3학년 2반 14번 김가상 3 / 40 2026년 3월 4일 출력',
+    '분석 과정에서 표본의 한계를 인식하고 보완했다.',
+  ].join('\n');
+  const [block] = splitSections(text);
+  const joined = block.entries.join(' ');
+  for (const leaked of ['김가상', '3 / 40', '능 력 및']) assert.ok(!joined.includes(leaked), `남음: ${leaked}`);
+  assert.ok(joined.includes('통계 처리') && joined.includes('보완했다'));
+});
+
+test('서술 안의 시간·횟수 숫자 한 줄은 학년으로 오인하지 않는다', async t => {
+  const splitSections = await loadSplit(t);
+  const text = ['2', '자율활동 30', '봉사 활동을 꾸준히 이어 갔다.', '3', '이어서 후배를 도왔다.'].join('\n');
+  const [block] = splitSections(text);
+  assert.equal(block.year, 2);
+  assert.ok(block.entries.join(' ').includes('이어서 후배를 도왔다'));
+});
