@@ -8,10 +8,10 @@ import {
 } from '../../services/authApi';
 import { clearAccessToken } from '../../services/authToken';
 import {
-  DELETE_REPORT_CONFIRM, deleteReport, formatReportDate, formatReportTime, getDeleteReportErrorMessage, getReports, NoTokenError,
+  DELETE_REPORT_CONFIRM, deleteReport, formatReportDate, formatReportTime, getDeleteReportErrorMessage, getReport, getReports, NoTokenError, type SavedReportDetail,
 } from '../../services/reportApi';
-import { APPLICATION_TIERS, TIER_LABELS } from '../report/reportTier';
-import { MOCK_SAVED_REPORTS, SYSTEM_RULES, type SavedReport } from './mypage.mock';
+import { APPLICATION_TIERS, TIER_LABELS, toApplicationTier, type ApplicationTier } from '../report/reportTier';
+import { SYSTEM_RULES } from './mypage.mock';
 import './MyPage.css';
 
 function TrashIcon() {
@@ -22,26 +22,42 @@ function TrashIcon() {
   );
 }
 
+type ReportCard = {
+  id: string;
+  createdAt: string;
+  title: string;
+  /** 예: 추천 원서 6장 · 안정 3 / 적정 2 / 소신 1. 상세를 아직 못 읽었으면 없어요. */
+  summary?: string;
+};
+
 /** 예: 추천 원서 4장 · 적정 2 / 도전 부담이 큰 후보 1 / 판단 자료 부족 1 (0장 구간은 빼요) */
-function formatReportCounts(counts: NonNullable<SavedReport['counts']>) {
+function formatReportCounts(total: number, counts: Partial<Record<ApplicationTier, number>>) {
   const tiers = APPLICATION_TIERS.filter(tier => (counts[tier] ?? 0) > 0);
-  const total = tiers.reduce((sum, tier) => sum + (counts[tier] ?? 0), 0);
-  return `추천 원서 ${total}장 · ${tiers.map(tier => `${TIER_LABELS[tier]} ${counts[tier]}`).join(' / ')}`;
+  const breakdown = tiers.map(tier => `${TIER_LABELS[tier]} ${counts[tier]}`).join(' / ');
+  return breakdown ? `추천 원서 ${total}장 · ${breakdown}` : `추천 원서 ${total}장`;
 }
 
-type ReportCard = { id: string; createdAt: string; title: string; counts?: SavedReport['counts'] };
-
-/**
- * 목록 API 는 reportId·createdAt 만 줘요. 학과 이름·구간별 장수는 명세에 없어서 생성 시각으로 제목을 대신합니다.
- * (목업 모드에서는 Figma 처럼 학과·장수까지 보여줘요.)
- */
+/** 목록 API 는 reportId·createdAt 만 줘요. 학과·장수를 받기 전까지는 생성 시각을 제목으로 보여줘요. */
 function toReportCard(summary: { reportId: string; createdAt: string }): ReportCard {
-  const mock = MOCK_SAVED_REPORTS.find(report => report.id === summary.reportId);
   return {
     id: summary.reportId,
     createdAt: formatReportDate(summary.createdAt),
-    title: mock?.title ?? `${formatReportTime(summary.createdAt)} 생성`,
-    counts: mock?.counts,
+    title: `${formatReportTime(summary.createdAt)} 생성`,
+  };
+}
+
+/** 저장본 상세로 Figma 처럼 "1지망 학과 외 N개" + 구간별 장수를 만들어요. */
+function describeReport(detail: SavedReportDetail): Pick<ReportCard, 'title' | 'summary'> | null {
+  const [first, ...rest] = detail.recommendations;
+  if (!first) return null;
+  const counts: Partial<Record<ApplicationTier, number>> = {};
+  for (const item of detail.recommendations) {
+    const tier = toApplicationTier(item.category);
+    if (tier) counts[tier] = (counts[tier] ?? 0) + 1;
+  }
+  return {
+    title: rest.length > 0 ? `${first.department} 외 ${rest.length}개` : first.department,
+    summary: formatReportCounts(detail.recommendations.length, counts),
   };
 }
 
@@ -60,6 +76,17 @@ export default function MyPage() {
         if (ignore) return;
         setReports(summaries.map(toReportCard));
         setListState('ready');
+        // 목록에 학과·장수가 없어서 저장본을 하나씩 읽어 채워요. 실패한 카드는 생성 시각 제목을 그대로 둬요.
+        summaries.forEach(({ reportId }) => {
+          getReport(reportId)
+            .then(detail => {
+              if (ignore) return;
+              const described = describeReport(detail);
+              if (!described) return;
+              setReports(current => current.map(report => (report.id === reportId ? { ...report, ...described } : report)));
+            })
+            .catch(() => { /* 제목만 못 채운 것이라 목록은 그대로 보여줘요. */ });
+        });
       })
       .catch((error: unknown) => {
         if (ignore) return;
@@ -183,7 +210,7 @@ export default function MyPage() {
                 {report.title}
               </Link>
             </h2>
-            {report.counts && <p>{formatReportCounts(report.counts)}</p>}
+            {report.summary && <p>{report.summary}</p>}
             <button type="button" className="mypage-report-card__delete" onClick={() => setConfirmDeleteId(report.id)} disabled={deletingId !== undefined} aria-label={`${report.createdAt} 리포트 삭제`}>
               <TrashIcon />
               {deletingId === report.id ? '삭제 중…' : '삭제'}
