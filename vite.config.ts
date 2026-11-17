@@ -8,7 +8,20 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: API_PROXY_TARGET
-      ? { proxy: { '/api': { target: API_PROXY_TARGET, changeOrigin: true, secure: true } } }
+      ? {
+        proxy: {
+          '/api': {
+            target: API_PROXY_TARGET,
+            changeOrigin: true,
+            secure: true,
+            // 브라우저는 POST·DELETE 에 Origin: http://localhost:5173 을 붙이는데, BE CORS 가 이를 403 으로 막아요.
+            // 서버끼리 전달하는 요청이라 Origin 이 필요 없으니 지워서 보내요. (GET 은 원래 Origin 이 없어서 됐어요)
+            configure: proxy => {
+              proxy.on('proxyReq', proxyReq => proxyReq.removeHeader('origin'));
+            },
+          },
+        },
+      }
       : undefined,
   };
 });

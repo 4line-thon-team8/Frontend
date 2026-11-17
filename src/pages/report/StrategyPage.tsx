@@ -45,7 +45,7 @@ export default function StrategyPage() {
           <img src={clipboard} alt="" width="15" height="17" />
           활동·지원 전략
         </h1>
-        <p>*활동 입력 내용은 저장되지 않아요.</p>
+        <p>*서술 원문은 서버로 보내지 않고, 근거 구절은 저장하지 않아요.</p>
       </header>
 
       {activitySummaryLines.length > 0 && <>
