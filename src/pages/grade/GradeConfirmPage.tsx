@@ -165,10 +165,9 @@ export default function GradeConfirmPage() {
 
   function subjectRow(subject: ConfirmSubject, index: number) {
     const review = reviewSubject(subject, draft.curriculum);
-    const invalidName = ocrSubjects ? !('subjectCode' in review) || review.status === 'excluded'
-      : review.status === 'review' && !('subjectCode' in review);
-    const invalidGrade = ocrSubjects ? !/^[1-5]$/u.test(subject.grade.trim())
-      : review.status === 'review' && 'subjectCode' in review;
+    // 제외 과목은 확인이 필요 없어요. 과목명을 못 찾았거나(이름), 반영 과목인데 등급이 1~5가 아닌 경우(등급)만 표시해요.
+    const invalidName = review.status === 'review' && !('subjectCode' in review);
+    const invalidGrade = review.status === 'review' && 'subjectCode' in review;
     const needsReview = invalidName || invalidGrade;
     const statusId = `subject-status-${subject.id}`;
     const displayName = 'subjectName' in review ? review.subjectName : subject.name || '과목명 미인식';
