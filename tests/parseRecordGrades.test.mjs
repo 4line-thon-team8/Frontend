@@ -50,3 +50,12 @@ test('keeps the trailing digit of 2022 curriculum names', () => {
   ].join('\n'));
   assert.deepEqual(rows.map(({ name, grade }) => [name, grade]), [['공통국어1', '2'], ['공통수학2', '1']]);
 });
+
+test('reads rows where OCR turned the decimal point into a comma', () => {
+  const rows = parseRecordGrades([
+    '국어      국어          3   75/73, 5(10, 0)    C(90)     5',
+    '과학         통합과학           3    76/75.3(10.4)     C(90)       5',
+    '한국사                한국사        3        88/69. 9(20, 9)           B(90)               3',
+  ].join('\n'));
+  assert.deepEqual(rows.map(({ name, grade }) => [name, grade]), [['국어', '5'], ['통합과학', '5'], ['한국사', '3']]);
+});
