@@ -54,6 +54,7 @@ export default function PdfUploadPage() {
     try {
       result = await extractPdfText(file, request.signal, {
         recognizePage: image => ocr.recognize(image),
+        concurrency: ocr.concurrency,
         onProgress: progress => { if (!request.signal.aborted) setStatus({ kind: 'processing', ...progress }); },
       });
     } finally {
