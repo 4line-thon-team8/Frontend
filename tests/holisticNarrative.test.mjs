@@ -331,3 +331,12 @@ test('모델이 있으면 모델이 지표를 정하고, 규칙은 근거 구절
   const none = findClauseHits(blocks, compiled, { modelVersion: 'none', predict: () => ({ probabilities: {}, indicators: [] }) });
   assert.deepEqual(none, []);
 });
+
+test('글자마다 띄어 찍은 표 머리글도 영역 제목으로 알아본다', async t => {
+  const { analyzeNarrative } = await load(t);
+  const spaced = SAMPLE.replace('세부능력 및 특기사항', '과목   세 부 능 력 및 특 기 사 항').replace('행동특성 및 종합의견', '행 동 특 성 및 종 합 의 견');
+  const result = analyzeNarrative(spaced);
+  assert.equal(result.ok, true);
+  assert.ok(result.payload.coverage.sectionChars.subject > 0);
+  assert.ok(result.payload.coverage.sectionChars.behavior > 0);
+});
