@@ -181,3 +181,12 @@
   line-height: normal;
   cursor: pointer;
 }
+
+/* 타일 아래 노란 안내 (10px) */
+.strategy-applications__note {
+  margin-top: 10px;
+  color: #c9a227;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: normal;
+}

@@ -7,7 +7,7 @@ import { Navigate } from 'react-router';
 import { useState } from 'react';
 import StrengthDetailDialog, { type StrengthDetailSection } from '../../components/report/StrengthDetailDialog';
 import type { HolisticStrategy } from '../../services/simulationApi';
-import { sectionLines, useReportView } from './analysisResult';
+import { useReportView } from './analysisResult';
 import { countByTier, tierClassName } from './reportTier';
 import './ReportPage.css';
 import './StrategyPage.css';
@@ -53,7 +53,6 @@ export default function StrategyPage() {
   const detailSections = toDetailSections(view.holisticStrategy);
   const summarySentence = activitySummary ? firstSentence(activitySummary) : '';
   const hasActivitySection = summarySentence !== '' || strengths.length > 0 || majorAdvices.length > 0;
-  const strategyLines = sectionLines(view.report.applicationStrategy);
   const { recommendations } = view;
   // 추천 카드의 구간(BE 값)별 장수. 0장인 구간은 표시하지 않아요.
   const applications = countByTier(recommendations);
@@ -145,12 +144,8 @@ export default function StrategyPage() {
             </li>
           ))}
         </ul>
-        {/* BE report.applicationStrategy (근거 기반 지원 방향 안내) */}
-        {strategyLines.length > 0 && (
-          <div className="report-fold-card strategy-advice">
-            {strategyLines.map((line, index) => <p key={index}>{line}</p>)}
-          </div>
-        )}
+        {/* Figma: 상향 지원 카드 포함을 켜고 분석했을 때만 보여요. */}
+        {view.includeReach && <p className="strategy-applications__note">*상향 카드 포함 설정이 반영됐어요.</p>}
       </section>
 
       <StrengthDetailDialog open={detailOpen} sections={detailSections} onClose={() => setDetailOpen(false)} />

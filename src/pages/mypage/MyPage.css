@@ -171,10 +171,14 @@
   color: #2f5d50;
 }
 
+/* 대학 학과 · 전형: Figma #1C2B26 · 12px · 600 · line-height normal */
 .mypage-detail-row__name {
   flex: 1;
   min-width: 0;
-  font-weight: 700;
+  color: #1c2b26;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
 }
 
 /* 배지: 58 × 26 알약 */
