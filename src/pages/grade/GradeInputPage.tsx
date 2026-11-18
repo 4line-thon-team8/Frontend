@@ -1,6 +1,10 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import SavedReportCard from '../mypage/SavedReportCard';
+import { useSavedReports } from '../mypage/useSavedReports';
+import { DELETE_REPORT_CONFIRM } from '../../services/reportApi';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import camera from '../../assets/icons/camera.svg';
 import chevron from '../../assets/icons/chevron-right.svg';
@@ -11,10 +15,22 @@ import report from '../../assets/icons/report.svg';
 import character from '../../assets/images/grade-character.svg';
 import './GradeInputPage.css';
 
+/** 메인에서는 최신 리포트 몇 장만 보여주고, 나머지는 '전체 보기'(마이페이지)에서 봐요. */
+const HOME_REPORT_LIMIT = 3;
+
+
 export default function GradeInputPage() {
   const { reset } = useGradeAnalysis();
   // Entering the upload screen ends the previous analysis session.
   useEffect(() => { reset(); }, [reset]);
+
+  // 로그인 전·세션 만료면 메인에서는 다른 화면으로 보내지 않고 빈 상태('첫 번째 리포트')를 보여줘요.
+  const [signedOut, setSignedOut] = useState(false);
+  const handleSignedOut = useCallback(() => setSignedOut(true), []);
+  const {
+    reports, listState, deletingId, deleteError, confirmDeleteId, requestDelete, cancelDelete, confirmDelete,
+  } = useSavedReports(handleSignedOut);
+  const visibleReports = signedOut ? [] : reports.slice(0, HOME_REPORT_LIMIT);
 
   return (
     <div className="grade-input-page">
@@ -53,12 +69,36 @@ export default function GradeInputPage() {
             <h2 id="grade-input-reports-title">나의 리포트</h2>
             <Link to="/mypage">전체 보기<img src={chevron} alt="" width="6" height="10" /></Link>
           </div>
-          <div className="grade-input-empty">
-            <img src={report} alt="" width="36" height="36" />
-            <p>첫 번째 리포트를 만들어보세요.</p>
-          </div>
+          {deleteError && <p className="grade-input-reports-error" role="alert">{deleteError}</p>}
+          {visibleReports.length > 0 ? (
+            <ul className="mypage-reports grade-input-report-list">
+              {visibleReports.map(item => (
+                <SavedReportCard
+                  key={item.id}
+                  report={item}
+                  className="mypage-report-card--home"
+                  headingLevel={3}
+                  deleting={deletingId === item.id}
+                  deleteDisabled={deletingId !== undefined}
+                  onDelete={() => requestDelete(item.id)}
+                />
+              ))}
+            </ul>
+          ) : listState !== 'loading' && (
+            <div className="grade-input-empty">
+              <img src={report} alt="" width="36" height="36" />
+              <p>첫 번째 리포트를 만들어보세요.</p>
+            </div>
+          )}
         </section>
       </div>
+      <ConfirmDialog
+        open={confirmDeleteId !== undefined}
+        {...DELETE_REPORT_CONFIRM}
+        destructive
+        onConfirm={() => void confirmDelete()}
+        onCancel={cancelDelete}
+      />
       <BottomNavigation />
     </div>
   );

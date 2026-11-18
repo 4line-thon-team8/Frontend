@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import BottomNavigation from '../../components/common/BottomNavigation';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
@@ -7,136 +7,22 @@ import {
   isNetworkError, isSessionExpiredError, logout, NETWORK_ERROR_MESSAGE, SESSION_EXPIRED_PATH, withdraw, WITHDRAW_CONFIRM, WITHDRAW_ERROR_MESSAGE,
 } from '../../services/authApi';
 import { clearAccessToken } from '../../services/authToken';
-import {
-  DELETE_REPORT_CONFIRM, deleteReport, formatReportDate, formatReportTime, getDeleteReportErrorMessage, getReport, getReports, NoTokenError, type SavedReportDetail,
-} from '../../services/reportApi';
-import { APPLICATION_TIERS, TIER_LABELS, toApplicationTier, type ApplicationTier } from '../report/reportTier';
+import { DELETE_REPORT_CONFIRM } from '../../services/reportApi';
 import { SYSTEM_RULES } from './mypage.mock';
+import SavedReportCard from './SavedReportCard';
+import { useSavedReports } from './useSavedReports';
 import './MyPage.css';
-
-function TrashIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-type ReportCard = {
-  id: string;
-  createdAt: string;
-  title: string;
-  /** 예: 추천 원서 6장 · 안정 3 / 적정 2 / 소신 1. 상세를 아직 못 읽었으면 없어요. */
-  summary?: string;
-};
-
-/** 예: 추천 원서 4장 · 적정 2 / 도전 부담이 큰 후보 1 / 판단 자료 부족 1 (0장 구간은 빼요) */
-function formatReportCounts(total: number, counts: Partial<Record<ApplicationTier, number>>) {
-  const tiers = APPLICATION_TIERS.filter(tier => (counts[tier] ?? 0) > 0);
-  const breakdown = tiers.map(tier => `${TIER_LABELS[tier]} ${counts[tier]}`).join(' / ');
-  return breakdown ? `추천 원서 ${total}장 · ${breakdown}` : `추천 원서 ${total}장`;
-}
-
-/** 목록 API 는 reportId·createdAt 만 줘요. 학과·장수를 받기 전까지는 생성 시각을 제목으로 보여줘요. */
-function toReportCard(summary: { reportId: string; createdAt: string }): ReportCard {
-  return {
-    id: summary.reportId,
-    createdAt: formatReportDate(summary.createdAt),
-    title: `${formatReportTime(summary.createdAt)} 생성`,
-  };
-}
-
-/** 저장본 상세로 Figma 처럼 "1지망 학과 외 N개" + 구간별 장수를 만들어요. */
-function describeReport(detail: SavedReportDetail): Pick<ReportCard, 'title' | 'summary'> | null {
-  const [first, ...rest] = detail.recommendations;
-  if (!first) return null;
-  const counts: Partial<Record<ApplicationTier, number>> = {};
-  for (const item of detail.recommendations) {
-    const tier = toApplicationTier(item.category);
-    if (tier) counts[tier] = (counts[tier] ?? 0) + 1;
-  }
-  return {
-    title: rest.length > 0 ? `${first.department} 외 ${rest.length}개` : first.department,
-    summary: formatReportCounts(detail.recommendations.length, counts),
-  };
-}
 
 export default function MyPage() {
   const navigate = useNavigate();
-  const [reports, setReports] = useState<ReportCard[]>([]);
-  const [listState, setListState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [listError, setListError] = useState<string>();
-
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let ignore = false; // 화면을 떠난 뒤 도착한 응답은 무시해요.
-    getReports()
-      .then(summaries => {
-        if (ignore) return;
-        setReports(summaries.map(toReportCard));
-        setListState('ready');
-        // 목록에 학과·장수가 없어서 저장본을 하나씩 읽어 채워요. 실패한 카드는 생성 시각 제목을 그대로 둬요.
-        summaries.forEach(({ reportId }) => {
-          getReport(reportId)
-            .then(detail => {
-              if (ignore) return;
-              const described = describeReport(detail);
-              if (!described) return;
-              setReports(current => current.map(report => (report.id === reportId ? { ...report, ...described } : report)));
-            })
-            .catch(() => { /* 제목만 못 채운 것이라 목록은 그대로 보여줘요. */ });
-        });
-      })
-      .catch((error: unknown) => {
-        if (ignore) return;
-        // 토큰 없음·만료(401) → 세션 만료 화면 → 재로그인 후 마이페이지로 돌아와요.
-        if (error instanceof NoTokenError || isSessionExpiredError(error)) {
-          clearAccessToken();
-          navigate(SESSION_EXPIRED_PATH, { replace: true, state: { from: '/mypage' } });
-          return;
-        }
-        setListError(isNetworkError(error) ? NETWORK_ERROR_MESSAGE : '저장된 리포트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
-        setListState('error');
-      });
-    return () => { ignore = true; };
-  }, [navigate, reloadKey]);
-
-  const retryLoadReports = () => {
-    setListState('loading');
-    setReloadKey(key => key + 1);
-  };
-
-  const [deletingId, setDeletingId] = useState<string>();
-  const [deleteError, setDeleteError] = useState<string>();
-
-  const goSessionExpired = () => {
+  const goSessionExpired = useCallback(() => {
     clearAccessToken();
     navigate(SESSION_EXPIRED_PATH, { replace: true, state: { from: '/mypage' } });
-  };
-
-  /** 삭제 확인 창을 띄운 리포트 */
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string>();
-
-  const handleDelete = async (id: string) => {
-    setConfirmDeleteId(undefined);
-    if (deletingId) return; // 중복 클릭 방지
-    setDeletingId(id);
-    setDeleteError(undefined);
-    try {
-      await deleteReport(id);
-      // 서버에서 지워진 뒤에만 목록에서 빼요.
-      setReports(current => current.filter(report => report.id !== id));
-    } catch (error) {
-      if (error instanceof NoTokenError || isSessionExpiredError(error)) {
-        goSessionExpired();
-        return;
-      }
-      setDeleteError(getDeleteReportErrorMessage(error));
-    } finally {
-      setDeletingId(undefined);
-    }
-  };
+  }, [navigate]);
+  const {
+    reports, listState, listError, reload: retryLoadReports,
+    deletingId, deleteError, confirmDeleteId, requestDelete, cancelDelete, confirmDelete,
+  } = useSavedReports(goSessionExpired);
 
   const { reset: resetGradeAnalysis } = useGradeAnalysis();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -203,19 +89,13 @@ export default function MyPage() {
 
       <ul className="mypage-reports">
         {reports.map(report => (
-          <li key={report.id} className="mypage-report-card">
-            <h2>
-              <Link to={`/mypage/reports/${report.id}`}>
-                <span className="mypage-report-card__date">{report.createdAt}</span>
-                {report.title}
-              </Link>
-            </h2>
-            {report.summary && <p>{report.summary}</p>}
-            <button type="button" className="mypage-report-card__delete" onClick={() => setConfirmDeleteId(report.id)} disabled={deletingId !== undefined} aria-label={`${report.createdAt} 리포트 삭제`}>
-              <TrashIcon />
-              {deletingId === report.id ? '삭제 중…' : '삭제'}
-            </button>
-          </li>
+          <SavedReportCard
+            key={report.id}
+            report={report}
+            deleting={deletingId === report.id}
+            deleteDisabled={deletingId !== undefined}
+            onDelete={() => requestDelete(report.id)}
+          />
         ))}
       </ul>
 
@@ -247,8 +127,8 @@ export default function MyPage() {
         open={confirmDeleteId !== undefined}
         {...DELETE_REPORT_CONFIRM}
         destructive
-        onConfirm={() => { if (confirmDeleteId) void handleDelete(confirmDeleteId); }}
-        onCancel={() => setConfirmDeleteId(undefined)}
+        onConfirm={() => void confirmDelete()}
+        onCancel={cancelDelete}
       />
 
       <ConfirmDialog

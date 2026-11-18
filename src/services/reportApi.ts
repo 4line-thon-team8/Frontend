@@ -78,8 +78,17 @@ export type SavedReportDetail = {
 
 function toSavedRecommendation(item: unknown, index: number): SavedRecommendation | null {
   if (typeof item !== 'object' || item === null) return null;
-  const { rank, university, department, admissionType, category, reason } = item as Record<string, unknown>;
-  const reasonText = typeof reason === 'object' && reason !== null ? (reason as Record<string, unknown>).text : undefined;
+  // BE 저장본(RecommendationDetail)은 분석 응답과 필드 이름이 달라요:
+  // universityName·deptName·trackName·label, reason 은 문자열. 분석 응답 이름(university 등)도 함께 받아요.
+  const record = item as Record<string, unknown>;
+  const rank = record.rank;
+  const university = record.universityName ?? record.university;
+  const department = record.deptName ?? record.department;
+  const admissionType = record.trackName ?? record.admissionType;
+  const category = record.label ?? record.category;
+  const reason = record.reason;
+  const reasonText = typeof reason === 'string' ? reason
+    : typeof reason === 'object' && reason !== null ? (reason as Record<string, unknown>).text : undefined;
   if (typeof university !== 'string' || typeof department !== 'string') return null;
   return {
     rank: typeof rank === 'number' && Number.isFinite(rank) ? rank : index + 1,
