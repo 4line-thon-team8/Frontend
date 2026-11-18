@@ -63,6 +63,8 @@ export type ReportView = RecommendationResult & {
   saveStatus: SaveStatus | null;
   /** 요약 카드: 희망 학과 / 선호 전형 (분석에 보낸 값 그대로) */
   profileLines: string[];
+  /** 분석 때 '상향 지원 카드 포함'을 켰는지 */
+  includeReach: boolean;
 };
 
 const ADMISSION_LABELS: Record<string, string> = { 'school-record': '학생부교과', comprehensive: '학생부종합', any: '상관없음' };
@@ -78,7 +80,12 @@ function toProfileLines(snapshot: GradeAnalysisSnapshot | null): string[] {
 
 /** 하단 '리포트' 탭용으로 남길 값. 성적·환산 결과·서술 분석·리포트 문장은 담지 않아요. */
 export function toStoredReport(result: SimulationResult, snapshot: GradeAnalysisSnapshot | null): StoredReport {
-  return { ...toRecommendationResult(result), saveStatus: result.saveStatus, profileLines: toProfileLines(snapshot) };
+  return {
+    ...toRecommendationResult(result),
+    saveStatus: result.saveStatus,
+    profileLines: toProfileLines(snapshot),
+    includeReach: snapshot?.preferences.includeReach === true,
+  };
 }
 
 const NO_REPORT_TEXT: SimulationResult['report'] = { greetingSummary: null, overallAssessment: null, applicationStrategy: null, closing: null };
@@ -112,6 +119,7 @@ export function useReportView(): ReportView | null {
     holisticStrategy: mock.holisticStrategy,
     saveStatus: mockRecommendations.recommendations.length ? 'SAVED' : 'NOT_SAVED',
     profileLines: profileLines.length ? profileLines : ['컴퓨터공학 · 통계학 희망', '학생부교과 선호'],
+    includeReach: snapshot ? snapshot.preferences.includeReach : true,
   };
 }
 

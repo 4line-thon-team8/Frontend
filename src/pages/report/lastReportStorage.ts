@@ -17,6 +17,8 @@ export type StoredReport = {
   saveStatus: SaveStatus | null;
   /** 요약 카드: '컴퓨터공학 · 통계학 희망', '학생부교과 선호' */
   profileLines: string[];
+  /** 분석 때 '상향 지원 카드 포함'을 켰는지 (활동·지원 전략 화면 안내 문구용) */
+  includeReach: boolean;
 };
 
 /** userId 와 함께 저장한 리포트 */
@@ -62,6 +64,7 @@ export function saveLastReport({ userId, report }: OwnedReport): void {
     warnings: report.warnings.map(({ code, message, rank }) => ({ code, message, rank })),
     saveStatus: report.saveStatus,
     profileLines: [...report.profileLines],
+    includeReach: report.includeReach,
   };
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ userId, report: stored }));
@@ -89,6 +92,7 @@ export function loadLastReport(): OwnedReport | null {
         warnings: compact(report.warnings, toWarning),
         saveStatus: SAVE_STATUSES.find(status => status === report.saveStatus) ?? null,
         profileLines: Array.isArray(report.profileLines) ? report.profileLines.filter(isString) : [],
+        includeReach: report.includeReach === true,
       },
     };
   } catch {
