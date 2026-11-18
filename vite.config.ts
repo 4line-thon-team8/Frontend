@@ -10,6 +10,11 @@ export default defineConfig(({ mode }) => {
     // 워커는 모두 { type: 'module' } 로 불러오고, 분석 워커는 모델 파일을 동적 import 로 따로 읽는다.
     // 기본 형식(iife)은 이렇게 파일을 나누는 워커를 만들 수 없어서 es 로 둔다.
     worker: { format: 'es' },
+    build: {
+      // 페이지를 나눠 불러와도 CSS 는 한 파일로 둔다. 페이지별로 쪼개면 CSS 적용 순서가 바뀌어,
+      // 다른 페이지 CSS 덕에 우연히 맞던 여백이 직접 진입 시 달라진다(예: /privacy 윗여백, /mypage 문단 간격).
+      cssCodeSplit: false,
+    },
     server: API_PROXY_TARGET
       ? {
         proxy: {
