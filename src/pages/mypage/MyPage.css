@@ -250,6 +250,3 @@
   font-size: 12px;
   cursor: pointer;
 }
-
-.mypage-reports-status--error { color: #b34a40; }
-.mypage-report-card__delete:disabled { opacity: 0.5; cursor: default; }

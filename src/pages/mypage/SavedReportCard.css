@@ -57,21 +57,3 @@
   font-size: 12px;
   line-height: normal;
 }
-
-/* 오른쪽 아래 '삭제' (10px) — 카드 링크 위에 올라와 따로 눌립니다. */
-.mypage-report-card__delete {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  margin: 4px 0 0 auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #52625d;
-  font-family: inherit;
-  font-size: 10px;
-  line-height: 12px;
-  cursor: pointer;
-}
