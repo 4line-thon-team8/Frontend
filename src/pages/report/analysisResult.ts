@@ -70,7 +70,10 @@ const ADMISSION_LABELS: Record<string, string> = { 'school-record': '학생부�
  * - BE 주소가 없는 시연 모드에서는 목업을 보여줘요 (?mock=partial / ?mock=empty 지원).
  */
 export function useReportView(): ReportView | null {
-  const { result, snapshot } = useGradeAnalysis();
+  // 방금 끝난 분석이 없으면(홈에서 새 입력을 시작한 뒤 탭으로 들어온 경우) 마지막 리포트를 보여줘요.
+  const { result: currentResult, snapshot: currentSnapshot, lastReport } = useGradeAnalysis();
+  const result = currentResult ?? lastReport?.result ?? null;
+  const snapshot = currentResult ? currentSnapshot : lastReport?.snapshot ?? null;
   const mockRecommendations = useMockRecommendationResult();
 
   const preferences = snapshot?.preferences;

@@ -37,7 +37,21 @@ interface GradeAnalysisState {
   /** 분석 응답 전체 (리포트 화면에서 사용). 새 분석을 시작하면 비워요. */
   result: SimulationResult | null;
   setResult: Dispatch<SetStateAction<SimulationResult | null>>;
+  /**
+   * 마지막으로 끝난 분석 (응답 + 그때 보낸 입력). 하단 '리포트' 탭이 이 값을 보여줘요.
+   * 홈에서 새 입력을 시작해도(reset) 남아 있고, 새 분석이 끝나면 바뀌어요. 로그아웃·탈퇴(resetAll) 때만 비워요.
+   */
+  lastReport: LastReport | null;
+  setLastReport: Dispatch<SetStateAction<LastReport | null>>;
+  /** 입력 중인 분석만 비워요. 마지막 리포트는 남겨요. */
   reset: () => void;
+  /** 마지막 리포트까지 모두 비워요 (로그아웃·탈퇴). */
+  resetAll: () => void;
+}
+
+export interface LastReport {
+  result: SimulationResult;
+  snapshot: GradeAnalysisSnapshot;
 }
 
 export const GradeAnalysisContext = createContext<GradeAnalysisState | null>(null);

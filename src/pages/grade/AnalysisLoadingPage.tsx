@@ -18,7 +18,7 @@ const WAITING_PROGRESS = 95;
 
 export default function AnalysisLoadingPage() {
   const navigate = useNavigate();
-  const { snapshot, setResult } = useGradeAnalysis();
+  const { snapshot, setResult, setLastReport } = useGradeAnalysis();
   const [elapsed, setElapsed] = useState(0);
   const [done, setDone] = useState(false);
 
@@ -30,6 +30,8 @@ export default function AnalysisLoadingPage() {
       .then(result => {
         if (controller.signal.aborted) return;
         setResult(result);
+        // 홈으로 나갔다가 하단 '리포트' 탭으로 다시 볼 수 있게 따로 남겨요.
+        setLastReport({ result, snapshot });
         setDone(true);
       })
       .catch((error: unknown) => {
@@ -45,7 +47,7 @@ export default function AnalysisLoadingPage() {
         navigate('/error/analysis', { replace: true });
       });
     return () => controller.abort();
-  }, [snapshot, setResult, navigate]);
+  }, [snapshot, setResult, setLastReport, navigate]);
 
   useEffect(() => {
     const startedAt = performance.now();

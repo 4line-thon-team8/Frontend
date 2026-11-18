@@ -24,7 +24,7 @@ export default function MyPage() {
     deletingId, deleteError, confirmDeleteId, requestDelete, cancelDelete, confirmDelete,
   } = useSavedReports(goSessionExpired);
 
-  const { reset: resetGradeAnalysis } = useGradeAnalysis();
+  const { resetAll: resetGradeAnalysis } = useGradeAnalysis();
   const [loggingOut, setLoggingOut] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string>();
