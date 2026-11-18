@@ -7,14 +7,17 @@ import { setGradeImage } from '../../utils/gradeImageStore';
 import type { GradeImage } from '../../utils/gradeImageStore';
 import { extractImageText } from '../../utils/extractImageText';
 import { analyzeNarrative } from '../../utils/holistic/analyzeNarrative';
-import { parseOcrGrades } from '../../utils/parseOcrGrades';
+import { recognizeGradeImages } from '../../utils/recognizeGradeImages';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import type { ConfirmSubject } from '../../types/gradeConfirm';
 import './CameraPage.css';
 
 type OcrState =
-  | { kind: 'idle' | 'preparing' | 'empty' | 'error' }
-  | { kind: 'recognizing'; progress: number };
+  | { kind: 'idle' }
+  | { kind: 'working'; page: number; progress: number | null }
+  | { kind: 'empty'; failed: number; empty: number; narrative: ReturnType<typeof analyzeNarrative> | null };
+
+type Photo = GradeImage & { id: number; url: string };
 
 function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
   return (
@@ -29,38 +32,55 @@ function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
 export default function CameraPage() {
   const navigate = useNavigate();
   const { setPendingOcrSubjects, setNarrative } = useGradeAnalysis();
-  const [photo, setPhoto] = useState<GradeImage | null>(null);
-  const [previewUrl, setPreviewUrl] = useState('');
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const photo = photos.find(item => item.id === selectedId);
+  const photoId = useRef(0);
+  const previewUrls = useRef(new Set<string>());
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [ocr, setOcr] = useState<OcrState>({ kind: 'idle' });
   const activeOcr = useRef<AbortController | null>(null);
-  const recognizing = ocr.kind === 'preparing' || ocr.kind === 'recognizing';
+  const recognizing = ocr.kind === 'working';
   const inputRef = useRef<HTMLInputElement>(null);
   const mounted = useRef(false);
   const operation = useRef(0);
-  const { videoRef, status, error, torchOn, torchSupported, torchBusy, stop, restart, switchCamera, markReady, onPlaybackPause, toggleTorch } = useCamera(!photo);
+  const { videoRef, status, error, torchOn, torchSupported, torchBusy, restart, switchCamera, markReady, onPlaybackPause, toggleTorch } = useCamera(!photo && !recognizing);
 
   useEffect(() => {
+    const urls = previewUrls.current;
     mounted.current = true;
     return () => {
       mounted.current = false;
       operation.current += 1;
       activeOcr.current?.abort();
+      for (const url of urls) URL.revokeObjectURL(url);
+      urls.clear();
     };
   }, []);
 
-  useEffect(() => {
-    if (!photo) return;
-    const url = URL.createObjectURL(photo.file);
-    // 객체 URL은 미리보기에서만 사용하고 화면 이탈 시 해제합니다.
-    queueMicrotask(() => { if (mounted.current) setPreviewUrl(url); });
-    return () => URL.revokeObjectURL(url);
-  }, [photo]);
+  function addPhotos(images: GradeImage[]) {
+    const added = images.map(image => {
+      const url = URL.createObjectURL(image.file);
+      previewUrls.current.add(url);
+      return { ...image, id: ++photoId.current, url };
+    });
+    setPhotos(current => [...current, ...added]);
+    setOcr({ kind: 'idle' });
+    return added.at(-1)?.id ?? null;
+  }
+
+  function removePhoto(item: Photo) {
+    URL.revokeObjectURL(item.url);
+    previewUrls.current.delete(item.url);
+    setPhotos(current => current.filter(photo => photo.id !== item.id));
+    if (selectedId === item.id) setSelectedId(null);
+    setOcr({ kind: 'idle' });
+  }
 
   async function capture() {
     const video = videoRef.current;
-    if (!video || status !== 'ready' || busy || !video.videoWidth || !video.videoHeight) return;
+    if (!video || status !== 'ready' || busy || activeOcr.current || !video.videoWidth || !video.videoHeight) return;
     setBusy(true);
     setMessage('');
     const current = ++operation.current;
@@ -78,82 +98,81 @@ export default function CameraPage() {
       context.drawImage(video, (video.videoWidth - width) / 2, (video.videoHeight - height) / 2, width, height, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('capture')), 'image/jpeg', 0.95));
       if (!mounted.current || current !== operation.current) return;
-      stop();
-      setPhoto({ file: new File([blob], `grade-${Date.now()}.jpg`, { type: 'image/jpeg' }), source: 'camera' });
+      addPhotos([{ file: new File([blob], `grade-${Date.now()}.jpg`, { type: 'image/jpeg' }), source: 'camera' }]);
     } catch {
       if (mounted.current && current === operation.current) setMessage('사진을 저장하지 못했습니다. 다시 촬영해주세요.');
     } finally { if (mounted.current && current === operation.current) setBusy(false); }
   }
 
   async function selectImage(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files ?? []);
     event.target.value = '';
-    if (!file) return;
+    if (!files.length || busy || activeOcr.current) return;
     const current = ++operation.current;
     setMessage('');
-    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
-      setMessage('JPG, PNG, WebP 등 사진 파일을 선택해주세요.'); return;
-    }
-    if (file.size > 30 * 1024 * 1024) { setMessage('30MB 이하의 이미지를 선택해주세요.'); return; }
     setBusy(true);
-    const url = URL.createObjectURL(file);
+    const valid: GradeImage[] = [];
     try {
-      const image = new Image();
-      image.src = url;
-      await image.decode();
-      if (!mounted.current || current !== operation.current) return;
-      stop();
-      setPhoto({ file, source: 'gallery' });
-    } catch {
-      if (mounted.current && current === operation.current) setMessage('이 사진 형식을 표시할 수 없습니다. JPG 또는 PNG로 저장한 뒤 다시 선택해주세요.');
+      for (const file of files) {
+        if (!file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.size > 30 * 1024 * 1024) continue;
+        const url = URL.createObjectURL(file);
+        previewUrls.current.add(url);
+        try {
+          const image = new Image();
+          image.src = url;
+          await image.decode();
+          valid.push({ file, source: 'gallery' });
+        } catch {
+          // 다른 이미지의 검증은 계속합니다.
+        } finally {
+          URL.revokeObjectURL(url);
+          previewUrls.current.delete(url);
+        }
+        if (!mounted.current || current !== operation.current) return;
+      }
+      if (valid.length) setSelectedId(addPhotos(valid));
+      const rejected = files.length - valid.length;
+      if (rejected) setMessage(`사진 ${rejected}장을 추가하지 못했어요. 열 수 있는 30MB 이하의 JPG, PNG, WebP 등을 선택해 주세요.`);
     } finally {
-      URL.revokeObjectURL(url);
       if (mounted.current && current === operation.current) setBusy(false);
     }
   }
 
-  function retake() {
+  function cancelOcr() {
     activeOcr.current?.abort();
-    activeOcr.current = null;
     setOcr({ kind: 'idle' });
-    operation.current += 1;
-    setPhoto(null);
-    setPreviewUrl('');
-    setMessage('');
-    restart();
   }
 
-  async function recognizePhoto() {
-    if (!photo || activeOcr.current) return;
+  async function recognizePhotos() {
+    if (!photos.length || busy || activeOcr.current) return;
     const request = new AbortController();
     activeOcr.current = request;
-    setOcr({ kind: 'preparing' });
     try {
-      const { text, words, tableSubjects } = await extractImageText(photo.file, request.signal, progress => {
-        if (!request.signal.aborted) setOcr(progress);
+      const { subjects, text, failed, empty } = await recognizeGradeImages(photos.map(item => item.file), request.signal, (file, index) => {
+        const page = index + 1;
+        setOcr({ kind: 'working', page, progress: null });
+        return extractImageText(file, request.signal, ({ progress }) => {
+          if (!request.signal.aborted) setOcr({ kind: 'working', page, progress });
+        });
       });
-      if (!request.signal.aborted) {
-        // OCR 전문은 서술 분석에만 쓰고 저장하지 않아요.
-        setNarrative(analyzeNarrative(text));
-        const subjects = tableSubjects.length ? tableSubjects : parseOcrGrades(words);
-        if (subjects.length) {
-          openGradeConfirm(subjects);
-          return;
-        }
-        setOcr({ kind: 'empty' });
-      }
+      request.signal.throwIfAborted();
+      const narrative = text.trim() ? analyzeNarrative(text) : null;
+      if (subjects.length) openGradeConfirm(subjects, narrative, failed + empty);
+      else setOcr({ kind: 'empty', failed, empty, narrative });
     } catch {
-      if (!request.signal.aborted) setOcr({ kind: 'error' });
+      if (!request.signal.aborted) setOcr({ kind: 'empty', failed: photos.length, empty: 0, narrative: null });
     } finally {
       if (activeOcr.current === request) activeOcr.current = null;
     }
   }
 
-  function openGradeConfirm(subjects: ConfirmSubject[] | null = null) {
-    if (!photo) return;
+  function openGradeConfirm(subjects: ConfirmSubject[] | null, narrative: ReturnType<typeof analyzeNarrative> | null, skipped = 0) {
+    const firstPhoto = photos[0];
+    if (!firstPhoto) return;
+    setNarrative(narrative);
     setPendingOcrSubjects(subjects);
-    setGradeImage(photo);
-    navigate('/grade/confirm', { replace: true });
+    setGradeImage({ file: firstPhoto.file, source: firstPhoto.source });
+    navigate('/grade/confirm', { replace: true, state: skipped ? { skippedPhotos: skipped } : undefined });
   }
 
   return (
@@ -164,43 +183,59 @@ export default function CameraPage() {
           <span>{photo ? '사진 확인' : '성적표 촬영'}</span>
         </header>
         <div className="grade-camera-preview">
-          {photo ? <img className="grade-camera-photo" src={previewUrl || undefined} alt="선택한 성적표 사진" /> : <>
+          {photo ? <img className="grade-camera-photo" src={photo.url} alt="선택한 성적표 사진" /> : <>
             <video ref={videoRef} autoPlay playsInline muted onLoadedData={markReady} onPlaying={markReady} onPause={onPlaybackPause} aria-label="실시간 카메라 영상" />
             <div className="grade-camera-grid" aria-hidden="true"><i /><i /><i /><i /></div>
             {status !== 'ready' && <div className="grade-camera-status" role="status">
               <p>{status === 'requesting' ? '카메라 연결 중입니다. 권한 요청이 표시되면 허용해주세요.' : status === 'paused' ? error || '카메라가 일시 중지되었습니다.' : error}</p>
-              {(status === 'error' || status === 'paused') && <button type="button" onClick={restart}>카메라 다시 시작</button>}
+              {(status === 'error' || status === 'paused') && <button type="button" disabled={recognizing} onClick={restart}>카메라 다시 시작</button>}
             </div>}
-            {torchSupported && status === 'ready' && <button type="button" className="grade-camera-flash" aria-label="플래시" aria-pressed={torchOn} disabled={torchBusy || busy} onClick={() => void toggleTorch()}><CameraIcon kind="flash" /></button>}
+            {torchSupported && status === 'ready' && <button type="button" className="grade-camera-flash" aria-label="플래시" aria-pressed={torchOn} disabled={torchBusy || busy || recognizing} onClick={() => void toggleTorch()}><CameraIcon kind="flash" /></button>}
           </>}
         </div>
         <div className="grade-camera-feedback" aria-live="polite">{message || (status === 'ready' && !photo ? error : '')}</div>
-        {photo && ocr.kind !== 'idle' && <div className="grade-camera-ocr">
+        {photos.length > 0 && <div className="grade-camera-photo-list">
+          <p role="status">추가한 사진 {photos.length}장</p>
+          <ul aria-label="추가한 성적표 사진">
+            {photos.map((item, index) => (
+              <li key={item.id}>
+                <button type="button" className="grade-camera-thumbnail" aria-label={`${index + 1}번 사진 미리보기`} aria-pressed={item.id === selectedId} disabled={busy || recognizing} onClick={() => setSelectedId(item.id)}>
+                  <img src={item.url} alt="" />
+                  <span aria-hidden="true">{index + 1}</span>
+                </button>
+                <button type="button" className="grade-camera-remove" aria-label={`${index + 1}번 사진 삭제`} disabled={busy || recognizing} onClick={() => removePhoto(item)}>삭제</button>
+              </li>
+            ))}
+          </ul>
+        </div>}
+        {ocr.kind !== 'idle' && <div className="grade-camera-ocr">
           <div role="status">
-            {ocr.kind === 'preparing' && '인식 엔진과 언어 데이터를 준비하고 있어요.'}
-            {ocr.kind === 'recognizing' && '사진에서 텍스트를 읽고 있어요.'}
-            {ocr.kind === 'empty' && '사진에서 과목과 등급을 찾지 못했어요.'}
-            {ocr.kind === 'error' && '텍스트를 읽지 못했어요. 네트워크를 확인하고 다시 시도하거나 촬영해 주세요.'}
+            {ocr.kind === 'working' ? `총 ${photos.length}장 중 ${ocr.page}번째 사진 분석 중` : <>
+              <p>사진에서 과목과 등급을 찾지 못했어요.</p>
+              {ocr.failed > 0 && <p>텍스트를 읽지 못한 사진 {ocr.failed}장</p>}
+              {ocr.empty > 0 && <p>성적을 찾지 못한 사진 {ocr.empty}장</p>}
+            </>}
           </div>
-          {ocr.kind === 'recognizing' && <progress aria-label="텍스트 인식 진행률" max={1} value={ocr.progress} />}
-          {ocr.kind === 'empty' &&
-            <p role="status">사진 속 성적을 반영하지 못했어요. 기존 성적이 유지되며, 성적 확인 화면에서 직접 수정할 수 있어요.</p>}
-          {ocr.kind === 'empty' && <button type="button" onClick={() => void recognizePhoto()}>다시 시도</button>}
+          {ocr.kind === 'working' && <progress aria-label="텍스트 인식 진행률" max={1} value={ocr.progress ?? undefined} />}
         </div>}
-        {ocr.kind === 'error' && <button type="button" className="grade-camera-retake" onClick={() => openGradeConfirm()}>성적 확인으로 이동</button>}
-        {photo ? <div className="grade-camera-review-actions">
-          <button type="button" className="grade-camera-retake" onClick={retake}>다시 촬영하기</button>
-          {ocr.kind === 'empty'
-            ? <button type="button" className="grade-camera-use" onClick={() => openGradeConfirm()}>성적 확인으로 이동</button>
-            : <button type="button" className="grade-camera-use" onClick={() => void recognizePhoto()} disabled={!previewUrl || recognizing}>
-              {ocr.kind === 'error' ? '다시 시도' : '사진 사용'}
-            </button>}
-        </div> : <div className="grade-camera-controls">
-          <button type="button" className="grade-camera-icon-button" aria-label="갤러리에서 사진 선택" disabled={busy} onClick={() => inputRef.current?.click()}><CameraIcon kind="gallery" /></button>
-          <button type="button" className="grade-camera-shutter" aria-label="성적표 촬영" disabled={status !== 'ready' || busy} onClick={() => void capture()} />
-          <button type="button" className="grade-camera-icon-button" aria-label="전면 후면 카메라 전환" disabled={busy || status === 'requesting'} onClick={switchCamera}><CameraIcon kind="switch" /></button>
+        <div className={photo ? 'grade-camera-review-actions' : 'grade-camera-controls'}>
+          <button type="button" className="grade-camera-icon-button" aria-label="갤러리에서 사진 선택" disabled={busy || recognizing} onClick={() => inputRef.current?.click()}><CameraIcon kind="gallery" /></button>
+          {photo
+            ? <button type="button" className="grade-camera-retake" disabled={busy || recognizing} onClick={() => setSelectedId(null)}>추가 촬영</button>
+            : <>
+              <button type="button" className="grade-camera-shutter" aria-label="성적표 촬영" disabled={status !== 'ready' || busy || recognizing} onClick={() => void capture()} />
+              <button type="button" className="grade-camera-icon-button" aria-label="전면 후면 카메라 전환" disabled={busy || recognizing || status === 'requesting'} onClick={switchCamera}><CameraIcon kind="switch" /></button>
+            </>}
+        </div>
+        {photos.length > 0 && <div className="grade-camera-review-actions">
+          {ocr.kind === 'working'
+            ? <button type="button" className="grade-camera-retake" onClick={cancelOcr}>분석 취소</button>
+            : <>
+              <button type="button" className="grade-camera-use" disabled={busy} onClick={() => void recognizePhotos()}>{ocr.kind === 'empty' ? '다시 시도' : '사진 분석하기'}</button>
+              {ocr.kind === 'empty' && <button type="button" className="grade-camera-retake" disabled={busy} onClick={() => openGradeConfirm(null, ocr.narrative)}>성적 확인으로 이동</button>}
+            </>}
         </div>}
-        <input ref={inputRef} type="file" accept="image/*" className="grade-camera-file" aria-label="성적표 이미지 파일" onChange={event => void selectImage(event)} />
+        <input ref={inputRef} type="file" accept="image/*" multiple className="grade-camera-file" aria-label="성적표 이미지 파일" onChange={event => void selectImage(event)} />
       </div>
     </section>
   );
