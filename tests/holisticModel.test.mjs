@@ -16,7 +16,8 @@ async function load(t) {
   const modelCore = await server.ssrLoadModule('/src/utils/holistic/holisticModel.ts');
   const model = await server.ssrLoadModule('/src/utils/holistic/model.ts');
   const rules = await server.ssrLoadModule('/src/utils/holistic/rules.ts');
-  return { ...modelCore, ...model, ...rules };
+  const bundledModel = await model.loadBundledModel();
+  return { ...modelCore, ...model, ...rules, BUNDLED_MODEL: bundledModel };
 }
 
 test('char_wb n-gram 이 scikit-learn 과 같은 모양이다', async t => {
