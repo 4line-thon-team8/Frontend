@@ -52,7 +52,8 @@ export default function BottomNavigation() {
 
   return (
     <nav className="grade-bottom-navigation" aria-label="주요 메뉴">
-      <NavItem to="/report/summary" label="리포트" icon={<ReportIcon />} active={isReportActive} />
+      {/* 리포트 탭은 활동·지원 전략(2페이지)으로 열려요. 분석 전이면 그 화면에서 '저장된 리포트가 없어요'가 보여요. */}
+      <NavItem to="/report/strategy" label="리포트" icon={<ReportIcon />} active={isReportActive} />
       <NavItem to="/grade/input" label="홈" icon={<HomeIcon />} end />
       <NavItem to="/mypage" label="마이페이지" icon={<MypageIcon />} />
     </nav>

@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router';
+import NoReport from '../../components/report/NoReport';
 import BottomNavigation from '../../components/common/BottomNavigation';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
 import ReportPagination from '../../components/report/ReportPagination';
@@ -12,7 +12,8 @@ import './RecommendationPage.css';
 
 export default function RecommendationPage() {
   const view = useReportView();
-  if (!view) return <Navigate to="/grade/input" replace />;
+  // 아직 분석한 리포트가 없으면(하단 리포트 탭으로 바로 온 경우 등) 빈 화면을 보여줘요.
+  if (!view) return <NoReport />;
   const { recommendations, warnings } = view;
 
   return (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { isSessionExpiredError, SESSION_EXPIRED_PATH } from '../../services/authApi';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
+import { getReturnTo, isSessionExpiredError, SESSION_EXPIRED_PATH } from '../../services/authApi';
 import { clearAccessToken } from '../../services/authToken';
 import {
   DELETE_REPORT_CONFIRM, deleteReport, formatReportDate, getDeleteReportErrorMessage, getReport, getReportErrorMessage, NoTokenError,
@@ -28,6 +28,8 @@ function CategoryBadge({ category }: { category: string | null }) {
 export default function ReportDetailPage() {
   const navigate = useNavigate();
   const { reportId } = useParams();
+  // 이전 버튼: 카드를 누른 화면(메인 '나의 리포트' 또는 마이페이지)으로 돌아가요. 주소로 바로 들어왔으면 마이페이지로.
+  const backTo = getReturnTo(useLocation().state) ?? '/mypage';
   const [report, setReport] = useState<SavedReportDetail>();
   const [loadError, setLoadError] = useState<string>();
   const [reloadKey, setReloadKey] = useState(0);
@@ -69,8 +71,8 @@ export default function ReportDetailPage() {
     setDeleteError(undefined);
     try {
       await deleteReport(reportId);
-      // 서버에서 지워진 뒤에만 목록으로 돌아가요.
-      navigate('/mypage', { replace: true });
+      // 서버에서 지워진 뒤에만 들어왔던 목록(메인·마이페이지)으로 돌아가요.
+      navigate(backTo, { replace: true });
     } catch (error) {
       if (error instanceof NoTokenError || isSessionExpiredError(error)) {
         clearAccessToken();
@@ -84,7 +86,7 @@ export default function ReportDetailPage() {
 
   return (
     <div className="mypage-page mypage-page--detail">
-      <Link className="mypage-back" to="/mypage" aria-label="마이페이지로 돌아가기">
+      <Link className="mypage-back" to={backTo} aria-label={backTo === '/mypage' ? '마이페이지로 돌아가기' : '이전 화면으로 돌아가기'}>
         <img src={arrowBack} alt="" width="29" height="29" />
       </Link>
 

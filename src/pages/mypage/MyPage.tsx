@@ -7,7 +7,6 @@ import {
   isNetworkError, isSessionExpiredError, logout, NETWORK_ERROR_MESSAGE, SESSION_EXPIRED_PATH, withdraw, WITHDRAW_CONFIRM, WITHDRAW_ERROR_MESSAGE,
 } from '../../services/authApi';
 import { clearAccessToken } from '../../services/authToken';
-import { DELETE_REPORT_CONFIRM } from '../../services/reportApi';
 import { SYSTEM_RULES } from './mypage.mock';
 import SavedReportCard from './SavedReportCard';
 import { useSavedReports } from './useSavedReports';
@@ -19,10 +18,7 @@ export default function MyPage() {
     clearAccessToken();
     navigate(SESSION_EXPIRED_PATH, { replace: true, state: { from: '/mypage' } });
   }, [navigate]);
-  const {
-    reports, listState, listError, reload: retryLoadReports,
-    deletingId, deleteError, confirmDeleteId, requestDelete, cancelDelete, confirmDelete,
-  } = useSavedReports(goSessionExpired);
+  const { reports, listState, listError, reload: retryLoadReports } = useSavedReports(goSessionExpired);
 
   const { resetAll: resetGradeAnalysis } = useGradeAnalysis();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -85,18 +81,9 @@ export default function MyPage() {
         <p className="mypage-reports-status">아직 저장된 리포트가 없어요.<br />성적을 입력하고 분석하면 자동으로 저장돼요.</p>
       )}
 
-      {deleteError && <p className="mypage-reports-status mypage-reports-status--error" role="alert">{deleteError}</p>}
-
+      {/* 삭제는 카드를 눌러 들어간 리포트 상세 화면에서만 해요. */}
       <ul className="mypage-reports">
-        {reports.map(report => (
-          <SavedReportCard
-            key={report.id}
-            report={report}
-            deleting={deletingId === report.id}
-            deleteDisabled={deletingId !== undefined}
-            onDelete={() => requestDelete(report.id)}
-          />
-        ))}
+        {reports.map(report => <SavedReportCard key={report.id} report={report} />)}
       </ul>
 
       <Link className="mypage-add" to="/grade/input">리포트 만들러가기</Link>
@@ -122,14 +109,6 @@ export default function MyPage() {
         {withdrawing ? '탈퇴 처리 중…' : '회원 탈퇴'}
       </button>
       {withdrawError && <p className="mypage-logout-error" role="alert">{withdrawError}</p>}
-
-      <ConfirmDialog
-        open={confirmDeleteId !== undefined}
-        {...DELETE_REPORT_CONFIRM}
-        destructive
-        onConfirm={() => void confirmDelete()}
-        onCancel={cancelDelete}
-      />
 
       <ConfirmDialog
         open={confirmWithdrawOpen}
