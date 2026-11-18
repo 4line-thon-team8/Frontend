@@ -1,4 +1,5 @@
-import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
+import { useGradeAnalysis, type GradeAnalysisSnapshot } from '../../app/gradeAnalysisContext';
+import type { StoredReport } from './lastReportStorage';
 import { USE_MOCK_AUTH } from '../../services/authApi';
 import type { ReportSection, SaveStatus, SimulationResult, SimulationWarning } from '../../services/simulationApi';
 import { createMockSimulationResult, useMockRecommendationResult } from './recommendation.mock';
@@ -64,29 +65,37 @@ export type ReportView = RecommendationResult & {
 
 const ADMISSION_LABELS: Record<string, string> = { 'school-record': '학생부교과', comprehensive: '학생부종합', any: '상관없음' };
 
-/**
- * 리포트 화면 데이터. 분석 응답(GradeAnalysisProvider.result)을 화면 모양으로 바꿔요.
- * - 분석 결과가 없으면 null → 화면에서 성적 입력으로 보내요.
- * - BE 주소가 없는 시연 모드에서는 목업을 보여줘요 (?mock=partial / ?mock=empty 지원).
- */
-export function useReportView(): ReportView | null {
-  // 방금 끝난 분석이 없으면(홈에서 새 입력을 시작한 뒤 탭으로 들어온 경우) 마지막 리포트를 보여줘요.
-  const { result: currentResult, snapshot: currentSnapshot, lastReport } = useGradeAnalysis();
-  const result = currentResult ?? lastReport?.result ?? null;
-  const snapshot = currentResult ? currentSnapshot : lastReport?.snapshot ?? null;
-  const mockRecommendations = useMockRecommendationResult();
-
-  const preferences = snapshot?.preferences;
+function toProfileLines(snapshot: GradeAnalysisSnapshot | null): string[] {
   const majorNames = snapshot?.majorNames ?? [];
-  const admissions = preferences?.admissions.map(id => ADMISSION_LABELS[id] ?? id) ?? [];
-  const profileLines = [
+  const admissions = snapshot?.preferences.admissions.map(id => ADMISSION_LABELS[id] ?? id) ?? [];
+  return [
     majorNames.length ? `${majorNames.join(' · ')} 희망` : '',
     admissions.length ? `${admissions.join(' · ')} 선호` : '',
   ].filter(Boolean);
+}
 
-  if (result) return { ...toRecommendationResult(result), report: result.report, saveStatus: result.saveStatus, profileLines };
+/** 하단 '리포트' 탭용으로 남길 값. 성적·환산 결과·서술 분석·리포트 문장은 담지 않아요. */
+export function toStoredReport(result: SimulationResult, snapshot: GradeAnalysisSnapshot | null): StoredReport {
+  return { ...toRecommendationResult(result), saveStatus: result.saveStatus, profileLines: toProfileLines(snapshot) };
+}
+
+const NO_REPORT_TEXT: SimulationResult['report'] = { greetingSummary: null, overallAssessment: null, applicationStrategy: null, closing: null };
+
+/**
+ * 리포트 화면 데이터. 분석 응답(GradeAnalysisProvider.result)을 화면 모양으로 바꿔요.
+ * - 방금 끝난 분석이 없으면 마지막 리포트(lastReport)를 보여줘요. 리포트 문장은 저장하지 않아서 총평·전략 문단은 빠져요.
+ * - 둘 다 없으면 null → 화면에서 성적 입력으로 보내요.
+ * - BE 주소가 없는 시연 모드에서는 목업을 보여줘요 (?mock=partial / ?mock=empty 지원).
+ */
+export function useReportView(): ReportView | null {
+  const { result, snapshot, lastReport } = useGradeAnalysis();
+  const mockRecommendations = useMockRecommendationResult();
+
+  if (result) return { ...toStoredReport(result, snapshot), report: result.report };
+  if (lastReport) return { ...lastReport, report: NO_REPORT_TEXT };
   if (!USE_MOCK_AUTH) return null;
   const mock = createMockSimulationResult();
+  const profileLines = toProfileLines(snapshot);
   return {
     ...mockRecommendations,
     report: mock.report,

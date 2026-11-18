@@ -8,6 +8,7 @@ import type { ReturnToState } from '../../services/authApi';
 import { clearAccessToken } from '../../services/authToken';
 import { NoTokenError } from '../../services/reportApi';
 import { runSimulation } from '../../services/simulationApi';
+import { toStoredReport } from '../report/analysisResult';
 import { MOCK_ANALYSIS_STEPS, MOCK_ANALYSIS_STEP_DURATION_MS } from './analysisLoading.mock';
 import './AnalysisLoadingPage.css';
 
@@ -30,8 +31,8 @@ export default function AnalysisLoadingPage() {
       .then(result => {
         if (controller.signal.aborted) return;
         setResult(result);
-        // 홈으로 나갔다가 하단 '리포트' 탭으로 다시 볼 수 있게 따로 남겨요.
-        setLastReport({ result, snapshot });
+        // 홈으로 나갔다가·새로고침한 뒤에도 하단 '리포트' 탭으로 다시 볼 수 있게 남겨요 (성적·리포트 문장은 빼고).
+        setLastReport(toStoredReport(result, snapshot));
         setDone(true);
       })
       .catch((error: unknown) => {

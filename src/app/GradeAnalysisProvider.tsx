@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { createInitialGradeConfirmDraft } from '../pages/grade/gradeConfirm.mock';
 import { GradeAnalysisContext } from './gradeAnalysisContext';
-import type { GradeAnalysisSnapshot, LastReport } from './gradeAnalysisContext';
+import type { GradeAnalysisSnapshot } from './gradeAnalysisContext';
+import { clearLastReport, loadLastReport, saveLastReport, type StoredReport } from '../pages/report/lastReportStorage';
 import type { ConfirmSubject } from '../types/gradeConfirm';
 import type { SimulationResult } from '../services/simulationApi';
 import { clearGradeImage } from '../utils/gradeImageStore';
@@ -15,7 +16,11 @@ export default function GradeAnalysisProvider({ children }: PropsWithChildren) {
   const [pendingOcrSubjects, setPendingOcrSubjects] = useState<ConfirmSubject[] | null>(null);
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [narrative, setNarrative] = useState<NarrativeAnalysisResult | null>(null);
-  const [lastReport, setLastReport] = useState<LastReport | null>(null);
+  const [lastReport, setLastReportState] = useState<StoredReport | null>(loadLastReport);
+  const setLastReport = useCallback((report: StoredReport) => {
+    saveLastReport(report);
+    setLastReportState(report);
+  }, []);
 
   const reset = useCallback(() => {
     clearGradeImage();
@@ -29,7 +34,8 @@ export default function GradeAnalysisProvider({ children }: PropsWithChildren) {
 
   const resetAll = useCallback(() => {
     reset();
-    setLastReport(null);
+    clearLastReport();
+    setLastReportState(null);
   }, [reset]);
 
   return (
