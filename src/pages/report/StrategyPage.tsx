@@ -12,15 +12,10 @@ import { countByTier, tierClassName } from './reportTier';
 import './ReportPage.css';
 import './StrategyPage.css';
 
-/** 강점 막대 칸 수. Figma 수정안: 5칸 → 3칸 */
-const SCORE_MAX = 3;
-const BE_LEVEL_MAX = 5;
+/** 강점 막대 칸 수 (BE level 1~5 그대로) */
+const SCORE_MAX = 5;
 
-/**
- * BE level(1~5)을 3칸 기준으로 바꿔요. 반올림이라 5 → 3, 4·3 → 2, 2·1 → 1.
- * (BE 는 강점으로 4·5만 보내서 실제로는 2 또는 3칸이에요.)
- */
-const toScore = (level: number) => Math.min(SCORE_MAX, Math.max(1, Math.round((level * SCORE_MAX) / BE_LEVEL_MAX)));
+const toScore = (level: number) => Math.min(SCORE_MAX, Math.max(1, Math.round(level)));
 
 /** 활동 요약은 한 문장만 보여줘요 (Figma: 리포트 요약 문장 / 한 문장으로 제한). */
 function firstSentence(text: string): string {
@@ -30,14 +25,22 @@ function firstSentence(text: string): string {
 }
 
 /**
- * '자세히 보기' 창 내용. 시안의 전용 문장(강점 근거·보완할 점 등)은 아직 BE 응답에 없어서,
- * 지금 받는 값으로 채우고 없는 항목은 숨겨요. TODO: BE 상세 필드가 생기면 교체
+ * '자세히 보기' 창 내용 (BE holistic.detail). 빈 영역은 창에서 숨겨요.
+ * BE 2단계 배포 전이라 detail 이 아직 없으면, 지금 받는 값(요약·강점 설명·학과별 조언)으로 임시로 채워요.
  */
-function toDetailSections({ activitySummary, strengths, majorAdvices }: HolisticStrategy): StrengthDetailSection[] {
+function toDetailSections({ activitySummary, strengths, majorAdvices, detail }: HolisticStrategy): StrengthDetailSection[] {
+  if (detail) {
+    return [
+      { title: '전체 요약', lines: detail.overview ? [detail.overview] : [] },
+      { title: '생기부 강점', lines: detail.strengthEvidence, list: true },
+      { title: '보완할 점', lines: detail.improvements, list: true },
+      { title: '다음 단계 제안', lines: detail.nextSteps, list: true },
+    ];
+  }
   return [
-    { title: '한눈에 보기', lines: activitySummary ? [activitySummary.replace(/\s+/g, ' ').trim()] : [] },
-    { title: '강점의 근거', lines: strengths.filter(item => item.description).map(item => `${item.label}: ${item.description}`) },
-    { title: '다음 준비 방향', lines: majorAdvices.map(item => `${item.department}: ${item.advice}`) },
+    { title: '전체 요약', lines: activitySummary ? [activitySummary.replace(/\s+/g, ' ').trim()] : [] },
+    { title: '생기부 강점', lines: strengths.filter(item => item.description).map(item => `${item.label}: ${item.description}`), list: true },
+    { title: '다음 단계 제안', lines: majorAdvices.map(item => `${item.department}: ${item.advice}`), list: true },
   ];
 }
 

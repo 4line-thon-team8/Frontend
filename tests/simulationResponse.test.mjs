@@ -73,12 +73,41 @@ test('holistic 의 활동 요약·강점·학과별 조언을 읽는다', async 
       { indicatorId: 'C3', label: '성실성과 규칙준수', level: 5, description: '' },
     ],
     majorAdvices: [{ department: '컴퓨터공학과', advice: '과정을 남겨 보세요.' }],
+    detail: null,
   });
+});
+
+test('holistic.detail 의 상세 창 네 영역을 읽는다', async t => {
+  const { parseSimulationResult } = await load(t);
+  const item = text => ({ text, generationMethod: 'TEMPLATE' });
+  const result = parseSimulationResult({
+    recommendations: [card()],
+    holistic: {
+      status: 'APPLIED',
+      detail: {
+        overview: { text: '활동 흐름이에요.', generationMethod: 'LLM' },
+        strengthEvidence: [item('근거 1'), item('근거 2'), item('근거 3'), item('근거 4')],
+        improvements: null,
+        nextSteps: [item(' '), item('모집요강을 확인해 보세요.')],
+      },
+    },
+  });
+  assert.deepEqual(result.holisticStrategy.detail, {
+    overview: '활동 흐름이에요.',
+    strengthEvidence: ['근거 1', '근거 2', '근거 3'],
+    improvements: [],
+    nextSteps: ['모집요강을 확인해 보세요.'],
+  });
+  const emptyDetail = parseSimulationResult({
+    recommendations: [card()],
+    holistic: { status: 'APPLIED', detail: { overview: null, strengthEvidence: [], improvements: [], nextSteps: [] } },
+  });
+  assert.equal(emptyDetail.holisticStrategy.detail, null);
 });
 
 test('1단계 배포·SKIPPED·필드 없음이면 비어 있는 활동 전략', async t => {
   const { parseSimulationResult } = await load(t);
-  const empty = { activitySummary: null, strengths: [], majorAdvices: [] };
+  const empty = { activitySummary: null, strengths: [], majorAdvices: [], detail: null };
   const stage1 = parseSimulationResult({
     recommendations: [card()],
     holistic: { status: 'APPLIED', activitySummary: null, strengths: [{ indicatorId: 'A3', label: '탐구력', level: 4, description: '' }], majorAdvices: [] },

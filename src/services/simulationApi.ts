@@ -124,6 +124,23 @@ export type HolisticStrategy = {
   strengths: HolisticStrength[];
   /** 희망 학과 입력 순서, 최대 3개 */
   majorAdvices: HolisticMajorAdvice[];
+  /** '자세히 보기' 창 (BE holistic.detail). BE 2단계 배포 전이거나 SKIPPED·NOT_PROVIDED 면 null */
+  detail: HolisticDetail | null;
+};
+
+/**
+ * '자세히 보기' 창의 네 영역. 목록은 각각 최대 3개, 비면 null·[] 예요.
+ * 외부 AI 전달 스위치가 켜지기 전에는 TEMPLATE 문장만 와요 (켜지면 FE 변경 없이 LLM 문장으로 바뀌어요).
+ */
+export type HolisticDetail = {
+  /** 전체 요약 */
+  overview: string | null;
+  /** 생기부 강점 */
+  strengthEvidence: string[];
+  /** 보완할 점 */
+  improvements: string[];
+  /** 다음 단계 제안 (마지막은 모집요강 확인 고정 문장) */
+  nextSteps: string[];
 };
 
 /** 추천 안내. 서버는 code·rank 만 보내고, 화면 문구는 FE 가 정해요. */
@@ -194,8 +211,22 @@ function toHolistic(value: unknown): HolisticResult {
 const MAX_STRATEGY_ITEMS = 3;
 const textOf = (value: unknown) => (isObject(value) && typeof value.text === 'string' ? value.text.trim() : '');
 
+const textList = (value: unknown) => (Array.isArray(value) ? value.map(textOf).filter(Boolean).slice(0, MAX_STRATEGY_ITEMS) : []);
+
+function toHolisticDetail(value: unknown): HolisticDetail | null {
+  if (!isObject(value)) return null;
+  const detail: HolisticDetail = {
+    overview: textOf(value.overview) || null,
+    strengthEvidence: textList(value.strengthEvidence),
+    improvements: textList(value.improvements),
+    nextSteps: textList(value.nextSteps),
+  };
+  const hasContent = detail.overview !== null || detail.strengthEvidence.length > 0 || detail.improvements.length > 0 || detail.nextSteps.length > 0;
+  return hasContent ? detail : null;
+}
+
 function toHolisticStrategy(value: unknown): HolisticStrategy {
-  const empty: HolisticStrategy = { activitySummary: null, strengths: [], majorAdvices: [] };
+  const empty: HolisticStrategy = { activitySummary: null, strengths: [], majorAdvices: [], detail: null };
   if (!isObject(value) || value.status !== 'APPLIED') return empty;
   const strengths = Array.isArray(value.strengths)
     ? value.strengths.flatMap((item): HolisticStrength[] => {
@@ -220,6 +251,7 @@ function toHolisticStrategy(value: unknown): HolisticStrategy {
     activitySummary: textOf(value.activitySummary) || null,
     strengths: strengths.slice(0, MAX_STRATEGY_ITEMS),
     majorAdvices: majorAdvices.slice(0, MAX_STRATEGY_ITEMS),
+    detail: toHolisticDetail(value.detail),
   };
 }
 
