@@ -10,7 +10,12 @@ const TOKEN_LIFETIME_MS = 2 * 60 * 60 * 1000;
 
 export type Credentials = { email: string; password: string };
 /** 200 응답. expiresAt 필수 여부는 명세상 아직 미정이라 없을 수도 있어요. */
-type LoginResponse = { accessToken: string; expiresAt?: string };
+type LoginResponse = { accessToken: string; expiresAt?: string; userId?: unknown };
+
+/** 로그인 결과. userId 는 BE 가 문자열로 줘요. 없거나 형식이 다르면 null */
+export type LoginResult = { userId: string | null };
+
+const MOCK_USER_ID = 'mock-user';
 
 function postJson(body: unknown): RequestInit {
   return {
@@ -32,10 +37,10 @@ export async function signup(credentials: Credentials): Promise<void> {
   await apiClient('/api/auth/signup', postJson(credentials));
 }
 
-export async function login(credentials: Credentials): Promise<void> {
+export async function login(credentials: Credentials): Promise<LoginResult> {
   if (USE_MOCK_AUTH) {
-    setAccessToken('mock-access-token', new Date(Date.now() + TOKEN_LIFETIME_MS).toISOString());
-    return;
+    setAccessToken('mock-access-token', new Date(Date.now() + TOKEN_LIFETIME_MS).toISOString(), MOCK_USER_ID);
+    return { userId: MOCK_USER_ID };
   }
   const body = await apiClient('/api/auth/login', postJson(credentials));
   if (!isLoginResponse(body)) throw new Error('로그인 응답 형식이 올바르지 않아요.');
@@ -43,7 +48,9 @@ export async function login(credentials: Credentials): Promise<void> {
   const expiresAt = body.expiresAt && !Number.isNaN(Date.parse(body.expiresAt))
     ? body.expiresAt
     : new Date(Date.now() + TOKEN_LIFETIME_MS).toISOString();
-  setAccessToken(body.accessToken, expiresAt);
+  const userId = typeof body.userId === 'string' && body.userId !== '' ? body.userId : null;
+  setAccessToken(body.accessToken, expiresAt, userId);
+  return { userId };
 }
 
 /**

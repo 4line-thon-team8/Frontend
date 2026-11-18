@@ -6,6 +6,7 @@ import arrowBack from '../../assets/icons/arrow-back.svg';
 import logo from '../../assets/images/logo.svg';
 import signupButton from '../../assets/icons/signup-button.svg';
 import signupButtonBefore from '../../assets/icons/signup-button-before.svg';
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import { getSignupErrorMessage, login, signup } from '../../services/authApi';
 import { PASSWORD_MAX_LENGTH, PASSWORD_PLACEHOLDER, validateEmail, validatePassword } from './authValidation';
 import './AuthPage.css';
@@ -14,6 +15,7 @@ type SignupErrors = { email?: string; password?: string; passwordConfirm?: strin
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const { syncReportOwner } = useGradeAnalysis();
   const [submitting, setSubmitting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,7 +52,9 @@ export default function SignupPage() {
 
     // 가입 후 자동 로그인이 없어서 이어서 로그인합니다.
     try {
-      await login(credentials);
+      const { userId } = await login(credentials);
+      // 새 계정이라 이전 사용자의 마지막 리포트는 지워요.
+      syncReportOwner(userId);
     } catch {
       // 가입은 됐으니 로그인 화면에서 다시 로그인하면 돼요.
       navigate('/login', { replace: true });

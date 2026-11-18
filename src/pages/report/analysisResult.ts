@@ -83,16 +83,17 @@ const NO_REPORT_TEXT: SimulationResult['report'] = { greetingSummary: null, over
 
 /**
  * 리포트 화면 데이터. 분석 응답(GradeAnalysisProvider.result)을 화면 모양으로 바꿔요.
- * - 방금 끝난 분석이 없으면 마지막 리포트(lastReport)를 보여줘요. 리포트 문장은 저장하지 않아서 총평·전략 문단은 빠져요.
+ * - 방금 끝난 분석이 없으면(홈·마이페이지를 다녀온 경우) 마지막 리포트(lastReport)를 보여줘요.
+ *   리포트 문장은 메모리에만 있어서, 새로고침한 뒤에는 총평·전략 문단만 빠져요.
  * - 둘 다 없으면 null → 화면에서 성적 입력으로 보내요.
  * - BE 주소가 없는 시연 모드에서는 목업을 보여줘요 (?mock=partial / ?mock=empty 지원).
  */
 export function useReportView(): ReportView | null {
-  const { result, snapshot, lastReport } = useGradeAnalysis();
+  const { result, snapshot, lastReport, lastReportText } = useGradeAnalysis();
   const mockRecommendations = useMockRecommendationResult();
 
   if (result) return { ...toStoredReport(result, snapshot), report: result.report };
-  if (lastReport) return { ...lastReport, report: NO_REPORT_TEXT };
+  if (lastReport) return { ...lastReport, report: lastReportText ?? NO_REPORT_TEXT };
   if (!USE_MOCK_AUTH) return null;
   const mock = createMockSimulationResult();
   const profileLines = toProfileLines(snapshot);
