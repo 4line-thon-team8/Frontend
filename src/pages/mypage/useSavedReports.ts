@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { isNetworkError, isSessionExpiredError, NETWORK_ERROR_MESSAGE } from '../../services/authApi';
 import {
-  deleteReport, formatReportDate, formatReportTime, getDeleteReportErrorMessage, getReport, getReports, NoTokenError,
+  formatReportDate, formatReportTime, getReport, getReports, NoTokenError,
   type SavedReportDetail,
 } from '../../services/reportApi';
 import { APPLICATION_TIERS, TIER_LABELS, toApplicationTier, type ApplicationTier } from '../report/reportTier';
@@ -48,7 +48,7 @@ function describeReport(detail: SavedReportDetail): Pick<SavedReportCardData, 't
 export const isAuthError = (error: unknown) => error instanceof NoTokenError || isSessionExpiredError(error);
 
 /**
- * 저장된 리포트 카드 목록 + 삭제 (마이페이지 · 메인 '나의 리포트' 공용).
+ * 저장된 리포트 카드 목록 (마이페이지 · 메인 '나의 리포트' 공용). 삭제는 리포트 상세 화면에서만 해요.
  * 토큰 없음·만료(401)는 onAuthError 로 넘겨요. 화면마다 처리가 달라서예요.
  */
 export function useSavedReports(onAuthError: () => void) {
@@ -93,37 +93,5 @@ export function useSavedReports(onAuthError: () => void) {
     setReloadKey(key => key + 1);
   }, []);
 
-  const [deletingId, setDeletingId] = useState<string>();
-  const [deleteError, setDeleteError] = useState<string>();
-  /** 삭제 확인 창을 띄운 리포트 */
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string>();
-
-  const confirmDelete = async () => {
-    const id = confirmDeleteId;
-    setConfirmDeleteId(undefined);
-    if (!id || deletingId) return; // 중복 클릭 방지
-    setDeletingId(id);
-    setDeleteError(undefined);
-    try {
-      await deleteReport(id);
-      // 서버에서 지워진 뒤에만 목록에서 빼요.
-      setReports(current => current.filter(report => report.id !== id));
-    } catch (error) {
-      if (isAuthError(error)) {
-        onAuthError();
-        return;
-      }
-      setDeleteError(getDeleteReportErrorMessage(error));
-    } finally {
-      setDeletingId(undefined);
-    }
-  };
-
-  return {
-    reports, listState, listError, reload,
-    deletingId, deleteError, confirmDeleteId,
-    requestDelete: setConfirmDeleteId,
-    cancelDelete: () => setConfirmDeleteId(undefined),
-    confirmDelete,
-  };
+  return { reports, listState, listError, reload };
 }

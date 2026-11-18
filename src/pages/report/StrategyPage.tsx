@@ -3,7 +3,7 @@ import ReportPagination from '../../components/report/ReportPagination';
 import clipboard from '../../assets/icons/clipboard.svg';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
 import { isNoCandidates } from '../../components/report/resultWarnings';
-import { Navigate } from 'react-router';
+import NoReport from '../../components/report/NoReport';
 import { useState } from 'react';
 import StrengthDetailDialog, { type StrengthDetailSection } from '../../components/report/StrengthDetailDialog';
 import type { HolisticStrategy } from '../../services/simulationApi';
@@ -47,7 +47,8 @@ function toDetailSections({ activitySummary, strengths, majorAdvices, detail }: 
 export default function StrategyPage() {
   const view = useReportView();
   const [detailOpen, setDetailOpen] = useState(false);
-  if (!view) return <Navigate to="/grade/input" replace />;
+  // 아직 분석한 리포트가 없으면(하단 리포트 탭으로 바로 온 경우 등) 빈 화면을 보여줘요.
+  if (!view) return <NoReport />;
   // BE holistic.activitySummary·strengths·majorAdvices. 비어 있는 영역은 숨겨요 (BE 1단계에는 강점만 와요).
   const { activitySummary, strengths, majorAdvices } = view.holisticStrategy;
   const detailSections = toDetailSections(view.holisticStrategy);

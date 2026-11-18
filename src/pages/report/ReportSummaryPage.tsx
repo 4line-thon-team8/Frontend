@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router';
+import NoReport from '../../components/report/NoReport';
 import BottomNavigation from '../../components/common/BottomNavigation';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
 import ReportPagination from '../../components/report/ReportPagination';
@@ -18,7 +18,8 @@ const SAVE_STATUS_MESSAGES: Partial<Record<SaveStatus, string>> = {
 export default function ReportSummaryPage() {
   const view = useReportView();
   // 분석 결과 없이 들어오면(새로고침 등) 성적 입력부터 다시 시작해요.
-  if (!view) return <Navigate to="/grade/input" replace />;
+  // 아직 분석한 리포트가 없으면(하단 리포트 탭으로 바로 온 경우 등) 빈 화면을 보여줘요.
+  if (!view) return <NoReport />;
 
   const overallLines = sectionLines(view.report.overallAssessment);
   const saveMessage = view.saveStatus ? SAVE_STATUS_MESSAGES[view.saveStatus] : undefined;

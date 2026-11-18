@@ -62,7 +62,6 @@
 .grade-input-reports-heading a { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; line-height: 30px; color: #8a9893; text-decoration: none; }
 .grade-input-reports-heading a img { filter: brightness(0) saturate(100%) invert(63%) sepia(8%) saturate(376%) hue-rotate(101deg) brightness(91%) contrast(88%); }
 .grade-input-report-list { margin-top: 0; gap: 10px; }
-.grade-input-reports-error { margin: 0 0 8px; color: #b34a40; font-size: 12px; }
 .grade-input-empty { display: flex; min-height: 114px; padding: 16px 12px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #f1f1f1; border-radius: 8px; }
 .grade-input-empty p { margin: 0; color: var(--color-primary); font-size: 14px; font-weight: 600; font-style: normal; line-height: 30px; text-align: center; }
 @media (max-width: 360px) {
