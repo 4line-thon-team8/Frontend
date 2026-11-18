@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import Button from '../../components/common/Button';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import subjectBook from '../../assets/icons/subject-book.svg';
@@ -27,12 +27,14 @@ type MajorLookup =
 
 export default function GradeConfirmPage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const { draft, setDraft, snapshot, setSnapshot, setResult, narrative, pendingOcrSubjects, setPendingOcrSubjects, setHasConfirmedGrades } = useGradeAnalysis();
   const ocrSubjects = pendingOcrSubjects;
   const subjects = ocrSubjects ?? draft.subjects;
   const ocrReview = ocrSubjects && reviewOcrGrades(ocrSubjects, draft.curriculum);
   const analysisDraft = ocrSubjects ? { ...draft, subjects: ocrSubjects } : draft;
-  const [editing, setEditing] = useState(false);
+  const manualEntry = state?.manualEntry === true && !ocrSubjects;
+  const [editing, setEditing] = useState(manualEntry);
   const focusSubjectId = useRef<string | null>(null);
   const [majorDialogOpen, setMajorDialogOpen] = useState(false);
   const [majorLookup, setMajorLookup] = useState<MajorLookup>({ status: 'loading' });
@@ -213,7 +215,7 @@ export default function GradeConfirmPage() {
         <Link to="/grade/input" replace aria-label="성적표 입력 방법 선택으로 돌아가기"><img src={arrowBack} alt="" width="29" height="29" /></Link>
       </header>
       <section className="grade-confirm-intro" aria-labelledby="grade-confirm-title">
-        <h1 id="grade-confirm-title">읽어온 값이 맞는지 확인하고,<br />틀리면 고쳐주세요.</h1>
+        <h1 id="grade-confirm-title">{manualEntry ? '성적을 직접 입력해 주세요.' : <>읽어온 값이 맞는지 확인하고,<br />틀리면 고쳐주세요.</>}</h1>
         <p>2022 개정 교육과정의 5등급제 성적을 확인해 주세요.</p>
       </section>
       <form onSubmit={submit} noValidate>
