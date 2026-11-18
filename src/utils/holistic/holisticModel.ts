@@ -5,7 +5,8 @@ import type { HolisticRule, NarrativeSection } from './types';
 /**
  * 구절 단위 지표 분류 모델(로지스틱 회귀). 서버 규칙 사전과 별개로 앱에 번들해 두고 기기 안에서만 쓴다.
  * 학습·내보내기는 파이썬(model-<버전>.json)에서 하며, 여기서는 같은 계산을 그대로 재현한다.
- * 입력: 구절의 char_wb 1~3-gram TF-IDF(L2 정규화) + 영역 원-핫 + 규칙 적중 플래그.
+ * 입력: 구절의 char_wb 1~3-gram TF-IDF(L2 정규화) + 영역 원-핫 + 규칙 적중 플래그 + 구절 길이 + 부정·개선 표현 유무.
+ * 모델 0.5.0 부터는 NB-SVM 방식으로 학습했지만, 클래스별 비율 가중치를 계수에 미리 곱해 내보내므로 계산식은 그대로 선형이다.
  */
 
 export interface HolisticModelIndicator {
@@ -28,6 +29,11 @@ export interface HolisticModel {
   /** 규칙 적중 플래그 특성의 지표 순서 */
   ruleFlagOrder: string[];
   ruleFlagScale: number;
+  /** 구절 길이 특성(0.5.0~). 두 개: min(글자 수, cap)/cap, 글자 수가 long 보다 크면 1. 둘 다 scale 을 곱한다. */
+  lengthFeatures?: { cap: number; long: number; scale: number };
+  /** 부정·개선 표현 특성(0.5.0~). 구절에 해당 문자열이 들어 있으면 해당 순서의 특성이 negationScale 이 된다. */
+  negationTerms?: string[];
+  negationScale?: number;
   vocab: Record<string, number>;
   idf: number[];
   indicators: Record<string, HolisticModelIndicator>;
@@ -117,6 +123,18 @@ export function createModelClassifier(model: HolisticModel, rules: readonly Holi
     const flags = ruleIndicators(section, clause);
     model.ruleFlagOrder.forEach((id, order) => {
       if (flags.has(id)) x.set(flagBase + order, model.ruleFlagScale);
+    });
+    // 학습 때와 같은 순서: 영역 → 규칙 플래그 → 길이(2) → 부정 표현.
+    const lengthBase = flagBase + model.ruleFlagOrder.length;
+    const negationBase = lengthBase + (model.lengthFeatures ? 2 : 0);
+    if (model.lengthFeatures) {
+      const { cap, long, scale } = model.lengthFeatures;
+      const length = Array.from(clause).length; // 파이썬 len() 과 같이 코드포인트 수
+      x.set(lengthBase, (Math.min(length, cap) / cap) * scale);
+      if (length > long) x.set(lengthBase + 1, scale);
+    }
+    model.negationTerms?.forEach((term, order) => {
+      if (clause.includes(term)) x.set(negationBase + order, model.negationScale ?? 1);
     });
     return x;
   }
