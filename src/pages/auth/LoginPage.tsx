@@ -5,6 +5,7 @@ import AuthImageButton from '../../components/auth/AuthImageButton';
 import logo from '../../assets/images/logo.svg';
 import loginButton from '../../assets/icons/login-button.svg';
 import loginButtonBefore from '../../assets/icons/login-button-before.svg';
+import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import { getLoginErrorMessage, getReturnTo, login } from '../../services/authApi';
 import { PASSWORD_MAX_LENGTH, validateEmail, validateLoginPassword } from './authValidation';
 import './AuthPage.css';
@@ -13,6 +14,7 @@ type LoginErrors = { email?: string; password?: string; form?: string };
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { syncReportOwner } = useGradeAnalysis();
   const location = useLocation();
   const [submitting, setSubmitting] = useState(false);
   const [email, setEmail] = useState('');
@@ -30,7 +32,9 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      await login({ email: email.trim(), password });
+      const { userId } = await login({ email: email.trim(), password });
+      // 다른 계정으로 로그인했으면 이전 사용자의 마지막 리포트를 지워요.
+      syncReportOwner(userId);
       // 세션 만료로 왔다면 원래 화면(예: S-03)으로, 아니면 성적 입력으로 이동해요.
       navigate(getReturnTo(location.state) ?? '/grade/input', { replace: true });
     } catch (error) {

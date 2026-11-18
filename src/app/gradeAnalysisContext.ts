@@ -5,6 +5,8 @@ import type { ConfirmSubject, GradeConfirmDraft } from '../types/gradeConfirm';
 import type { HolisticAnalysisPayload, NarrativeAnalysisResult } from '../utils/holistic/types';
 import type { StoredReport } from '../pages/report/lastReportStorage';
 
+export type ReportText = SimulationResult['report'];
+
 type AnalysisPreferences = Pick<
   GradeConfirmDraft,
   'majorIds' | 'admissions' | 'includeReach' | 'expandSimilarMajors'
@@ -43,8 +45,12 @@ interface GradeAnalysisState {
    * 홈에서 새 입력을 시작해도(reset)·새로고침해도 남아 있고, 새 분석이 끝나면 바뀌어요. 로그아웃·탈퇴(resetAll) 때만 비워요.
    */
   lastReport: StoredReport | null;
-  /** 새 분석이 끝나면 불러요. sessionStorage 에도 같이 남겨요 (성적·리포트 문장은 빼고). */
-  setLastReport: (report: StoredReport) => void;
+  /** 마지막 리포트의 총평·지원 전략 등 문장. 메모리에만 있어서 새로고침하면 null 이에요. */
+  lastReportText: ReportText | null;
+  /** 새 분석이 끝나면 불러요. 목록은 sessionStorage 에도 남기고, 문장(reportText)은 메모리에만 둬요. */
+  setLastReport: (report: StoredReport, reportText: ReportText) => void;
+  /** 로그인 직후 불러요. 남아 있는 리포트가 다른 계정(또는 주인을 모르는) 것이면 지워요. */
+  syncReportOwner: (userId: string | null) => void;
   /** 입력 중인 분석만 비워요. 마지막 리포트는 남겨요. */
   reset: () => void;
   /** 마지막 리포트까지 모두 비워요 (로그아웃·탈퇴). */

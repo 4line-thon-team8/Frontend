@@ -6,13 +6,21 @@ const EXPIRY_MARGIN_MS = 30_000;
 
 let accessToken: string | null = null;
 let expiresAtMs: number | null = null;
+/** 로그인 응답의 userId. 마지막 리포트가 누구 것인지 표시할 때 써요. */
+let currentUserId: string | null = null;
 
 /** 로그인 성공 시 호출합니다. expiresAt 은 로그인 응답의 절대 시각(ISO 문자열)입니다. */
-export function setAccessToken(token: string, expiresAt: string) {
+export function setAccessToken(token: string, expiresAt: string, userId: string | null = null) {
   const parsed = Date.parse(expiresAt);
   if (!token || Number.isNaN(parsed)) throw new Error('로그인 토큰 정보가 올바르지 않아요.');
   accessToken = token;
   expiresAtMs = parsed;
+  currentUserId = userId;
+}
+
+/** 지금 로그인한 사용자의 userId. 로그인 전이거나 서버가 주지 않았으면 null */
+export function getCurrentUserId(): string | null {
+  return accessToken ? currentUserId : null;
 }
 
 /** 토큰이 없거나 만료됐으면 null. 분석 요청 전에 null 이면 요청하지 말고 재로그인으로 보내 주세요. */
@@ -29,6 +37,7 @@ export function getAccessToken(): string | null {
 export function clearAccessToken() {
   accessToken = null;
   expiresAtMs = null;
+  currentUserId = null;
 }
 
 /** fetch headers 에 펼쳐 쓰는 Authorization 헤더. 토큰이 없으면 빈 객체예요. */

@@ -32,7 +32,7 @@ export default function AnalysisLoadingPage() {
         if (controller.signal.aborted) return;
         setResult(result);
         // 홈으로 나갔다가·새로고침한 뒤에도 하단 '리포트' 탭으로 다시 볼 수 있게 남겨요 (성적·리포트 문장은 빼고).
-        setLastReport(toStoredReport(result, snapshot));
+        setLastReport(toStoredReport(result, snapshot), result.report);
         setDone(true);
       })
       .catch((error: unknown) => {

@@ -7,6 +7,9 @@ import { toApplicationTier } from './reportTier';
  *
  * 기획 결정(2026-11-18): 입력한 성적·환산 결과·서술 분석은 브라우저에 남기지 않아요.
  * 총평·지원 전략 같은 리포트 문장도 남기지 않아요. 남기는 건 추천 원서 목록·안내 코드·저장 결과·요약 카드 문구뿐이에요.
+ *
+ * 누구 리포트인지 로그인 응답의 userId 를 같이 남겨요. 다른 계정으로 로그인하면 지워요.
+ * userId 없이 저장된 값(예전 v1 포함)은 주인을 알 수 없어서 읽지 않고 지워요.
  */
 export type StoredReport = {
   recommendations: Recommendation[];
@@ -16,7 +19,12 @@ export type StoredReport = {
   profileLines: string[];
 };
 
-const STORAGE_KEY = 'odeunggeup:last-report:v1';
+/** userId 와 함께 저장한 리포트 */
+export type OwnedReport = { userId: string; report: StoredReport };
+
+const STORAGE_KEY = 'odeunggeup:last-report:v2';
+/** userId 없이 저장하던 예전 키. 불러올 때 지워요. */
+const LEGACY_STORAGE_KEYS = ['odeunggeup:last-report:v1'];
 const SAVE_STATUSES: readonly SaveStatus[] = ['SAVED', 'FAILED', 'NOT_SAVED'];
 
 type Json = Record<string, unknown>;
@@ -46,7 +54,7 @@ const compact = <T,>(items: unknown, map: (item: unknown) => T | null): T[] =>
   Array.isArray(items) ? items.map(map).filter((item): item is T => item !== null) : [];
 
 /** 저장할 값만 골라 담아요. 다른 필드가 섞여 들어와도 저장되지 않아요. */
-export function saveLastReport(report: StoredReport): void {
+export function saveLastReport({ userId, report }: OwnedReport): void {
   const stored: StoredReport = {
     recommendations: report.recommendations.map(({ rank, university, major, admission, tier, reason, evidence }) => ({
       rank, university, major, admission, tier, reason: { text: reason.text }, evidence,
@@ -56,25 +64,35 @@ export function saveLastReport(report: StoredReport): void {
     profileLines: [...report.profileLines],
   };
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ userId, report: stored }));
   } catch {
     // 저장소를 못 쓰면(사생활 보호 모드 등) 이번 화면에서만 볼 수 있어요.
   }
 }
 
-export function loadLastReport(): StoredReport | null {
+export function loadLastReport(): OwnedReport | null {
   try {
+    LEGACY_STORAGE_KEYS.forEach(key => sessionStorage.removeItem(key));
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const body: unknown = JSON.parse(raw);
-    if (!isObject(body)) return null;
+    // 주인(userId)을 알 수 없는 값은 남겨 두지 않아요.
+    if (!isObject(body) || !isString(body.userId) || body.userId === '' || !isObject(body.report)) {
+      clearLastReport();
+      return null;
+    }
+    const report = body.report;
     return {
-      recommendations: compact(body.recommendations, toRecommendation),
-      warnings: compact(body.warnings, toWarning),
-      saveStatus: SAVE_STATUSES.find(status => status === body.saveStatus) ?? null,
-      profileLines: Array.isArray(body.profileLines) ? body.profileLines.filter(isString) : [],
+      userId: body.userId,
+      report: {
+        recommendations: compact(report.recommendations, toRecommendation),
+        warnings: compact(report.warnings, toWarning),
+        saveStatus: SAVE_STATUSES.find(status => status === report.saveStatus) ?? null,
+        profileLines: Array.isArray(report.profileLines) ? report.profileLines.filter(isString) : [],
+      },
     };
   } catch {
+    clearLastReport();
     return null;
   }
 }
@@ -82,6 +100,7 @@ export function loadLastReport(): StoredReport | null {
 export function clearLastReport(): void {
   try {
     sessionStorage.removeItem(STORAGE_KEY);
+    LEGACY_STORAGE_KEYS.forEach(key => sessionStorage.removeItem(key));
   } catch {
     // 저장소를 못 쓰면 지울 것도 없어요.
   }
