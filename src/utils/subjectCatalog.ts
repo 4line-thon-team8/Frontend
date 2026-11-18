@@ -37,9 +37,17 @@ function withinOneEdit(a: readonly string[], b: readonly string[]) {
   return restA.join('') === restB.join('');
 }
 
+/** 과목명 끝의 로마 숫자·숫자('수학Ⅰ', '통합사회2')를 비교용 숫자로 바꿔요. 없으면 빈 문자열이에요. */
+function numeralSuffix(letters: readonly string[]) {
+  const last = letters.at(-1) ?? '';
+  if (last === 'Ⅰ' || last === 'I' || last === '1') return '1';
+  if (last === 'Ⅱ' || last === '2') return '2';
+  return '';
+}
+
 /**
  * OCR이 한 글자 틀리게 읽은 과목명('농합사회')을 과목 사전의 이름('통합사회')으로 맞춰요.
- * 사전에 이미 있으면 그대로 두고, 3글자 이상이면서 한 글자 차이로 맞는 과목이 정확히 하나일 때만 바꿔요.
+ * 사전에 이미 있으면 그대로 두고, 3글자 이상이면서 한 글자 차이로 맞는 과목이 정확히 하나일 때만 바꿔요(끝 숫자만 다른 이름은 제외).
  * 애매하면 읽은 그대로 돌려줘서 성적 확인 화면에서 사용자가 고치게 해요.
  */
 export function snapSubjectName(name: string, curriculum: string) {
@@ -47,6 +55,8 @@ export function snapSubjectName(name: string, curriculum: string) {
   const letters = [...compactName(name)];
   if (letters.length < 3) return name;
   const matches = catalog.subjects.filter(subject => subject.curriculum === curriculum &&
-    withinOneEdit(letters, [...compactName(subject.name)]));
+    withinOneEdit(letters, [...compactName(subject.name)]) &&
+    // '물리학1'과 '물리학', '미적분'과 '미적분Ⅰ'처럼 끝 숫자만 다른 이름은 다른 교육과정의 다른 과목이라 OCR 오독으로 보지 않아요.
+    numeralSuffix(letters) === numeralSuffix([...compactName(subject.name)]));
   return matches.length === 1 ? matches[0]!.name : name;
 }
