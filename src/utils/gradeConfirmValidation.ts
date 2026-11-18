@@ -44,28 +44,30 @@ export function reviewSubject(subject: ConfirmSubject, curriculum: GradeConfirmD
   return { ...identified, status: 'included', gradeValue: Number(grade) } as const;
 }
 
-export function validateSubjects(draft: GradeConfirmDraft): string[] {
+type GradeConfirmError = { field: 'subjects' | 'average' | 'majors' | 'admissions'; message: string };
+
+export function validateSubjects(draft: GradeConfirmDraft): GradeConfirmError[] {
   const reviews = draft.subjects.map(subject => reviewSubject(subject, draft.curriculum));
-  const errors: string[] = [];
+  const errors: GradeConfirmError[] = [];
   if (reviews.some(review => review.status === 'review')) {
-    errors.push('확인이 필요한 과목을 수정해 주세요.');
+    errors.push({ field: 'subjects', message: '확인이 필요한 과목을 수정해 주세요.' });
   }
   if (!reviews.some(review => review.status === 'included')) {
-    errors.push('참고 평균에 반영할 과목이 1개 이상 필요합니다.');
+    errors.push({ field: 'average', message: '참고 평균에 반영할 과목이 1개 이상 필요합니다.' });
   }
   return errors;
 }
 
-export function validateGradeConfirm(draft: GradeConfirmDraft, rules: GradeConfirmRules): string[] {
+export function validateGradeConfirm(draft: GradeConfirmDraft, rules: GradeConfirmRules): GradeConfirmError[] {
   const errors = validateSubjects(draft);
   if (draft.majorIds.length < 1 || draft.majorIds.length > rules.maxMajors ||
     new Set(draft.majorIds).size !== draft.majorIds.length || draft.majorIds.some(id => !rules.allowedMajorIds.includes(id))) {
-    errors.push(`희망 학과를 1~${rules.maxMajors}개 선택해주세요.`);
+    errors.push({ field: 'majors', message: `희망 학과를 1~${rules.maxMajors}개 선택해주세요.` });
   }
   if (!draft.admissions.length || new Set(draft.admissions).size !== draft.admissions.length ||
     draft.admissions.some(id => !rules.allowedAdmissions.includes(id)) ||
     (draft.admissions.includes('any') && draft.admissions.length > 1)) {
-    errors.push('선호하는 전형을 1개 이상 선택해주세요.');
+    errors.push({ field: 'admissions', message: '선호하는 전형을 1개 이상 선택해주세요.' });
   }
   return errors;
 }
