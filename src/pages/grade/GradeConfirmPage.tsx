@@ -34,6 +34,7 @@ export default function GradeConfirmPage() {
   const ocrReview = ocrSubjects && reviewOcrGrades(ocrSubjects, draft.curriculum);
   const analysisDraft = ocrSubjects ? { ...draft, subjects: ocrSubjects } : draft;
   const manualEntry = state?.manualEntry === true && !ocrSubjects;
+  const skippedPhotos = ocrSubjects && typeof state?.skippedPhotos === 'number' ? state.skippedPhotos : 0;
   const [editing, setEditing] = useState(manualEntry);
   const focusSubjectId = useRef<string | null>(null);
   const [majorDialogOpen, setMajorDialogOpen] = useState(false);
@@ -216,6 +217,7 @@ export default function GradeConfirmPage() {
       </header>
       <section className="grade-confirm-intro" aria-labelledby="grade-confirm-title">
         <h1 id="grade-confirm-title">{manualEntry ? '성적을 직접 입력해 주세요.' : <>읽어온 값이 맞는지 확인하고,<br />틀리면 고쳐주세요.</>}</h1>
+        {skippedPhotos > 0 && <div className="grade-confirm-notice" role="status">사진 {skippedPhotos}장에서 성적을 읽지 못했어요. 빠진 성적은 수정하기에서 추가할 수 있어요.</div>}
         <p>2022 개정 교육과정의 5등급제 성적을 확인해 주세요.</p>
       </section>
       <form onSubmit={submit} noValidate>

@@ -48,14 +48,14 @@
 .grade-confirm-subject-edit-name { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 3px; }
 .grade-confirm-subject-check { color: #73562c; }
 .grade-confirm-subject-grade { display: flex; flex-shrink: 0; max-width: 50%; align-items: center; gap: 6px; color: var(--color-primary); font-size: 16px; line-height: 24px; font-weight: 600; white-space: nowrap; }
-.grade-confirm-subject-grade > span:only-child { white-space: normal; overflow-wrap: anywhere; }
+.grade-confirm-subject-grade > span:only-child { white-space: nowrap; }
 .grade-confirm-subject input { min-width: 0; max-width: 100%; border: 1px solid #c2c6c4; border-radius: 5px; padding: 8px 6px; font-size: 14px; background: #fff; color: #1a1a1a; }
 .grade-confirm-subject-name input { flex: 1; width: 0; }
 .grade-confirm-subject-grade input { width: 48px; appearance: textfield; }
 .grade-confirm-subject input::-webkit-inner-spin-button { appearance: none; }
 .grade-confirm-subject input[aria-invalid='true'] { border-color: #b34a40; }
 .grade-confirm-delete { padding: 8px 0 8px 4px; border: 0; font-size: 11px; color: #a9443c; background: transparent; }
-.grade-confirm-subject-grade:has(.grade-confirm-delete) { margin-inline-end: 10px; }
+.grade-confirm-subject-grade:has(> span:only-child, .grade-confirm-delete) { margin-inline-end: 10px; }
 .grade-confirm-add-subject { padding: 10px 0; border: 0; background: transparent; color: var(--color-primary); font-size: 13px; }
 .grade-confirm-field-hint { font-size: 11px; line-height: 18px; color: #8a9893; }
 .grade-confirm-directions { padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); }
