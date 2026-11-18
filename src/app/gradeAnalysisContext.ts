@@ -5,7 +5,8 @@ import type { ConfirmSubject, GradeConfirmDraft } from '../types/gradeConfirm';
 import type { HolisticAnalysisPayload, NarrativeAnalysisResult } from '../utils/holistic/types';
 import type { StoredReport } from '../pages/report/lastReportStorage';
 
-export type ReportText = SimulationResult['report'];
+/** 메모리에만 두는 리포트 부분: 총평·전략 등 문장 + 활동 요약·강점·학과별 조언 (브라우저 저장소에는 남기지 않아요) */
+export type ReportText = Pick<SimulationResult, 'report' | 'holisticStrategy'>;
 
 type AnalysisPreferences = Pick<
   GradeConfirmDraft,
@@ -45,7 +46,7 @@ interface GradeAnalysisState {
    * 홈에서 새 입력을 시작해도(reset)·새로고침해도 남아 있고, 새 분석이 끝나면 바뀌어요. 로그아웃·탈퇴(resetAll) 때만 비워요.
    */
   lastReport: StoredReport | null;
-  /** 마지막 리포트의 총평·지원 전략 등 문장. 메모리에만 있어서 새로고침하면 null 이에요. */
+  /** 마지막 리포트의 총평·지원 전략 문장과 활동 요약·강점·학과별 조언. 메모리에만 있어서 새로고침하면 null 이에요. */
   lastReportText: ReportText | null;
   /** 새 분석이 끝나면 불러요. 목록은 sessionStorage 에도 남기고, 문장(reportText)은 메모리에만 둬요. */
   setLastReport: (report: StoredReport, reportText: ReportText) => void;

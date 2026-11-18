@@ -87,7 +87,18 @@ export const MOCK_RECOMMENDATIONS = MOCK_FULL.recommendations;
 export function createMockSimulationResult(): SimulationResult {
   return {
     conversion: { overallGrade: 2.5, isAssumed: false, assumptionReasons: [] },
-    holistic: { status: 'NOT_PROVIDED', skipReason: null },
+    holistic: { status: 'APPLIED', skipReason: null },
+    holisticStrategy: {
+      activitySummary: '교내 설문조사에서 역할을 나누고,\n응답 데이터를 분석해 개선안을 제안했어요.',
+      strengths: [
+        { indicatorId: 'A3', label: '탐구력', level: 5, description: '궁금한 것을 스스로 파고드는 탐구 활동이 보여요.' },
+        { indicatorId: 'C1', label: '협업과 소통능력', level: 4, description: '역할을 나누고 결과를 함께 공유했어요.' },
+      ],
+      majorAdvices: [
+        { department: '컴퓨터공학', advice: '직접 만들어 보거나 문제를 코드로 풀어 본 경험을 과정과 결과가 보이게 남겨 보세요.' },
+        { department: '통계학', advice: '설문 설계와 결과 해석 경험을 자료 분석 과정으로 설명해 보세요.' },
+      ],
+    },
     recommendations: MOCK_FULL.recommendations.map(item => ({
       rank: item.rank,
       university: item.university,
