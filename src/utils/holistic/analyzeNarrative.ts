@@ -3,7 +3,7 @@ import { buildCoverage, buildEvidence, buildIndicatorSignals, buildInterestTags 
 import { createModelClassifier, isModelCompatible } from './holisticModel';
 import type { HolisticModel } from './holisticModel';
 import { compileRules, findClauseHits } from './matchRules';
-import { BUNDLED_MODEL } from './model';
+import { loadBundledModel } from './model';
 import { BUNDLED_RULES } from './rules';
 import { splitSections } from './splitSections';
 import type { HolisticRules, NarrativeAnalysisResult, TagKeyword } from './types';
@@ -14,7 +14,7 @@ interface AnalyzeOptions {
   /** 전공 키워드 사전(GET /api/tag-map)의 entries. 없으면 관심 계열 태그를 비워서 보낸다. */
   tagKeywords?: readonly TagKeyword[];
   /**
-   * 구절 분류 모델. 생략하면 앱에 포함된 모델을 쓰고, null 이면 규칙만 쓴다.
+   * 구절 분류 모델. 생략하거나 null 이면 규칙만 쓴다(앱에 포함된 모델은 analyzeNarrativeWithBundledModel 이 읽어 온다).
    * 모델이 규칙 사전 버전과 맞지 않으면 자동으로 규칙만 쓴다.
    */
   model?: HolisticModel | null;
@@ -34,7 +34,7 @@ export function analyzeNarrative(fullText: string, options: AnalyzeOptions = {})
   const totalChars = Object.values(coverage.sectionChars).reduce((sum, chars) => sum + chars, 0);
   if (totalChars < rules.limits.minNarrativeChars) return { ok: false, reason: 'too-short' };
 
-  const model = options.model === undefined ? BUNDLED_MODEL : options.model;
+  const model = options.model ?? null;
   const classifier = model && isModelCompatible(model, rules.rulesVersion) ? createModelClassifier(model, rules.rules) : null;
   const compiled = compileRules(rules.rules);
   const hits = findClauseHits(blocks, compiled, classifier);
@@ -49,4 +49,17 @@ export function analyzeNarrative(fullText: string, options: AnalyzeOptions = {})
       evidence: buildEvidence(hits, rules.limits),
     },
   };
+}
+
+/**
+ * 앱에 포함된 모델을 읽어 와서 분석한다. 모델은 별도 파일이라 처음에는 읽는 시간이 든다.
+ * 모델을 읽지 못하면(오프라인 등) 규칙만으로 분석한다. options.model 을 주면 그 값을 그대로 쓴다.
+ */
+export async function analyzeNarrativeWithBundledModel(
+  fullText: string,
+  options: AnalyzeOptions = {},
+): Promise<NarrativeAnalysisResult> {
+  if (options.model !== undefined) return analyzeNarrative(fullText, options);
+  const model = await loadBundledModel().catch(() => null);
+  return analyzeNarrative(fullText, { ...options, model });
 }

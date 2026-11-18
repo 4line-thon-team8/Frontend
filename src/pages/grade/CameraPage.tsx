@@ -6,7 +6,8 @@ import { useCamera } from '../../hooks/useCamera';
 import { setGradeImage } from '../../utils/gradeImageStore';
 import type { GradeImage } from '../../utils/gradeImageStore';
 import { extractImageText } from '../../utils/extractImageText';
-import { analyzeNarrative } from '../../utils/holistic/analyzeNarrative';
+import { analyzeNarrative, analyzeNarrativeWithBundledModel } from '../../utils/holistic/analyzeNarrative';
+import { preloadBundledModel } from '../../utils/holistic/model';
 import { recognizeGradeImages } from '../../utils/recognizeGradeImages';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import type { ConfirmSubject } from '../../types/gradeConfirm';
@@ -46,6 +47,9 @@ export default function CameraPage() {
   const mounted = useRef(false);
   const operation = useRef(0);
   const { videoRef, status, error, torchOn, torchSupported, torchBusy, restart, switchCamera, markReady, onPlaybackPause, toggleTorch } = useCamera(!photo && !recognizing);
+
+  // 서술 분석 모델은 별도 파일이라 화면에 들어올 때 미리 읽어 둬요.
+  useEffect(() => { preloadBundledModel(); }, []);
 
   useEffect(() => {
     const urls = previewUrls.current;
@@ -156,7 +160,8 @@ export default function CameraPage() {
         });
       });
       request.signal.throwIfAborted();
-      const narrative = text.trim() ? analyzeNarrative(text) : null;
+      const narrative = text.trim() ? await analyzeNarrativeWithBundledModel(text) : null;
+      request.signal.throwIfAborted();
       if (subjects.length) openGradeConfirm(subjects, narrative, failed + empty);
       else setOcr({ kind: 'empty', failed, empty, narrative });
     } catch {

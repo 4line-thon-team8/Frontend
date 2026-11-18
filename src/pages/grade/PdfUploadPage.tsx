@@ -5,7 +5,8 @@ import arrowBack from '../../assets/icons/arrow-back.svg';
 import clipboard from '../../assets/icons/clipboard.svg';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import Button from '../../components/common/Button';
-import { analyzeNarrative } from '../../utils/holistic/analyzeNarrative';
+import { analyzeNarrativeWithBundledModel } from '../../utils/holistic/analyzeNarrative';
+import { preloadBundledModel } from '../../utils/holistic/model';
 import { createPageOcr } from '../../utils/createPageOcr';
 import { extractPdfText, MAX_PDF_BYTES } from '../../utils/extractPdfText';
 import type { PdfExtractionResult } from '../../utils/extractPdfText';
@@ -36,6 +37,8 @@ export default function PdfUploadPage() {
   const { setNarrative, setPendingOcrSubjects } = useGradeAnalysis();
   const [status, setStatus] = useState<UploadStatus>({ kind: 'idle' });
 
+  // 서술 분석 모델은 별도 파일이라 화면에 들어올 때 미리 읽어 둬요.
+  useEffect(() => { preloadBundledModel(); }, []);
   useEffect(() => () => activeRequest.current?.abort(), []);
 
   async function selectPdf(event: ChangeEvent<HTMLInputElement>) {
@@ -65,7 +68,7 @@ export default function PdfUploadPage() {
     if (result.ok) {
       // 페이지를 이어 붙여 분석해요(영역이 페이지 경계에서 끊기는 경우 대비). 전문은 여기서만 쓰고 저장하지 않아요.
       const text = result.pages.map(page => page.text).join('\n');
-      setNarrative(analyzeNarrative(text));
+      setNarrative(await analyzeNarrativeWithBundledModel(text));
       const subjects = parseRecordGrades(text).map(subject => ({ ...subject, name: snapSubjectName(subject.name, '2022') }));
       if (subjects.length) {
         setPendingOcrSubjects(subjects);
