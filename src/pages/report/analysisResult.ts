@@ -82,7 +82,7 @@ export function toStoredReport(result: SimulationResult, snapshot: GradeAnalysis
 }
 
 const NO_REPORT_TEXT: SimulationResult['report'] = { greetingSummary: null, overallAssessment: null, applicationStrategy: null, closing: null };
-const NO_HOLISTIC_STRATEGY: HolisticStrategy = { activitySummary: null, strengths: [], majorAdvices: [] };
+const NO_HOLISTIC_STRATEGY: HolisticStrategy = { activitySummary: null, strengths: [], majorAdvices: [], detail: null };
 
 /**
  * 리포트 화면 데이터. 분석 응답(GradeAnalysisProvider.result)을 화면 모양으로 바꿔요.
