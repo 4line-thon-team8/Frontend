@@ -43,75 +43,6 @@
   line-height: 24px;
 }
 
-/* 저장된 리포트 카드: 350 × 85, 카드 사이 15px, 제목 아래 19px */
-.mypage-reports {
-  display: grid;
-  gap: 15px;
-  margin: 19px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.mypage-report-card {
-  position: relative;
-  min-height: 85px;
-  padding: 24px 20px 9px 19px;
-  border-radius: 8px;
-  background: #f5f8f6;
-}
-
-/* 날짜(14px 초록) + 대표 학과(16px bold). 카드 전체를 누르면 상세로 이동합니다. */
-.mypage-report-card h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: normal;
-}
-
-.mypage-report-card h2 a {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  color: inherit;
-  text-decoration: none;
-}
-
-.mypage-report-card h2 a::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-}
-
-.mypage-report-card__date {
-  color: #2f5d50;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.mypage-report-card > p {
-  margin-top: 3px;
-  color: #52625d;
-  font-size: 12px;
-  line-height: normal;
-}
-
-/* 오른쪽 아래 '삭제' (10px) — 카드 링크 위에 올라와 따로 눌립니다. */
-.mypage-report-card__delete {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  margin: 4px 0 0 auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #52625d;
-  font-size: 10px;
-  line-height: 12px;
-}
-
 .mypage-add {
   align-self: center;
   margin-top: 14px;
@@ -237,7 +168,7 @@
 
 .mypage-detail-row__rank {
   flex-shrink: 0;
-  color: #52625d;
+  color: #2f5d50;
 }
 
 .mypage-detail-row__name {
@@ -269,16 +200,6 @@
 .mypage-detail-row__tier.is-unrated { background: #7d8783; }
 
 .mypage-detail-delete { margin-top: 49px; }
-
-/* 추천 이유: 학교·학과 아래 작은 글씨 (Figma 에 없어 임시 스타일) */
-.mypage-detail-row__reason {
-  display: block;
-  margin-top: 4px;
-  color: #52625d;
-  font-size: 10px;
-  font-weight: 400;
-  line-height: 1.4;
-}
 
 /* 로그아웃 실패 안내 (로그인 화면 에러 문구와 같은 색) */
 .mypage-logout-error {

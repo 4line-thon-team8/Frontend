@@ -109,8 +109,6 @@ export default function ReportDetailPage() {
                 <span className="mypage-detail-row__rank">{item.rank}지망</span>
                 <span className="mypage-detail-row__name">
                   {item.university} {item.department}{item.admissionType && ` · ${item.admissionType}`}
-                  {/* F-16: 마이페이지에서는 추천 원서와 이유만 보여줘요. */}
-                  {item.reasonText && <span className="mypage-detail-row__reason">{item.reasonText}</span>}
                 </span>
                 <CategoryBadge category={item.category} />
               </li>
