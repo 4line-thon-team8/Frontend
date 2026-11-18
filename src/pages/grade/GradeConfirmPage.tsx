@@ -164,7 +164,8 @@ export default function GradeConfirmPage() {
   }
 
   function subjectRow(subject: ConfirmSubject, index: number) {
-    const review = reviewSubject(subject, draft.curriculum);
+    const review = ocrReview?.reviews[index] ?? reviewSubject(subject, draft.curriculum);
+    const duplicate = review.status === 'included' && ocrReview?.duplicateCodes.has(review.subjectCode);
     // 제외 과목은 확인이 필요 없어요. 과목명을 못 찾았거나(이름), 반영 과목인데 등급이 1~5가 아닌 경우(등급)만 표시해요.
     const invalidName = review.status === 'review' && !('subjectCode' in review);
     const invalidGrade = review.status === 'review' && 'subjectCode' in review;
@@ -174,7 +175,7 @@ export default function GradeConfirmPage() {
     const grade = subject.grade.trim();
     const displayGrade = /^[1-5]$/u.test(grade) ? `${grade}등급` : grade;
     return (
-      <li className={`grade-confirm-subject${needsReview && !ocrSubjects ? ' needs-review' : ''}`} key={subject.id}>
+      <li className={`grade-confirm-subject${needsReview && !ocrSubjects ? ' needs-review' : ''}${duplicate ? ' is-duplicate' : ''}`} key={subject.id}>
         <div className="grade-confirm-subject-fields">
           <div className="grade-confirm-subject-name">
             <img src={subjectBook} alt="" width="24" height="24" />
@@ -196,7 +197,8 @@ export default function GradeConfirmPage() {
           </div>
         </div>
         <p className={`grade-confirm-subject-status${ocrSubjects && needsReview ? ' grade-confirm-subject-check' : ''}`} id={statusId}>
-          {ocrSubjects && needsReview ? invalidName && invalidGrade ? '과목·등급 확인' : invalidName ? '확인 필요' : '등급 확인'
+          {duplicate ? '중복 과목'
+            : ocrSubjects && needsReview ? invalidName && invalidGrade ? '과목·등급 확인' : invalidName ? '확인 필요' : '등급 확인'
             : review.status === 'included'
             ? `평균 반영 · ${review.subjectName}`
             : `${needsReview ? '확인 필요' : '평균 제외'} · ${review.message}`}

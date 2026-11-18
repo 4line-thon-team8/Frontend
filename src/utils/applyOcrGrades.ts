@@ -4,11 +4,17 @@ import { reviewSubject } from './gradeConfirmValidation';
 export function reviewOcrGrades(subjects: ConfirmSubject[], curriculum: GradeConfirmDraft['curriculum']) {
   const reviews = subjects.map(subject => reviewSubject(subject, curriculum));
   const codes = reviews.flatMap(review => review.status === 'included' ? [review.subjectCode] : []);
-  const duplicate = new Set(codes).size !== codes.length;
+  const seenCodes = new Set<string>();
+  const duplicateCodes = new Set<string>();
+  for (const code of codes) {
+    if (seenCodes.has(code)) duplicateCodes.add(code);
+    seenCodes.add(code);
+  }
+  const duplicate = duplicateCodes.size > 0;
   // 평균에서 제외되는 과목(성취도만 있는 과목, 과학탐구실험 등)은 수동 입력과 같이 그대로 두고,
   // 과목명이나 등급을 아직 못 읽은 행('review')만 막아요. 서버에는 반영 과목만 보내요.
   const unresolved = reviews.some(review => review.status === 'review');
-  return { reviews, duplicate, valid: codes.length > 0 && !unresolved && !duplicate };
+  return { reviews, duplicate, duplicateCodes, valid: codes.length > 0 && !unresolved && !duplicate };
 }
 
 export function applyOcrGrades(draft: GradeConfirmDraft, subjects: ConfirmSubject[], confirmed: boolean) {
