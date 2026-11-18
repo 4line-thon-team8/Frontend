@@ -1,7 +1,7 @@
 import { useGradeAnalysis, type GradeAnalysisSnapshot } from '../../app/gradeAnalysisContext';
 import type { StoredReport } from './lastReportStorage';
 import { USE_MOCK_AUTH } from '../../services/authApi';
-import type { ReportSection, SaveStatus, SimulationResult, SimulationWarning } from '../../services/simulationApi';
+import type { HolisticStrategy, ReportSection, SaveStatus, SimulationResult, SimulationWarning } from '../../services/simulationApi';
 import { createMockSimulationResult, useMockRecommendationResult } from './recommendation.mock';
 import type { Recommendation, RecommendationResult, ResultWarning } from './recommendation.mock';
 import { toApplicationTier } from './reportTier';
@@ -58,9 +58,13 @@ function toRecommendationResult(result: SimulationResult): RecommendationResult 
 
 export type ReportView = RecommendationResult & {
   report: SimulationResult['report'];
+  /** 활동·지원 전략 화면 위쪽: 활동 요약·강점·학과별 조언 (비어 있으면 영역을 숨겨요) */
+  holisticStrategy: HolisticStrategy;
   saveStatus: SaveStatus | null;
   /** 요약 카드: 희망 학과 / 선호 전형 (분석에 보낸 값 그대로) */
   profileLines: string[];
+  /** 분석 때 '상향 지원 카드 포함'을 켰는지 */
+  includeReach: boolean;
 };
 
 const ADMISSION_LABELS: Record<string, string> = { 'school-record': '학생부교과', comprehensive: '학생부종합', any: '상관없음' };
@@ -76,10 +80,16 @@ function toProfileLines(snapshot: GradeAnalysisSnapshot | null): string[] {
 
 /** 하단 '리포트' 탭용으로 남길 값. 성적·환산 결과·서술 분석·리포트 문장은 담지 않아요. */
 export function toStoredReport(result: SimulationResult, snapshot: GradeAnalysisSnapshot | null): StoredReport {
-  return { ...toRecommendationResult(result), saveStatus: result.saveStatus, profileLines: toProfileLines(snapshot) };
+  return {
+    ...toRecommendationResult(result),
+    saveStatus: result.saveStatus,
+    profileLines: toProfileLines(snapshot),
+    includeReach: snapshot?.preferences.includeReach === true,
+  };
 }
 
 const NO_REPORT_TEXT: SimulationResult['report'] = { greetingSummary: null, overallAssessment: null, applicationStrategy: null, closing: null };
+const NO_HOLISTIC_STRATEGY: HolisticStrategy = { activitySummary: null, strengths: [], majorAdvices: [], detail: null };
 
 /**
  * 리포트 화면 데이터. 분석 응답(GradeAnalysisProvider.result)을 화면 모양으로 바꿔요.
@@ -92,16 +102,24 @@ export function useReportView(): ReportView | null {
   const { result, snapshot, lastReport, lastReportText } = useGradeAnalysis();
   const mockRecommendations = useMockRecommendationResult();
 
-  if (result) return { ...toStoredReport(result, snapshot), report: result.report };
-  if (lastReport) return { ...lastReport, report: lastReportText ?? NO_REPORT_TEXT };
+  if (result) return { ...toStoredReport(result, snapshot), report: result.report, holisticStrategy: result.holisticStrategy };
+  if (lastReport) {
+    return {
+      ...lastReport,
+      report: lastReportText?.report ?? NO_REPORT_TEXT,
+      holisticStrategy: lastReportText?.holisticStrategy ?? NO_HOLISTIC_STRATEGY,
+    };
+  }
   if (!USE_MOCK_AUTH) return null;
   const mock = createMockSimulationResult();
   const profileLines = toProfileLines(snapshot);
   return {
     ...mockRecommendations,
     report: mock.report,
+    holisticStrategy: mock.holisticStrategy,
     saveStatus: mockRecommendations.recommendations.length ? 'SAVED' : 'NOT_SAVED',
     profileLines: profileLines.length ? profileLines : ['컴퓨터공학 · 통계학 희망', '학생부교과 선호'],
+    includeReach: snapshot ? snapshot.preferences.includeReach : true,
   };
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import Button from '../../components/common/Button';
 import arrowBack from '../../assets/icons/arrow-back.svg';
 import subjectBook from '../../assets/icons/subject-book.svg';
@@ -27,12 +27,16 @@ type MajorLookup =
 
 export default function GradeConfirmPage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const { draft, setDraft, snapshot, setSnapshot, setResult, narrative, pendingOcrSubjects, setPendingOcrSubjects, setHasConfirmedGrades } = useGradeAnalysis();
   const ocrSubjects = pendingOcrSubjects;
   const subjects = ocrSubjects ?? draft.subjects;
   const ocrReview = ocrSubjects && reviewOcrGrades(ocrSubjects, draft.curriculum);
+  const subjectReviews = ocrReview?.reviews ?? subjects.map(subject => reviewSubject(subject, draft.curriculum));
   const analysisDraft = ocrSubjects ? { ...draft, subjects: ocrSubjects } : draft;
-  const [editing, setEditing] = useState(false);
+  const manualEntry = state?.manualEntry === true && !ocrSubjects;
+  const skippedPhotos = ocrSubjects && typeof state?.skippedPhotos === 'number' ? state.skippedPhotos : 0;
+  const [editing, setEditing] = useState(manualEntry);
   const focusSubjectId = useRef<string | null>(null);
   const [majorDialogOpen, setMajorDialogOpen] = useState(false);
   const [majorLookup, setMajorLookup] = useState<MajorLookup>({ status: 'loading' });
@@ -51,6 +55,7 @@ export default function GradeConfirmPage() {
     allowedAdmissions,
   });
   const analysisBlocked = editing || errors.length > 0 || (ocrReview !== null && !ocrReview.valid);
+  const invalidSubjects = subjectReviews.filter(review => review.status === 'review');
 
   function updateSubjects(update: (current: ConfirmSubject[]) => ConfirmSubject[]) {
     if (ocrSubjects) {
@@ -116,6 +121,11 @@ export default function GradeConfirmPage() {
     setEditing(false);
   }
 
+  function retryMajors() {
+    setMajorLookup({ status: 'loading' });
+    setMajorAttempt(attempt => attempt + 1);
+  }
+
   function toggleMajor(code: string) {
     if (!majorNames.has(code)) return;
     setDraft(current => {
@@ -164,7 +174,8 @@ export default function GradeConfirmPage() {
   }
 
   function subjectRow(subject: ConfirmSubject, index: number) {
-    const review = reviewSubject(subject, draft.curriculum);
+    const review = subjectReviews[index]!;
+    const duplicate = review.status === 'included' && ocrReview?.duplicateCodes.has(review.subjectCode);
     // 제외 과목은 확인이 필요 없어요. 과목명을 못 찾았거나(이름), 반영 과목인데 등급이 1~5가 아닌 경우(등급)만 표시해요.
     const invalidName = review.status === 'review' && !('subjectCode' in review);
     const invalidGrade = review.status === 'review' && 'subjectCode' in review;
@@ -174,7 +185,7 @@ export default function GradeConfirmPage() {
     const grade = subject.grade.trim();
     const displayGrade = /^[1-5]$/u.test(grade) ? `${grade}등급` : grade;
     return (
-      <li className={`grade-confirm-subject${needsReview && !ocrSubjects ? ' needs-review' : ''}`} key={subject.id}>
+      <li className={`grade-confirm-subject${needsReview && !ocrSubjects ? ' needs-review' : ''}${duplicate ? ' is-duplicate' : ''}`} key={subject.id}>
         <div className="grade-confirm-subject-fields">
           <div className="grade-confirm-subject-name">
             <img src={subjectBook} alt="" width="24" height="24" />
@@ -196,7 +207,8 @@ export default function GradeConfirmPage() {
           </div>
         </div>
         <p className={`grade-confirm-subject-status${ocrSubjects && needsReview ? ' grade-confirm-subject-check' : ''}`} id={statusId}>
-          {ocrSubjects && needsReview ? invalidName && invalidGrade ? '과목·등급 확인' : invalidName ? '확인 필요' : '등급 확인'
+          {duplicate ? '중복 과목'
+            : ocrSubjects && needsReview ? invalidName && invalidGrade ? '과목·등급 확인' : invalidName ? '확인 필요' : '등급 확인'
             : review.status === 'included'
             ? `평균 반영 · ${review.subjectName}`
             : `${needsReview ? '확인 필요' : '평균 제외'} · ${review.message}`}
@@ -211,7 +223,8 @@ export default function GradeConfirmPage() {
         <Link to="/grade/input" replace aria-label="성적표 입력 방법 선택으로 돌아가기"><img src={arrowBack} alt="" width="29" height="29" /></Link>
       </header>
       <section className="grade-confirm-intro" aria-labelledby="grade-confirm-title">
-        <h1 id="grade-confirm-title">읽어온 값이 맞는지 확인하고,<br />틀리면 고쳐주세요.</h1>
+        <h1 id="grade-confirm-title">{manualEntry ? '성적을 직접 입력해 주세요.' : <>읽어온 값이 맞는지 확인하고,<br />틀리면 고쳐주세요.</>}</h1>
+        {skippedPhotos > 0 && <div className="grade-confirm-notice" role="status">사진 {skippedPhotos}장에서 성적을 읽지 못했어요. 빠진 성적은 수정하기에서 추가할 수 있어요.</div>}
         <p>2022 개정 교육과정의 5등급제 성적을 확인해 주세요.</p>
       </section>
       <form onSubmit={submit} noValidate>
@@ -225,7 +238,6 @@ export default function GradeConfirmPage() {
             <option key={subject.code} value={subject.name} />)}</datalist>}
           <ul className="grade-confirm-subjects" aria-label={ocrSubjects ? '확정 전 OCR 성적' : undefined}>{subjects.map(subjectRow)}</ul>
           {editing && <><button type="button" className="grade-confirm-add-subject" onClick={addSubject}>+ 과목 추가</button><p className="grade-confirm-field-hint">성적표의 과목명과 석차등급(1~5)을 입력해 주세요. 성취도만 기록된 경우 A~E 또는 P를 입력해 주세요.</p><Button type="button" className="grade-confirm-finish" onClick={finishEditing}>수정 완료</Button></>}
-          {ocrReview?.duplicate && <p>중복 과목을 확인하고 한 행만 남겨 주세요.</p>}
         </section>
         <section className="grade-confirm-directions" aria-labelledby="grade-confirm-direction-title">
           <div className="grade-confirm-direction-heading"><h2 id="grade-confirm-direction-title">지원 방향</h2><span>희망 학과 (1~3)</span></div>
@@ -248,9 +260,23 @@ export default function GradeConfirmPage() {
           <div className="grade-confirm-submit">
             <Button type="submit" className="grade-confirm-analyze" disabled={analysisBlocked} aria-describedby="grade-confirm-validation">분석하기</Button>
             <div id="grade-confirm-validation" className="grade-confirm-validation" aria-live="polite">
-              {ocrReview && !ocrReview.valid && <p>인식된 과목과 석차등급을 확인해 주세요.</p>}
-              {errors.map(error => <p key={error}>{error}</p>)}
+              {editing && <p>성적 입력을 마친 뒤 ‘수정 완료’를 눌러 주세요.</p>}
+              {ocrReview?.duplicate && <p>중복 과목은 과목별로 한 행만 남겨 주세요.</p>}
+              {invalidSubjects.some(review => !('subjectCode' in review)) && <p>‘확인 필요’ 행의 과목명을 확인해 주세요.</p>}
+              {invalidSubjects.some(review => 'subjectCode' in review) && <p>비어 있거나 잘못된 석차등급을 1~5로 입력해 주세요.</p>}
+              {errors.map(({ field, message }) => {
+                if (field === 'subjects') return null;
+                if (field === 'majors') {
+                  if (majorLookup.status === 'loading') return <p key={field}>희망 학과 목록을 불러오고 있어요.</p>;
+                  if (majorLookup.status === 'error') return <p key={field}>희망 학과 목록을 불러오지 못했어요.</p>;
+                  if (!majors.length) return <p key={field}>선택할 수 있는 희망 학과가 없어요.</p>;
+                }
+                return <p key={field}>{message}</p>;
+              })}
             </div>
+            {majorLookup.status === 'error' && (
+              <Button type="button" className="grade-confirm-major-retry" onClick={retryMajors}>학과 목록 다시 불러오기</Button>
+            )}
           </div>
         </section>
       </form>
@@ -260,10 +286,7 @@ export default function GradeConfirmPage() {
           {majorLookup.status === 'loading' && <p role="status">학과 목록을 불러오고 있어요.</p>}
           {majorLookup.status === 'error' && <>
             <p role="alert">{majorLookup.message}</p>
-            <Button type="button" onClick={() => {
-              setMajorLookup({ status: 'loading' });
-              setMajorAttempt(attempt => attempt + 1);
-            }}>다시 시도</Button>
+            <Button type="button" onClick={retryMajors}>다시 시도</Button>
           </>}
           {majorLookup.status === 'ready' && (majors.length === 0
             ? <p role="status">등록된 학과가 없어요.</p>

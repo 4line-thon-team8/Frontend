@@ -118,11 +118,18 @@ export default function PdfUploadPage() {
           <button type="button" className="pdf-upload-cancel" onClick={cancel}>취소</button>
         </>}
         {status.kind === 'no-grades' && <>
-          <p>PDF {status.pageCount}페이지를 읽었지만 교과학습발달상황 성적표를 찾지 못했어요. 서술 내용만 분석에 반영돼요.</p>
-          <p><Link to="/grade/camera">성적표를 사진으로 촬영</Link>하거나 <Link to="/grade/input">다른 방법</Link>으로 성적을 넣어 주세요.</p>
+          <p>PDF {status.pageCount}페이지를 읽었지만 교과학습발달상황 성적표를 찾지 못했어요.</p>
         </>}
         {status.kind === 'error' && <p className="pdf-upload-error">{status.message}</p>}
       </div>
+      {status.kind === 'no-grades' && (
+        <div className="pdf-upload-fallback">
+          <Link className="button" to="/grade/confirm" state={{ manualEntry: true }}>
+            성적 직접 입력하기
+          </Link>
+          <Link to="/grade/camera">성적표를 사진으로 촬영</Link>
+        </div>
+      )}
     </section>
   );
 }

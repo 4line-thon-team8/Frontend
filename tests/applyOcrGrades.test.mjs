@@ -68,6 +68,36 @@ test('maps exact names and only replaces the S-03 draft after explicit confirmat
     assert.equal(getOcrSubjectsForReview(confirmedDraft, differentUpload, true), differentUpload);
     assert.equal(applyOcrGrades(confirmedDraft, differentUpload, false), confirmedDraft);
     assert.deepEqual(applyOcrGrades(confirmedDraft, differentUpload, true), { ...confirmedDraft, subjects: differentUpload });
+
+    const duplicateRows = [
+      { id: 'korean-1', name: '공통국어1', grade: '1' },
+      { id: 'math-1', name: '공통수학1', grade: '2' },
+      { id: 'korean-2', name: '공통 국어1', grade: '3' },
+      { id: 'math-2', name: '공통수학1', grade: '4' },
+      { id: 'korean-3', name: '공통국어1', grade: '5' },
+      { id: 'english', name: '공통영어1', grade: '1' },
+    ];
+    const duplicateIds = rows => {
+      const { reviews, duplicateCodes } = reviewOcrGrades(rows, '2022');
+      return rows.filter((_, index) => {
+        const review = reviews[index];
+        return review.status === 'included' && duplicateCodes.has(review.subjectCode);
+      }).map(row => row.id);
+    };
+    const pair = [duplicateRows[0], duplicateRows[2], duplicateRows[5]];
+    assert.deepEqual(duplicateIds(pair), ['korean-1', 'korean-2']);
+    assert.deepEqual(duplicateIds(duplicateRows), ['korean-1', 'math-1', 'korean-2', 'math-2', 'korean-3']);
+    assert.equal(reviewOcrGrades(duplicateRows, '2022').duplicate, true);
+    assert.equal(reviewOcrGrades(duplicateRows, '2022').valid, false);
+    assert.equal(applyOcrGrades(draft, duplicateRows, true), draft);
+
+    const renamed = pair.map(row => row.id === 'korean-2' ? { ...row, name: '공통국어2' } : row);
+    const deleted = pair.filter(row => row.id !== 'korean-1');
+    for (const resolved of [renamed, deleted]) {
+      assert.deepEqual(duplicateIds(resolved), []);
+      assert.equal(reviewOcrGrades(resolved, '2022').duplicate, false);
+      assert.equal(reviewOcrGrades(resolved, '2022').valid, true);
+    }
   } finally {
     await server.close();
   }

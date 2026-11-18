@@ -87,7 +87,35 @@ export const MOCK_RECOMMENDATIONS = MOCK_FULL.recommendations;
 export function createMockSimulationResult(): SimulationResult {
   return {
     conversion: { overallGrade: 2.5, isAssumed: false, assumptionReasons: [] },
-    holistic: { status: 'NOT_PROVIDED', skipReason: null },
+    holistic: { status: 'APPLIED', skipReason: null },
+    holisticStrategy: {
+      activitySummary: '교내 설문조사에서 역할을 나누고,\n응답 데이터를 분석해 개선안을 제안했어요.',
+      strengths: [
+        { indicatorId: 'A3', label: '탐구력', level: 5, description: '궁금한 것을 스스로 파고드는 탐구 활동이 보여요.' },
+        { indicatorId: 'C1', label: '협업과 소통능력', level: 4, description: '역할을 나누고 결과를 함께 공유했어요.' },
+      ],
+      majorAdvices: [
+        { department: '컴퓨터공학', advice: '직접 만들어 보거나 문제를 코드로 풀어 본 경험을 과정과 결과가 보이게 남겨 보세요.' },
+        { department: '통계학', advice: '설문 설계와 결과 해석 경험을 자료 분석 과정으로 설명해 보세요.' },
+      ],
+      detail: {
+        overview: '페니실린 관련 활동이 교과 세특과 동아리에서 이어져 나타나요. 이를 바탕으로 생명·화학 계열과 연결해 볼 수 있어요.',
+        strengthEvidence: [
+          '페니실린 관련 탐구가 2·3학년 세특에 걸쳐 이어져, 한 주제에 꾸준히 관심을 가진 것으로 보여요.',
+          'Python으로 실험 데이터를 정리한 활동이 확인돼, 데이터를 다루는 역량도 함께 보여요.',
+          '동아리에서 실험 결과를 발표한 경험이 있어 전달력도 드러나요.',
+        ],
+        improvements: [
+          '탐구의 결과나 결론이 구체적으로 드러난 구절이 상대적으로 적게 확인돼요.',
+          '활동에서 맡은 역할과 배우고 느낀 점이 드러나면 설명이 더 풍부해질 수 있어요.',
+        ],
+        nextSteps: [
+          '페니실린 탐구를 과정, 결과, 배우고 느낀 점 순서로 정리해 두면 면접 준비에 도움이 돼요.',
+          '소신 지원 카드는 다른 카드와 균형을 고려해 지원 여부를 판단해 보세요.',
+          '지원하려는 대학의 모집요강에서 평가요소 반영 비율을 확인해 보세요.',
+        ],
+      },
+    },
     recommendations: MOCK_FULL.recommendations.map(item => ({
       rank: item.rank,
       university: item.university,

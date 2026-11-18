@@ -1,3 +1,4 @@
+import { buildCitations } from './citations';
 import { buildCoverage, buildEvidence, buildIndicatorSignals, buildInterestTags } from './buildPayload';
 import { createModelClassifier, isModelCompatible } from './holisticModel';
 import type { HolisticModel } from './holisticModel';
@@ -35,9 +36,11 @@ export function analyzeNarrative(fullText: string, options: AnalyzeOptions = {})
 
   const model = options.model ?? null;
   const classifier = model && isModelCompatible(model, rules.rulesVersion) ? createModelClassifier(model, rules.rules) : null;
-  const hits = findClauseHits(blocks, compileRules(rules.rules), classifier);
+  const compiled = compileRules(rules.rules);
+  const hits = findClauseHits(blocks, compiled, classifier);
   return {
     ok: true,
+    citations: buildCitations(blocks, compiled, classifier),
     payload: {
       rulesVersion: rules.rulesVersion,
       coverage,

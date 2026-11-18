@@ -1,0 +1,112 @@
+/* 활동에서의 강점 '자세히 보기' (Figma: 350 × 691, #F5F8F6, 1px #DFE6E3, 왼쪽 위 접힌 모서리) */
+.strength-detail {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.strength-detail::backdrop { background: rgb(0 0 0 / 0.35); }
+
+.strength-detail[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.strength-detail__panel {
+  --fold-size: 26px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(350px, calc(100% - 40px));
+  height: min(691px, calc(100dvh - 80px));
+  border: 1px solid #dfe6e3;
+  border-radius: 8px;
+  background: #f5f8f6;
+  color: #2f5d50;
+  font-family: inherit;
+  clip-path: polygon(var(--fold-size) 0, 100% 0, 100% 100%, 0 100%, 0 var(--fold-size));
+}
+
+.strength-detail__panel::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: var(--fold-size);
+  height: var(--fold-size);
+  background: #1f3b33;
+  border-bottom-right-radius: 2px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.strength-detail__back {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 10px 0 0 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+/* 내용이 길면 창 안에서만 스크롤 */
+.strength-detail__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 20px 24px;
+  word-break: keep-all;
+}
+
+.strength-detail__section { padding: 16px 0; }
+
+.strength-detail__section + .strength-detail__section { border-top: 1px solid #9fb5ac; }
+
+.strength-detail__section h2 {
+  margin: 0 0 8px;
+  padding-left: 20px;
+  color: #1a1a1a;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.strength-detail__section p,
+.strength-detail__section li {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.strength-detail__section ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* '·' 목록: 둘째 줄부터는 글자 위치에 맞춰 들여써요. */
+.strength-detail__section li {
+  position: relative;
+  padding-left: 28px;
+}
+
+.strength-detail__section li::before {
+  content: '·';
+  position: absolute;
+  left: 20px;
+}

@@ -109,6 +109,40 @@ export type HolisticResult = {
   skipReason: string | null;
 };
 
+/** 강점 지표 하나. indicatorId 는 /api/holistic-rules 의 지표 ID(A3 등), level 은 1~5 (실제로는 4·5만 와요). */
+export type HolisticStrength = { indicatorId: string; label: string; level: number; description: string };
+export type HolisticMajorAdvice = { department: string; advice: string };
+
+/**
+ * 활동·지원 전략 화면 위쪽 세 영역 (BE holistic.activitySummary·strengths·majorAdvices).
+ * 서버에 저장되지 않는 값이에요. SKIPPED·NOT_PROVIDED 이거나 필드가 없으면 null·빈 배열 → 화면에서 숨겨요.
+ * BE 단계별 배포: 1단계에는 strengths 만 오고 activitySummary 는 null, majorAdvices 는 [] 예요.
+ */
+export type HolisticStrategy = {
+  activitySummary: string | null;
+  /** 강한 순서 최대 3개 */
+  strengths: HolisticStrength[];
+  /** 희망 학과 입력 순서, 최대 3개 */
+  majorAdvices: HolisticMajorAdvice[];
+  /** '자세히 보기' 창 (BE holistic.detail). BE 2단계 배포 전이거나 SKIPPED·NOT_PROVIDED 면 null */
+  detail: HolisticDetail | null;
+};
+
+/**
+ * '자세히 보기' 창의 네 영역. 목록은 각각 최대 3개, 비면 null·[] 예요.
+ * 외부 AI 전달 스위치가 켜지기 전에는 TEMPLATE 문장만 와요 (켜지면 FE 변경 없이 LLM 문장으로 바뀌어요).
+ */
+export type HolisticDetail = {
+  /** 전체 요약 */
+  overview: string | null;
+  /** 생기부 강점 */
+  strengthEvidence: string[];
+  /** 보완할 점 */
+  improvements: string[];
+  /** 다음 단계 제안 (마지막은 모집요강 확인 고정 문장) */
+  nextSteps: string[];
+};
+
 /** 추천 안내. 서버는 code·rank 만 보내고, 화면 문구는 FE 가 정해요. */
 export type SimulationWarning = { code: string; rank: number | null };
 
@@ -122,6 +156,8 @@ export type SimulationResult = {
   };
   recommendations: SimulationRecommendation[];
   holistic: HolisticResult;
+  /** holistic 응답에서 읽은 활동 요약·강점·학과별 조언 */
+  holisticStrategy: HolisticStrategy;
   report: {
     greetingSummary: ReportSection | null;
     overallAssessment: ReportSection | null;
@@ -172,6 +208,53 @@ function toHolistic(value: unknown): HolisticResult {
   return { status, skipReason: status === 'SKIPPED' && typeof value.skipReason === 'string' ? value.skipReason : null };
 }
 
+const MAX_STRATEGY_ITEMS = 3;
+const textOf = (value: unknown) => (isObject(value) && typeof value.text === 'string' ? value.text.trim() : '');
+
+const textList = (value: unknown) => (Array.isArray(value) ? value.map(textOf).filter(Boolean).slice(0, MAX_STRATEGY_ITEMS) : []);
+
+function toHolisticDetail(value: unknown): HolisticDetail | null {
+  if (!isObject(value)) return null;
+  const detail: HolisticDetail = {
+    overview: textOf(value.overview) || null,
+    strengthEvidence: textList(value.strengthEvidence),
+    improvements: textList(value.improvements),
+    nextSteps: textList(value.nextSteps),
+  };
+  const hasContent = detail.overview !== null || detail.strengthEvidence.length > 0 || detail.improvements.length > 0 || detail.nextSteps.length > 0;
+  return hasContent ? detail : null;
+}
+
+function toHolisticStrategy(value: unknown): HolisticStrategy {
+  const empty: HolisticStrategy = { activitySummary: null, strengths: [], majorAdvices: [], detail: null };
+  if (!isObject(value) || value.status !== 'APPLIED') return empty;
+  const strengths = Array.isArray(value.strengths)
+    ? value.strengths.flatMap((item): HolisticStrength[] => {
+      if (!isObject(item) || typeof item.label !== 'string' || !item.label.trim()) return [];
+      if (typeof item.level !== 'number' || !Number.isFinite(item.level)) return [];
+      return [{
+        indicatorId: str(item.indicatorId) || item.label,
+        label: item.label,
+        level: Math.min(5, Math.max(1, Math.round(item.level))),
+        description: str(item.description),
+      }];
+    })
+    : [];
+  const majorAdvices = Array.isArray(value.majorAdvices)
+    ? value.majorAdvices.flatMap((item): HolisticMajorAdvice[] => {
+      if (!isObject(item) || typeof item.department !== 'string') return [];
+      const advice = textOf(item.advice);
+      return advice ? [{ department: item.department, advice }] : [];
+    })
+    : [];
+  return {
+    activitySummary: textOf(value.activitySummary) || null,
+    strengths: strengths.slice(0, MAX_STRATEGY_ITEMS),
+    majorAdvices: majorAdvices.slice(0, MAX_STRATEGY_ITEMS),
+    detail: toHolisticDetail(value.detail),
+  };
+}
+
 function toWarnings(value: unknown): SimulationWarning[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap(item => (isObject(item) && typeof item.code === 'string'
@@ -208,6 +291,7 @@ export function parseSimulationResult(body: unknown): SimulationResult {
       assumptionReasons: toAssumptionReasons(conversion.assumptionReasons),
     },
     holistic: toHolistic(body.holistic),
+    holisticStrategy: toHolisticStrategy(body.holistic),
     // 카드 순서·rank 는 서버 결과 그대로 (지망 순서로만 정렬)
     recommendations: body.recommendations
       .map(toRecommendation)

@@ -1,0 +1,29 @@
+/*
+ * Figma (390 × 844): 이미지 244 × 212, 좌우 73px, 위 312px · 아래 320px.
+ * → 상태바(44px)를 포함한 화면 가운데보다 4px 위. 상태바가 없는 브라우저에서는 가운데보다 26px 위.
+ */
+.no-report {
+  position: relative;
+  min-height: 100dvh;
+  /* MobileLayout 의 main padding 을 상쇄해 화면 끝까지 채웁니다. */
+  margin: calc(var(--space-page) * -1);
+  background: var(--color-background);
+}
+
+/* 좌우 여백을 박스에 줘서 폭을 화면 기준으로 정해요 (이미지가 줄어도 가운데 유지). */
+.no-report__message {
+  position: absolute;
+  top: calc(50% - 26px);
+  left: 20px;
+  right: 20px;
+  transform: translateY(-50%);
+}
+
+.no-report__message img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.no-report__sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

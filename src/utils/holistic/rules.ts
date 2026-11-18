@@ -8,13 +8,22 @@ import type { HolisticRules, NarrativeSection } from './types';
  */
 export const BUNDLED_RULES: HolisticRules = bundled as unknown as HolisticRules;
 
+/**
+ * 글자 사이 공백을 허용하는 정규식을 만든다.
+ * 학교생활기록부 PDF는 표 머리글을 "세 부 능 력 및 특 기 사 항"처럼 글자마다 띄워서 찍는다.
+ */
+function spacedPattern(label: string): RegExp {
+  const letters = [...label].filter(letter => letter !== ' ').join('\\s*');
+  return new RegExp(letters.replace('\\s*및', '\\s*및?'), 'u');
+}
+
 /** 생기부 영역 제목. 서술 영역을 나누는 데만 쓰고 서버 규칙과는 무관하다. */
 export const SECTION_HEADINGS: ReadonlyArray<readonly [NarrativeSection, RegExp]> = [
-  ['autonomy', /자율\s*활동/u],
-  ['club', /동아리\s*활동/u],
-  ['career', /진로\s*활동/u],
-  ['subject', /(세부\s*능력\s*및?\s*특기\s*사항|교과\s*학습\s*발달\s*상황|세\s*특)/u],
-  ['behavior', /행동\s*특성\s*및?\s*종합\s*의견/u],
+  ['autonomy', spacedPattern('자율활동')],
+  ['club', spacedPattern('동아리활동')],
+  ['career', spacedPattern('진로활동')],
+  ['subject', new RegExp(`(${spacedPattern('세부능력및특기사항').source}|${spacedPattern('교과학습발달상황').source}|${spacedPattern('세특').source})`, 'u')],
+  ['behavior', spacedPattern('행동특성및종합의견')],
 ];
 
 export const SECTIONS: readonly NarrativeSection[] = ['autonomy', 'club', 'career', 'subject', 'behavior'];

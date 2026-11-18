@@ -36,6 +36,9 @@
 
 .strategy-score h3 {
   margin: 0;
+  padding-right: 8px;
+  /* '진로 탐색 활동과 경험'처럼 긴 지표 이름은 단어 단위로 줄바꿈돼요. */
+  word-break: keep-all;
   font-size: 12px;
   font-weight: 700;
   line-height: normal;
@@ -57,7 +60,9 @@
 
 .strategy-score__detail p {
   margin-top: 4px;
+  overflow: hidden;
   white-space: nowrap;
+  text-overflow: ellipsis;
   color: #dfe6e3;
   font-size: 10px;
   line-height: 14px;
@@ -160,3 +165,28 @@
   line-height: 16px;
 }
 
+
+/* 역량 카드 오른쪽 위 '자세히 보기 >' (상세 창을 열어요) */
+.strategy-scores { position: relative; }
+
+.strategy-scores__more {
+  display: block;
+  margin: -14px -6px 10px auto;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: #fefefe;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: normal;
+  cursor: pointer;
+}
+
+/* 타일 아래 노란 안내 (10px) */
+.strategy-applications__note {
+  margin-top: 10px;
+  color: #c9a227;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: normal;
+}

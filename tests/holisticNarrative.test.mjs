@@ -17,7 +17,9 @@ async function load(t) {
   const rules = await server.ssrLoadModule('/src/utils/holistic/rules.ts');
   const match = await server.ssrLoadModule('/src/utils/holistic/matchRules.ts');
   const payload = await server.ssrLoadModule('/src/utils/holistic/buildPayload.ts');
-  return { ...analyze, ...rules, ...match, ...payload, analyzeNarrative, BUNDLED_MODEL: bundledModel };
+  const sections = await server.ssrLoadModule('/src/utils/holistic/splitSections.ts');
+  const citations = await server.ssrLoadModule('/src/utils/holistic/citations.ts');
+  return { ...analyze, ...rules, ...match, ...payload, ...sections, ...citations, analyzeNarrative, BUNDLED_MODEL: bundledModel };
 }
 
 // 실제 학생 기록이 아닌 가상의 서술. 이름·학교는 가려지는지 보려고 일부러 넣었다.
@@ -334,6 +336,86 @@ test('모델이 있으면 모델이 지표를 정하고, 규칙은 근거 구절
 
   const none = findClauseHits(blocks, compiled, { modelVersion: 'none', predict: () => ({ probabilities: {}, indicators: [] }) });
   assert.deepEqual(none, []);
+});
+
+test('글자마다 띄어 찍은 표 머리글도 영역 제목으로 알아본다', async t => {
+  const { analyzeNarrative } = await load(t);
+  const spaced = SAMPLE.replace('세부능력 및 특기사항', '과목   세 부 능 력 및 특 기 사 항').replace('행동특성 및 종합의견', '행 동 특 성 및 종 합 의 견');
+  const result = analyzeNarrative(spaced);
+  assert.equal(result.ok, true);
+  assert.ok(result.payload.coverage.sectionChars.subject > 0);
+  assert.ok(result.payload.coverage.sectionChars.behavior > 0);
+});
+
+function sectionYears(blocks) {
+  return blocks.map(block => `${block.section}:${block.year}`);
+}
+
+test('스캔에서 숫자가 빠지거나 잘못 읽힌 학년 표시를 순서로 보정한다', async t => {
+  const { splitSections } = await load(t);
+  const text = [
+    '교과학습발달상황', '[1학년]', '세부능력및특기사항', '국어: 토론 활동에 적극적으로 참여함.',
+    '[학년]', '세부능력및특기사항', '수학: 확률 개념을 실생활에 적용해 설명함.',
+    '[3학년]', '세부능력및특기사항', '영어: 영어 발표 활동에서 논리적으로 의견을 전달함.',
+  ].join('\n');
+  assert.deepEqual(sectionYears(splitSections(text)), ['subject:1', 'subject:2', 'subject:3']);
+  const duplicated = text.replace('[학년]', '[3학년]');
+  assert.deepEqual(sectionYears(splitSections(duplicated)), ['subject:1', 'subject:2', 'subject:3']);
+});
+
+test('창체 학년 칸을 읽지 못해도 영역 제목이 한 바퀴 돌 때마다 학년이 바뀐다', async t => {
+  const { splitSections } = await load(t);
+  const text = [
+    '자율활동 85 학급 회의에서 역할을 나누어 행사를 준비하며 협업함.', '진로활동 31 진로 탐색 검사를 하고 희망 학과를 조사함.',
+    '자율활동 61 학생회 선거에 참여하고 공약을 비교하며 질문함.', '진로활동 32 학과 박람회에서 전공 상담을 받고 보고서를 작성함.',
+    '자율활동 70 학급 도서관 운영을 맡아 규칙을 정함.',
+  ].join('\n');
+  assert.deepEqual(sectionYears(splitSections(text)), ['autonomy:1', 'career:1', 'autonomy:2', 'career:2', 'autonomy:3']);
+});
+
+test('같은 영역 제목이 한 번 더 나와도 학년은 넘어가지 않는다', async t => {
+  const { splitSections } = await load(t);
+  const text = ['2', '동아리활동', '과학 실험 동아리에서 실험 계획을 세움.', '동아리활동', '이어서 결과를 정리해 발표함.'].join('\n');
+  assert.deepEqual(sectionYears(splitSections(text)), ['club:2']);
+});
+
+test('인용 구절: 문장 경계는 날짜를 자르지 않고, 깨진 OCR 문장은 점수가 낮다', async t => {
+  const { splitSentences, citationQuality, noiseTokenCount } = await load(t);
+  assert.deepEqual(splitSentences('진로 박람회(2020.11. 02.)에 참가함. 이후 보고서를 작성함.'), ['진로 박람회(2020.11. 02.)에 참가함', '이후 보고서를 작성함.']);
+  const clean = '실험 결과를 표로 정리하고 오차의 원인을 분석하여 발표함';
+  const broken = '수업 과제를 ASST 때마다 성실 한 태도로 연습 하 는 모습을 보임';
+  assert.ok(citationQuality(clean) >= 0.9);
+  assert.ok(citationQuality(broken) < 0.9);
+  assert.ok(noiseTokenCount(broken) >= 2);
+  assert.equal(noiseTokenCount('PPT와 AI를 활용해 발표함'), 0);
+});
+
+test('인용 구절: 모델이 없으면 만들지 않고, 길이·마스킹·전체 개수 제한을 지킨다', async t => {
+  const { buildCitations, compileRules, BUNDLED_RULES, CITATION_LIMITS } = await load(t);
+  const compiled = compileRules(BUNDLED_RULES.rules);
+  const blocks = [{ section: 'subject', year: 1, entries: [
+    '실험 결과를 표로 정리하고 오차의 원인을 분석하여 발표함. 후속 실험을 설계하고 가설을 검증하여 결과를 보고서로 작성함. 문헌을 조사해 이론을 비교하고 한계를 성찰함.',
+  ] }];
+  assert.deepEqual(buildCitations(blocks, compiled, null), []);
+  const always = { predict: () => ({ probabilities: Object.fromEntries(['A2', 'A3', 'B3', 'C1', 'C2', 'C3', 'C4', 'D1', 'D3', 'D4'].map(id => [id, 0.95])), indicators: [] }) };
+  const citations = buildCitations(blocks, compiled, always);
+  assert.ok(citations.length > 0);
+  for (const citation of citations) {
+    assert.ok(citation.text.length >= CITATION_LIMITS.minChars && citation.text.length <= CITATION_LIMITS.maxChars);
+    assert.match(citation.id, /^c\d+$/);
+  }
+  assert.ok(citations.length <= CITATION_LIMITS.totalMax);
+  assert.ok(citations.length <= CITATION_LIMITS.perIndicatorMax * 10);
+  const masked = [{ section: 'subject', year: 1, entries: ['담임 김철수 선생님과 상담하며 실험 결과를 표로 정리하고 오차의 원인을 분석하여 발표함'] }];
+  assert.deepEqual(buildCitations(masked, compiled, always), []);
+});
+
+test('분석 결과에 인용 구절이 따로 담기고 서버 payload에는 섞이지 않는다', async t => {
+  const { analyzeNarrative } = await load(t);
+  const result = analyzeNarrative(SAMPLE);
+  assert.equal(result.ok, true);
+  assert.ok(Array.isArray(result.citations));
+  assert.equal('citations' in result.payload, false);
 });
 
 test('번들 모델은 비동기로 읽어 오고, 읽은 모델로 분석한 결과가 모델을 직접 준 결과와 같다', async t => {
