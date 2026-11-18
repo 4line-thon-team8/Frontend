@@ -26,7 +26,7 @@ export const CITATION_LIMITS = {
 } as const;
 
 /** 문장 경계: 한글 뒤 마침표 + 공백 + 새 문장의 시작. 날짜("2022.03.02.")는 숫자 뒤 마침표라 자르지 않는다. */
-const SENTENCE_BOUNDARY = /(?<=[가-힣])\.\s+(?=[가-힣A-Za-z0-9(「『'"\[])/u;
+const SENTENCE_BOUNDARY = /(?<=[가-힣])\.\s+(?=[가-힣A-Za-z0-9(「『'"[])/u;
 const SENTENCE_END = /(?:함|음|됨|임|였음|했음|보임|있음|나타냄|돋보임|시킴|기름|높임|이룸|줌|냄|감|옴|둠|짐|다|요)\.?$/u;
 const MASK_TOKEN = /\[(?:이메일|번호|학교|교사|이름)\]/u;
 /** OCR이 깨뜨린 흔적: 표 선, 연속 기호, 숫자가 한글 사이에 낀 단어. */
@@ -40,7 +40,7 @@ const ACRONYM_OK = new Set(['AI', 'PPT', 'DNA', 'RNA', 'SNS', 'IT', 'SW', 'PC', 
 export function noiseTokenCount(sentence: string): number {
   let count = 0;
   for (const token of sentence.split(/\s+/u)) {
-    const bare = token.replace(/^[('"“‘「『\[]+|[)'"”’」』\],.:;!?]+$/gu, '');
+    const bare = token.replace(/^[('"“‘「『[]+|[)'"”’」』\],.:;!?]+$/gu, '');
     if (/^[가-힣]$/u.test(bare) && !LONE_SYLLABLE_OK.has(bare)) count += 1;
     else if (/^[A-Z]{1,5}$/u.test(bare) && !ACRONYM_OK.has(bare)) count += 1;
   }

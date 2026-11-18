@@ -53,19 +53,27 @@ export interface ModelClassifier {
 
 const WHITESPACE = /\s+/u;
 
+const SURROGATE = /[\ud800-\udfff]/; // u 플래그를 쓰면 쌍을 한 글자로 봐서 감지하지 못한다
+
 /** scikit-learn 의 analyzer='char_wb' 와 같은 n-gram. 단어마다 앞뒤에 공백을 붙여 단어 안에서만 자른다. */
 export function charWbNgrams(text: string, minN: number, maxN: number): string[] {
   const grams: string[] = [];
   for (const word of text.toLowerCase().split(WHITESPACE)) {
     if (word === '') continue;
-    const chars = Array.from(` ${word} `);
-    const length = chars.length;
+    const padded = ` ${word} `;
+    // 한글·영문처럼 글자 하나가 UTF-16 한 칸이면 문자열을 바로 잘라도 코드포인트 단위와 같다(훨씬 빠르다).
+    // 이모지 같은 서로게이트 쌍이 있으면 코드포인트 배열로 잘라 파이썬과 같은 결과를 지킨다.
+    const chars = SURROGATE.test(padded) ? Array.from(padded) : null;
+    const length = chars ? chars.length : padded.length;
+    const cut = chars
+      ? (from: number, to: number) => chars.slice(from, to).join('')
+      : (from: number, to: number) => padded.slice(from, to);
     for (let n = minN; n <= maxN; n++) {
       let offset = 0;
-      grams.push(chars.slice(offset, offset + n).join(''));
+      grams.push(cut(offset, offset + n));
       while (offset + n < length) {
         offset += 1;
-        grams.push(chars.slice(offset, offset + n).join(''));
+        grams.push(cut(offset, offset + n));
       }
       // 단어가 n 보다 짧으면 한 번만 센다(scikit-learn 과 같은 동작).
       if (offset === 0) break;
@@ -88,9 +96,19 @@ export function createModelClassifier(model: HolisticModel, rules: readonly Holi
   const sectionBase = model.idf.length;
   const flagBase = sectionBase + model.sections.length;
   const indicatorIds = Object.keys(model.indicators);
-  const weights = new Map(
-    indicatorIds.map(id => [id, new Map(Object.entries(model.indicators[id]!.coef).map(([index, w]) => [Number(index), w]))]),
-  );
+  // 특성 하나가 모든 지표에 주는 가중치를 한 칸 묶음으로 둔다(지표 수 K). 특성마다 Map 을 지표 수만큼 찾지 않고 한 번에 읽는다.
+  // 지표마다 특성을 더하는 순서는 예전(지표별 Map 순회)과 같아서 계산 결과가 비트 단위로 같다.
+  const indicatorCount = indicatorIds.length;
+  const intercepts = Float64Array.from(indicatorIds, id => model.indicators[id]!.intercept);
+  const thresholds = indicatorIds.map(id => model.indicators[id]!.threshold);
+  let maxFeature = -1;
+  for (const id of indicatorIds) {
+    for (const index of Object.keys(model.indicators[id]!.coef)) maxFeature = Math.max(maxFeature, Number(index));
+  }
+  const dense = new Float64Array((maxFeature + 1) * indicatorCount);
+  indicatorIds.forEach((id, k) => {
+    for (const [index, w] of Object.entries(model.indicators[id]!.coef)) dense[Number(index) * indicatorCount + k] = w;
+  });
 
   function ruleIndicators(section: NarrativeSection, clause: string): Set<string> {
     const found = new Set<string>();
@@ -143,16 +161,19 @@ export function createModelClassifier(model: HolisticModel, rules: readonly Holi
     modelVersion: model.modelVersion,
     predict(section, clause) {
       const x = features(section, clause);
+      const z = Float64Array.from(intercepts);
+      for (const [index, value] of x) {
+        if (index > maxFeature) continue; // 가중치가 없는 특성은 0 이다.
+        const base = index * indicatorCount;
+        for (let k = 0; k < indicatorCount; k++) z[k]! += dense[base + k]! * value;
+      }
       const probabilities: Record<string, number> = {};
       const hits: string[] = [];
-      for (const id of indicatorIds) {
-        const indicator = model.indicators[id]!;
-        const w = weights.get(id)!;
-        let z = indicator.intercept;
-        for (const [index, value] of x) z += (w.get(index) ?? 0) * value;
-        const p = sigmoid(z);
+      for (let k = 0; k < indicatorCount; k++) {
+        const id = indicatorIds[k]!;
+        const p = sigmoid(z[k]!);
         probabilities[id] = p;
-        if (p >= indicator.threshold) hits.push(id);
+        if (p >= thresholds[k]!) hits.push(id);
       }
       return { probabilities, indicators: hits };
     },

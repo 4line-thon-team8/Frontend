@@ -7,6 +7,9 @@ export default defineConfig(({ mode }) => {
   const { API_PROXY_TARGET } = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react()],
+    // 워커는 모두 { type: 'module' } 로 불러오고, 분석 워커는 모델 파일을 동적 import 로 따로 읽는다.
+    // 기본 형식(iife)은 이렇게 파일을 나누는 워커를 만들 수 없어서 es 로 둔다.
+    worker: { format: 'es' },
     server: API_PROXY_TARGET
       ? {
         proxy: {
