@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { createInitialGradeConfirmDraft } from '../pages/grade/gradeConfirm.mock';
 import { GradeAnalysisContext } from './gradeAnalysisContext';
-import type { GradeAnalysisSnapshot } from './gradeAnalysisContext';
+import type { GradeAnalysisSnapshot, LastReport } from './gradeAnalysisContext';
 import type { ConfirmSubject } from '../types/gradeConfirm';
 import type { SimulationResult } from '../services/simulationApi';
 import { clearGradeImage } from '../utils/gradeImageStore';
@@ -15,6 +15,7 @@ export default function GradeAnalysisProvider({ children }: PropsWithChildren) {
   const [pendingOcrSubjects, setPendingOcrSubjects] = useState<ConfirmSubject[] | null>(null);
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [narrative, setNarrative] = useState<NarrativeAnalysisResult | null>(null);
+  const [lastReport, setLastReport] = useState<LastReport | null>(null);
 
   const reset = useCallback(() => {
     clearGradeImage();
@@ -26,8 +27,13 @@ export default function GradeAnalysisProvider({ children }: PropsWithChildren) {
     setNarrative(null);
   }, []);
 
+  const resetAll = useCallback(() => {
+    reset();
+    setLastReport(null);
+  }, [reset]);
+
   return (
-    <GradeAnalysisContext.Provider value={{ narrative, setNarrative, draft, setDraft, snapshot, setSnapshot, reset, pendingOcrSubjects, setPendingOcrSubjects, hasConfirmedGrades, setHasConfirmedGrades, result, setResult }}>
+    <GradeAnalysisContext.Provider value={{ lastReport, setLastReport, resetAll, narrative, setNarrative, draft, setDraft, snapshot, setSnapshot, reset, pendingOcrSubjects, setPendingOcrSubjects, hasConfirmedGrades, setHasConfirmedGrades, result, setResult }}>
       {children}
     </GradeAnalysisContext.Provider>
   );
