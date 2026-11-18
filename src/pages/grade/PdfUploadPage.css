@@ -70,7 +70,22 @@
   font: inherit;
 }
 
-.pdf-upload-status a {
+.pdf-upload-fallback {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.pdf-upload-fallback .button {
+  display: grid;
+  min-height: 44px;
+  place-items: center;
+  text-decoration: none;
+}
+
+.pdf-upload-fallback a:not(.button) {
   color: inherit;
   text-decoration: underline;
 }
