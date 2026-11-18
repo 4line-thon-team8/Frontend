@@ -51,6 +51,33 @@ test('reconstructs adjacent header fragments from coordinates despite shuffled O
   assert.deepEqual(parseOcrGrades(words.reverse()), [{ id: 'ocr-1', name: '공통수학1', grade: '2' }]);
 });
 
+test('recovers a split first syllable crossing the first subject heading boundary', () => {
+  const positioned = (text, x0, y0, x1, y1, confidence = 93) =>
+    ({ text, confidence, bbox: { x0, y0, x1, y1 } });
+  const heading = [
+    positioned('과목명', 207, 56, 309, 88),
+    positioned('단위수', 536, 56, 658, 89),
+    positioned('석차등급', 716, 56, 855, 88),
+  ];
+  const prefix = positioned('공', 180, 146, 212, 178);
+  const body = [
+    positioned('통', 224, 146, 248, 178), positioned('국어1', 260, 145, 335, 179),
+    positioned('4', 575, 150, 594, 176), positioned('2', 777, 150, 793, 176),
+  ];
+  assert.deepEqual(parseOcrGrades([...heading, prefix, ...body]), [
+    { id: 'ocr-1', name: '공 통 국어1', grade: '2' },
+  ]);
+  assert.deepEqual(parseOcrGrades([...heading, { ...prefix, confidence: 79 }, ...body]), []);
+  assert.equal(parseOcrGrades([...heading, positioned('공', 180, 146, 202, 178), ...body])[0]?.name, '통 국어1');
+
+  const adjacentHeader = positioned('교과', 51, 55, 195, 89);
+  const adjacentWord = positioned('국어', 51, 145, 115, 179);
+  const boundaryNoise = positioned('국', 180, 146, 206, 178);
+  assert.equal(parseOcrGrades([...heading, adjacentHeader, adjacentWord, boundaryNoise, ...body])[0]?.name, '통 국어1');
+  assert.equal(parseOcrGrades([...heading, adjacentHeader, adjacentWord,
+    positioned('공통국어1', 208, 146, 335, 178), ...body.slice(2)])[0]?.name, '공통국어1');
+});
+
 test('rejects header fragments separated by a row, a wide gap, or low confidence', () => {
   const body = [word('한국사', 40, 124), word('2', 282, 124, 10)];
   const prefix = splitHeaders.slice(0, -1);

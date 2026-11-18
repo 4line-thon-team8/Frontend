@@ -112,8 +112,19 @@ export function parseOcrGrades(words: readonly ImageTextWord[]): ConfirmSubject[
       break;
     }
     const names = row.filter(({ bbox }) => bbox.x0 >= subjectLeft && bbox.x1 <= subjectRight);
-    if (!names.length) {
-      continue;
+    const firstName = names[0];
+    if (!firstName) continue;
+    // Without a preceding column header, the subject heading's ink is only a
+    // fallback boundary. A split first syllable can straddle it.
+    if (!previousHeader) {
+      const prefix = row[row.indexOf(firstName) - 1];
+      if (prefix && /^[가-힣]$/u.test(compact(prefix.text)) &&
+          prefix.bbox.x0 < subjectLeft && prefix.bbox.x1 > subjectLeft) {
+        const gap = firstName.bbox.x0 - prefix.bbox.x1;
+        if (gap >= 0 && gap <= Math.min(height(prefix), height(firstName)) / 2) {
+          names.unshift(prefix);
+        }
+      }
     }
     const name = names.map(word => word.text.trim()).join(' ');
     if (!/^[가-힣][가-힣a-zA-Z0-9·ㆍ・]+$/u.test(compact(name)) ||
