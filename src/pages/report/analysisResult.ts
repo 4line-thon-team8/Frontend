@@ -34,8 +34,9 @@ function toWarnings(warnings: SimulationWarning[]): ResultWarning[] {
 function toEvidenceText(evidence: Record<string, unknown> | null): string {
   if (!evidence) return '';
   const parts: string[] = [];
-  if (typeof evidence.quota === 'number') parts.push(`모집 인원 ${evidence.quota}명`);
-  if (typeof evidence.competitionRate === 'number') parts.push(`경쟁률 ${evidence.competitionRate}:1`);
+  // Figma 수정안: '모집 인원: 41명 · 경쟁률: 7.87:1 · 최근 3개년 입결 기준'
+  if (typeof evidence.quota === 'number') parts.push(`모집 인원: ${evidence.quota}명`);
+  if (typeof evidence.competitionRate === 'number') parts.push(`경쟁률: ${evidence.competitionRate}:1`);
   if (typeof evidence.basisYears === 'number' && evidence.basisYears > 0) parts.push(`최근 ${evidence.basisYears}개년 입결 기준`);
   if (evidence.isNewOrMergedDepartment === true || evidence.newOrMergedDepartment === true) parts.push('신설·통합 학과');
   return parts.join(' · ');

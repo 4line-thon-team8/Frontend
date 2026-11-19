@@ -15,7 +15,7 @@
   --tier-border: #dfe6e3;
   --fold-color: #c3cfca;
   min-height: 124px;
-  padding: 27px 17px 21px;
+  padding: 27px 17px 14px;
   border-color: var(--tier-border);
   background: #f5f8f6;
 }
@@ -118,24 +118,46 @@
   font-weight: 500;
 }
 
+/* 펼쳤을 때 보이는 추천 이유 (근거 칩 아래 16px) */
 .recommendation-card .recommendation-card__reason {
-  margin-top: 3px;
+  margin-top: 16px;
   color: #52625d;
   font-size: 12px;
-  line-height: normal;
+  line-height: 1.45;
 }
 
-/* 근거 칩: 카드 테두리색 알약 모양 (높이 26px) */
+/*
+ * 근거 칩: 카드 테두리색 알약 (높이 26px). 지망·학교 줄 아래 12px.
+ * 글이 길면 칩 안에서 줄바꿈되고 모서리가 둥근 상자로 늘어나요 (칩 밖으로 넘치지 않게).
+ */
 .recommendation-card .recommendation-card__evidence {
   display: inline-flex;
   align-items: center;
-  height: 26px;
+  max-width: 100%;
+  min-height: 26px;
   margin-top: 12px;
-  padding: 0 12px;
+  padding: 4px 12px;
   border: 1px solid var(--tier-border);
-  border-radius: 999px;
+  border-radius: 13px;
+  background: #fefefe;
   color: #52625d;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* 펼쳐보기 ∨ / 닫기 ∧: 오른쪽 아래 회색 11px */
+.recommendation-card__toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 14px 0 0 auto;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: #8a9893;
+  font-family: inherit;
+  font-size: 11px;
   line-height: normal;
+  cursor: pointer;
 }
 
