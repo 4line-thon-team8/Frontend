@@ -1,4 +1,4 @@
-import { analyzeNarrativeOnThisThread } from './analyzeNarrativeCore';
+import { analyzeBlocksOnThisThread, analyzeNarrativeOnThisThread } from './analyzeNarrativeCore';
 import { loadBundledModel } from './modelLoader';
 import type { NarrativeWorkerRequest, NarrativeWorkerResponse } from './narrativeWorkerClient';
 
@@ -13,10 +13,13 @@ self.onmessage = async ({ data }: MessageEvent<NarrativeWorkerRequest>) => {
     return;
   }
   try {
-    const result = await analyzeNarrativeOnThisThread(data.text, {
+    const options = {
       ...(data.rules ? { rules: data.rules } : {}),
       ...(data.tagKeywords ? { tagKeywords: data.tagKeywords } : {}),
-    });
+    };
+    const result = data.kind === 'analyzeBlocks'
+      ? await analyzeBlocksOnThisThread(data.blocks, options)
+      : await analyzeNarrativeOnThisThread(data.text, options);
     post({ kind: 'result', id: data.id, result });
   } catch {
     post({ kind: 'failed', id: data.id });

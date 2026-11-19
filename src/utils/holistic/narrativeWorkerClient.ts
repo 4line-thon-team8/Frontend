@@ -1,8 +1,9 @@
-import type { HolisticRules, NarrativeAnalysisResult, TagKeyword } from './types';
+import type { HolisticRules, NarrativeAnalysisResult, NarrativeBlock, TagKeyword } from './types';
 
-/** 메인 스레드 → 워커. 전문(text)은 계산에만 쓰이고 워커에 저장되지 않는다. */
+/** 메인 스레드 → 워커. 전문(text)과 블록(blocks)은 계산에만 쓰이고 워커에 저장되지 않는다. */
 export type NarrativeWorkerRequest =
   | { kind: 'analyze'; id: number; text: string; rules?: HolisticRules; tagKeywords?: readonly TagKeyword[] }
+  | { kind: 'analyzeBlocks'; id: number; blocks: readonly NarrativeBlock[]; rules?: HolisticRules; tagKeywords?: readonly TagKeyword[] }
   | { kind: 'warm' };
 
 /** 워커 → 메인 스레드. */
@@ -27,6 +28,8 @@ export interface NarrativeAnalyzeInput {
 export interface NarrativeWorkerClient {
   /** 워커에서 분석한다. 워커를 못 쓰거나 실패하면 reject 하므로, 부르는 쪽이 이 스레드 계산으로 대신한다. */
   analyze(text: string, input?: NarrativeAnalyzeInput): Promise<NarrativeAnalysisResult>;
+  /** splitSections 로 이미 나눈 블록을 워커에서 분석한다. 실패 규칙은 analyze 와 같다. */
+  analyzeBlocks(blocks: readonly NarrativeBlock[], input?: NarrativeAnalyzeInput): Promise<NarrativeAnalysisResult>;
   /** 워커를 미리 만들어 모델을 읽게 한다. 워커를 쓸 수 있으면 true. */
   warm(): boolean;
   /** 워커를 정리한다(대기 중인 요청은 reject). */
@@ -110,26 +113,32 @@ export function createNarrativeWorkerClient(options: NarrativeWorkerClientOption
     return source;
   }
 
+  function request(
+    payload: { kind: 'analyze'; text: string } | { kind: 'analyzeBlocks'; blocks: readonly NarrativeBlock[] },
+    input: NarrativeAnalyzeInput,
+  ): Promise<NarrativeAnalysisResult> {
+    const active = ensureWorker();
+    if (!active) return Promise.reject(new Error('Narrative worker unavailable'));
+    return new Promise<NarrativeAnalysisResult>((resolve, reject) => {
+      const id = (sequence += 1);
+      const timer = setTimeout(() => fail(active, new Error('Narrative worker timed out')), timeoutMs);
+      pending.set(id, { resolve, reject, timer });
+      try {
+        const message: NarrativeWorkerRequest = { ...payload, id };
+        if (input.rules) message.rules = input.rules;
+        if (input.tagKeywords) message.tagKeywords = input.tagKeywords;
+        active.postMessage(message);
+      } catch (error) {
+        clearTimeout(timer);
+        pending.delete(id);
+        reject(error);
+      }
+    });
+  }
+
   return {
-    analyze(text, input = {}) {
-      const active = ensureWorker();
-      if (!active) return Promise.reject(new Error('Narrative worker unavailable'));
-      return new Promise<NarrativeAnalysisResult>((resolve, reject) => {
-        const id = (sequence += 1);
-        const timer = setTimeout(() => fail(active, new Error('Narrative worker timed out')), timeoutMs);
-        pending.set(id, { resolve, reject, timer });
-        try {
-          const message: NarrativeWorkerRequest = { kind: 'analyze', id, text };
-          if (input.rules) message.rules = input.rules;
-          if (input.tagKeywords) message.tagKeywords = input.tagKeywords;
-          active.postMessage(message);
-        } catch (error) {
-          clearTimeout(timer);
-          pending.delete(id);
-          reject(error);
-        }
-      });
-    },
+    analyze: (text, input = {}) => request({ kind: 'analyze', text }, input),
+    analyzeBlocks: (blocks, input = {}) => request({ kind: 'analyzeBlocks', blocks }, input),
     warm() {
       const active = ensureWorker();
       if (!active) return false;

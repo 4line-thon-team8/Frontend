@@ -14,7 +14,8 @@ async function load(t) {
   const client = await server.ssrLoadModule('/src/utils/holistic/narrativeWorkerClient.ts');
   const model = await server.ssrLoadModule('/src/utils/holistic/model.ts');
   const holisticModel = await server.ssrLoadModule('/src/utils/holistic/holisticModel.ts');
-  return { ...core, ...entry, ...client, ...model, ...holisticModel };
+  const sections = await server.ssrLoadModule('/src/utils/holistic/splitSections.ts');
+  return { ...core, ...entry, ...client, ...model, ...holisticModel, ...sections };
 }
 
 // 실제 학생 기록이 아닌 가상의 서술이다. 분석 최소 분량을 넘도록 같은 문장을 몇 번 반복한다.
@@ -62,7 +63,14 @@ function fakeWorker(handler, log = {}) {
 const inProcessHandler = core => async message => {
   if (message.kind === 'warm') return null;
   try {
-    const result = await core.analyzeNarrativeOnThisThread(message.text, {});
+    // 실제 워커(narrativeAnalysis.worker.ts)처럼 규칙 사전·전공 키워드를 그대로 넘긴다.
+    const options = {
+      ...(message.rules ? { rules: message.rules } : {}),
+      ...(message.tagKeywords ? { tagKeywords: message.tagKeywords } : {}),
+    };
+    const result = message.kind === 'analyzeBlocks'
+      ? await core.analyzeBlocksOnThisThread(message.blocks, options)
+      : await core.analyzeNarrativeOnThisThread(message.text, options);
     return { kind: 'result', id: message.id, result };
   } catch {
     return { kind: 'failed', id: message.id };
@@ -146,7 +154,7 @@ test('규칙 사전과 전공 키워드를 워커로 넘긴다', async t => {
   const log = { messages: [] };
   const client = m.createNarrativeWorkerClient({ createWorker: () => fakeWorker(inProcessHandler(m), log) });
   t.after(() => client.dispose());
-  const tagKeywords = [{ tag: '컴퓨터', keywords: ['알고리즘'] }];
+  const tagKeywords = [{ keyword: '알고리즘', tag: '컴퓨터' }];
   await client.analyze(TEXT, { tagKeywords });
   assert.deepEqual(log.messages[0].tagKeywords, tagKeywords);
   assert.equal('rules' in log.messages[0], false);
@@ -189,4 +197,41 @@ test('char_wb n-gram 은 이모지가 있어도 코드포인트 단위로 자른
   for (const text of ['a', '가', '나다 라', '😀 이모지 테스트 😀😀', '  공백   많은   문장  ', '', 'ABC def 세부능력 및 특기사항', '𠮷野家 한글']) {
     assert.deepEqual(m.charWbNgrams(text, 1, 3), reference(text, 1, 3), JSON.stringify(text));
   }
+});
+
+test('블록으로 분석해도 전문으로 분석한 결과와 같다(규칙만·모델 사용 모두)', async t => {
+  const m = await load(t);
+  const blocks = m.splitSections(TEXT);
+  assert.deepEqual(m.analyzeBlocks(blocks), m.analyzeNarrative(TEXT));
+  const bundled = await m.loadBundledModel();
+  const expected = m.analyzeNarrative(TEXT, { model: bundled });
+  assert.equal(expected.ok, true);
+  assert.deepEqual(m.analyzeBlocks(blocks, { model: bundled }), expected);
+  assert.deepEqual(await m.analyzeBlocksWithBundledModel(blocks), expected);
+});
+
+test('블록의 문단을 고치면 분석 결과가 바뀌고 원래 블록은 그대로 남는다', async t => {
+  const m = await load(t);
+  const blocks = m.splitSections(TEXT);
+  const before = m.analyzeBlocks(blocks);
+  const snapshot = JSON.stringify(blocks);
+  const emptied = blocks.map(block => ({ ...block, entries: [] }));
+  assert.equal(before.ok, true);
+  assert.deepEqual(m.analyzeBlocks(emptied), { ok: false, reason: 'too-short' });
+  assert.equal(JSON.stringify(blocks), snapshot);
+  assert.deepEqual(m.analyzeBlocks([]), { ok: false, reason: 'no-sections' });
+});
+
+test('블록도 워커를 거쳐 같은 결과를 낸다', async t => {
+  const m = await load(t);
+  const log = { messages: [] };
+  const client = m.createNarrativeWorkerClient({ createWorker: () => fakeWorker(inProcessHandler(m), log) });
+  t.after(() => client.dispose());
+  const blocks = m.splitSections(TEXT);
+  const viaWorker = await client.analyzeBlocks(blocks, { tagKeywords: [{ keyword: '반도체', tag: '반도체' }] });
+  const direct = await m.analyzeBlocksOnThisThread(blocks, { tagKeywords: [{ keyword: '반도체', tag: '반도체' }] });
+  assert.equal(direct.ok, true);
+  assert.deepEqual(viaWorker, direct);
+  assert.equal(log.messages[0].kind, 'analyzeBlocks');
+  assert.deepEqual(log.messages[0].tagKeywords, [{ keyword: '반도체', tag: '반도체' }]);
 });
