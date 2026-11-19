@@ -34,8 +34,8 @@ export function toGray(rgba: ArrayLike<number>, width: number, height: number): 
   return { data, width, height };
 }
 
-/** 칸 평균으로 줄인다. */
-function shrink(gray: GrayImage, smallWidth: number, smallHeight: number): Float32Array {
+/** 칸 평균으로 줄인 밝기 배열을 돌려준다. */
+export function shrink(gray: GrayImage, smallWidth: number, smallHeight: number): Float32Array {
   const { data, width, height } = gray;
   const sum = new Float32Array(smallWidth * smallHeight);
   const count = new Float32Array(smallWidth * smallHeight);

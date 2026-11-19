@@ -5,33 +5,44 @@ import { detectOcrTables, recognizeOcrTable } from './ocrTable';
 import type { Cell } from './ocrTable';
 import type { ConfirmSubject } from '../types/gradeConfirm';
 import { flattenIllumination, toGray } from './ocr/flattenIllumination';
+import { assessImageQuality } from './ocr/imageQuality';
+import type { ImageQuality } from './ocr/imageQuality';
 
 const MAX_PIXELS = 12_000_000;
 
-/** 조명 불균형을 보정한 PNG 바이트를 만든다. 실패하거나 이미지가 너무 크면 null을 돌려주고 호출부가 원본을 쓴다. */
-async function flattenedBytes(file: File): Promise<Uint8Array | null> {
+interface PreparedImage {
+  /** 조명을 보정한 PNG 바이트. 보정하지 못하면 null이고 호출부가 원본을 쓴다. */
+  bytes: Uint8Array | null;
+  /** 원본 사진의 선명도·밝기 측정. 측정하지 못하면 null. */
+  quality: ImageQuality | null;
+}
+
+/** 사진 품질을 재고 조명 불균형을 보정한다. 실패하거나 이미지가 너무 크면 해당 값을 null로 돌려준다. */
+async function prepareImage(file: File): Promise<PreparedImage> {
   try {
     const bitmap = await createImageBitmap(file);
     try {
       const { width, height } = bitmap;
-      if (width * height > MAX_PIXELS) return null;
+      if (width * height > MAX_PIXELS) return { bytes: null, quality: null };
       const canvas = new OffscreenCanvas(width, height);
       const context = canvas.getContext('2d', { willReadFrequently: true });
-      if (!context) return null;
+      if (!context) return { bytes: null, quality: null };
       context.drawImage(bitmap, 0, 0);
-      const flat = flattenIllumination(toGray(context.getImageData(0, 0, width, height).data, width, height));
+      const gray = toGray(context.getImageData(0, 0, width, height).data, width, height);
+      const quality = assessImageQuality(gray);
+      const flat = flattenIllumination(gray);
       const output = context.createImageData(width, height);
       for (let index = 0; index < flat.data.length; index += 1) {
         const value = flat.data[index] ?? 255;
         output.data.set([value, value, value, 255], index * 4);
       }
       context.putImageData(output, 0, 0);
-      return new Uint8Array(await (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer());
+      return { bytes: new Uint8Array(await (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer()), quality };
     } finally {
       bitmap.close();
     }
   } catch {
-    return null;
+    return { bytes: null, quality: null };
   }
 }
 
@@ -53,7 +64,8 @@ self.onmessage = async ({ data: file }: MessageEvent<File>) => {
     await engine.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_COLUMN });
     self.postMessage({ kind: 'recognizing', progress: 0 });
     // 인식은 조명 보정본으로, 표 영역 검출은 원본 픽셀로 한다.
-    const bytes = (await flattenedBytes(file)) ?? new Uint8Array(await file.arrayBuffer());
+    const prepared = await prepareImage(file);
+    const bytes = prepared.bytes ?? new Uint8Array(await file.arrayBuffer());
     const { data } = await engine.recognize(bytes, {}, { text: true, blocks: true });
     const words = (data.blocks ?? []).flatMap(block => block.paragraphs.flatMap(paragraph =>
       paragraph.lines.flatMap(line => line.words.map(({ text, confidence, bbox }) => ({ text, confidence, bbox })))));
@@ -96,7 +108,7 @@ self.onmessage = async ({ data: file }: MessageEvent<File>) => {
     }
     await engine.terminate();
     engine = undefined;
-    self.postMessage({ kind: 'success', result: { text: data.text, words, tableSubjects } });
+    self.postMessage({ kind: 'success', result: { text: data.text, words, tableSubjects, quality: prepared.quality } });
   } catch {
     await engine?.terminate();
     self.postMessage({ kind: 'error' });
