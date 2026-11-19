@@ -1,3 +1,4 @@
+import { useId, useState } from 'react';
 import NoReport from '../../components/report/NoReport';
 import BottomNavigation from '../../components/common/BottomNavigation';
 import RecommendationEmpty from '../../components/report/RecommendationEmpty';
@@ -6,9 +7,55 @@ import ResultNotices from '../../components/report/ResultNotices';
 import { getCardWarnings, isNoCandidates } from '../../components/report/resultWarnings';
 import clipboard from '../../assets/icons/clipboard.svg';
 import { useReportView } from './analysisResult';
+import type { Recommendation, ResultWarning } from './recommendation.mock';
 import { TIER_LABELS, tierClassName } from './reportTier';
 import './ReportPage.css';
 import './RecommendationPage.css';
+
+function ChevronIcon({ up }: { up: boolean }) {
+  return (
+    <svg width="12" height="7" viewBox="0 0 12 7" fill="none" aria-hidden="true" style={up ? { transform: 'rotate(180deg)' } : undefined}>
+      <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * 추천 카드 (Figma '수정된 리포트'): 지망·학교·배지 → 근거 칩 → '펼쳐보기'.
+ * 추천 이유는 글이 길어서 접어 두고, 펼치면 보여줘요. 카드별 주의 안내는 접어도 항상 보여요.
+ */
+function RecommendationCard({ item, warnings }: { item: Recommendation; warnings: ResultWarning[] }) {
+  const [open, setOpen] = useState(false);
+  const reasonId = useId();
+  const hasReason = item.reason.text !== '';
+
+  return (
+    <li className={`report-fold-card recommendation-card ${tierClassName(item.tier)}`}>
+      <h2>
+        <span className="recommendation-card__rank">{item.rank}지망</span>
+        {item.university} {item.major}{item.admission && ` · ${item.admission}`}
+      </h2>
+      {item.tier && <span className="recommendation-card__tier">{TIER_LABELS[item.tier]}</span>}
+      {item.evidence && <p className="recommendation-card__evidence">{item.evidence}</p>}
+      {warnings.map(warning => (
+        <p key={`${warning.code}-${warning.message}`} className="recommendation-card__warning">{warning.message}</p>
+      ))}
+      {hasReason && open && <p id={reasonId} className="recommendation-card__reason">{item.reason.text}</p>}
+      {hasReason && (
+        <button
+          type="button"
+          className="recommendation-card__toggle"
+          aria-expanded={open}
+          aria-controls={open ? reasonId : undefined}
+          onClick={() => setOpen(current => !current)}
+        >
+          {open ? '닫기' : '펼쳐보기'}
+          <ChevronIcon up={open} />
+        </button>
+      )}
+    </li>
+  );
+}
 
 export default function RecommendationPage() {
   const view = useReportView();
@@ -31,23 +78,9 @@ export default function RecommendationPage() {
 
           {/* 카드 순서·rank·구간은 BE 응답 그대로 */}
           <ol className="recommendation-list">
-            {recommendations.map(item => {
-              const cardWarnings = getCardWarnings(warnings, item);
-              return (
-                <li key={item.rank} className={`report-fold-card recommendation-card ${tierClassName(item.tier)}`}>
-                  <h2>
-                    <span className="recommendation-card__rank">{item.rank}지망</span>
-                    {item.university} {item.major}{item.admission && ` · ${item.admission}`}
-                  </h2>
-                  {item.tier && <span className="recommendation-card__tier">{TIER_LABELS[item.tier]}</span>}
-                  {item.reason.text && <p className="recommendation-card__reason">{item.reason.text}</p>}
-                  {cardWarnings.map(warning => (
-                    <p key={`${warning.code}-${warning.message}`} className="recommendation-card__warning">{warning.message}</p>
-                  ))}
-                  {item.evidence && <p className="recommendation-card__evidence">근거 : {item.evidence}</p>}
-                </li>
-              );
-            })}
+            {recommendations.map(item => (
+              <RecommendationCard key={item.rank} item={item} warnings={getCardWarnings(warnings, item)} />
+            ))}
           </ol>
 
           <div className="report-pagination-slot">
