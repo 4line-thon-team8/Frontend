@@ -65,8 +65,30 @@ export function entryQuality(entryText: string, scorer: QualityScorer | null = n
   return windows.reduce((sum, window) => sum + measure(window), 0) / windows.length;
 }
 
+/** 같은 지표 안에서 이 값 이상 비슷한 구절은 같은 구절로 보고 한 번만 센다. */
+export const DUPLICATE_SIMILARITY = 0.8;
+
+/** 비교용 정규형: 공백·구두점·숫자를 없앤 글자열. 같은 문구가 학년·영역만 바뀌어 되풀이되는 경우를 잡는다. */
+function normalizeClause(clause: string): string {
+  return clause.replace(/[\s\p{P}\p{S}\d]+/gu, '');
+}
+
+function bigramsOf(text: string): Set<string> {
+  const grams = new Set<string>();
+  for (let index = 0; index < text.length - 1; index += 1) grams.add(text.slice(index, index + 2));
+  return grams;
+}
+
+function similarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  for (const gram of a) if (b.has(gram)) shared += 1;
+  return shared / (a.size + b.size - shared);
+}
+
 /**
- * 지표마다 count(맞은 구절 수), years(나타난 학년), quality(맞은 문단들의 평균 품질)를 만든다.
+ * 지표마다 count(서로 다른 맞은 구절 수), years(나타난 학년), quality(맞은 문단들의 평균 품질)를 만든다.
+ * 같은 문구를 반복해 쓴 글이 신호 수로 높은 수준을 받지 못하도록, 같은 지표 안에서 거의 같은 구절은 한 번만 센다.
  * 서버는 학년이 하나는 있어야 받으므로, 학년을 알 수 없는 지표는 보내지 않는다.
  */
 export function buildIndicatorSignals(
@@ -74,12 +96,23 @@ export function buildIndicatorSignals(
   limits: HolisticRuleLimits,
   scorer: QualityScorer | null = null,
 ): HolisticIndicatorSignal[] {
-  type IndicatorState = { clauses: number; years: Array<NarrativeYear | null>; entries: Map<string, string> };
+  type IndicatorState = {
+    clauses: number;
+    years: Array<NarrativeYear | null>;
+    entries: Map<string, string>;
+    seen: Array<{ key: string; grams: Set<string> }>;
+  };
   const byIndicator = new Map<string, IndicatorState>();
   for (const hit of hits) {
+    const key = normalizeClause(hit.clause);
+    const grams = bigramsOf(key);
     for (const indicator of new Set(hit.indicators)) {
-      const state: IndicatorState = byIndicator.get(indicator) ?? { clauses: 0, years: [], entries: new Map() };
-      state.clauses += 1;
+      const state: IndicatorState = byIndicator.get(indicator) ?? { clauses: 0, years: [], entries: new Map(), seen: [] };
+      const duplicate = state.seen.some(item => item.key === key || similarity(item.grams, grams) >= DUPLICATE_SIMILARITY);
+      if (!duplicate) {
+        state.clauses += 1;
+        state.seen.push({ key, grams });
+      }
       state.years.push(hit.year);
       state.entries.set(hit.entryKey, hit.entryText);
       byIndicator.set(indicator, state);
