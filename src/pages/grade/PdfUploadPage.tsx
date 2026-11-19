@@ -10,8 +10,10 @@ import { createPageOcr } from '../../utils/createPageOcr';
 import { extractPdfText, MAX_PDF_BYTES } from '../../utils/extractPdfText';
 import type { PdfExtractionResult } from '../../utils/extractPdfText';
 import { parseRecordGrades } from '../../utils/parseRecordGrades';
-import { snapSubjectName } from '../../utils/subjectCatalog';
+import { identifySubject, snapSubjectName } from '../../utils/subjectCatalog';
 import './PdfUploadPage.css';
+
+const isKnown2022Subject = (name: string) => identifySubject(name, '2022').status === 'identified';
 
 const errorMessages: Record<Exclude<Extract<PdfExtractionResult, { ok: false }>['reason'], 'cancelled'>, string> = {
   format: 'PDF 파일을 선택해 주세요.',
@@ -69,7 +71,7 @@ export default function PdfUploadPage() {
       const text = result.pages.map(page => page.text).join('\n');
       // 분석은 기다리지 않고 시작만 해요. 확인 화면에서 서술을 고칠 수 있도록 블록을 들고 있다가 제출할 때 결과를 받아요.
       loadNarrative(text);
-      const subjects = parseRecordGrades(text).map(subject => ({ ...subject, name: snapSubjectName(subject.name, '2022') }));
+      const subjects = parseRecordGrades(text, isKnown2022Subject).map(subject => ({ ...subject, name: snapSubjectName(subject.name, '2022') }));
       if (subjects.length) {
         setPendingOcrSubjects(subjects);
         navigate('/grade/confirm', { replace: true });
