@@ -58,5 +58,49 @@ export function snapSubjectName(name: string, curriculum: string) {
     withinOneEdit(letters, [...compactName(subject.name)]) &&
     // '물리학1'과 '물리학', '미적분'과 '미적분Ⅰ'처럼 끝 숫자만 다른 이름은 다른 교육과정의 다른 과목이라 OCR 오독으로 보지 않아요.
     numeralSuffix(letters) === numeralSuffix([...compactName(subject.name)]));
-  return matches.length === 1 ? matches[0]!.name : name;
+  if (matches.length === 1) return matches[0]!.name;
+  return snapByJamo(letters, curriculum) ?? name;
+}
+
+const HANGUL_START = 0xac00;
+const INITIALS = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const VOWELS = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+const FINALS = ['', ...'ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ'];
+
+/** 한글 음절을 자음·모음 낱글자로 풀어요. 한글이 아니면 그대로 둬요. */
+function toJamo(letters: readonly string[]) {
+  return letters.flatMap(letter => {
+    const code = letter.codePointAt(0)! - HANGUL_START;
+    if (code < 0 || code > 11171) return [letter];
+    return [INITIALS[Math.floor(code / 588)]!, VOWELS[Math.floor((code % 588) / 28)]!, FINALS[code % 28]!].filter(Boolean);
+  });
+}
+
+function editDistance(a: readonly string[], b: readonly string[]) {
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j++) {
+      current[j] = Math.min(previous[j]! + 1, current[j - 1]! + 1, previous[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    previous = current;
+  }
+  return previous[b.length]!;
+}
+
+/**
+ * 한 글자 차이로 후보가 여럿이거나 두 글자 이상 틀린 이름('공통명어1', '과학람구싶험1')을,
+ * 자음·모음 단위로 가장 가까운 과목 하나로 맞춰요. 모양이 비슷한 글자('명'↔'영')는 거리가 가깝고 다른 글자('명'↔'국')는 멀어서 구분돼요.
+ * 가장 가까운 과목이 하나로 뚜렷하고 차이가 작을 때만 바꾸고, 아니면 null이라 사용자가 고치게 해요.
+ */
+function snapByJamo(letters: readonly string[], curriculum: string) {
+  const jamo = toJamo(letters);
+  const allowed = Math.min(2, Math.floor(jamo.length / 5));
+  if (allowed < 1) return null;
+  const ranked = catalog.subjects
+    .filter(subject => subject.curriculum === curriculum && numeralSuffix([...compactName(subject.name)]) === numeralSuffix(letters))
+    .map(subject => ({ name: subject.name, distance: editDistance(jamo, toJamo([...compactName(subject.name)])) }))
+    .sort((a, b) => a.distance - b.distance);
+  const [best, second] = ranked;
+  return best && best.distance <= allowed && (!second || second.distance > best.distance) ? best.name : null;
 }

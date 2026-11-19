@@ -17,6 +17,10 @@ const SUBJECT_AND_CREDITS = /([가-힣A-Za-z·ㆍ]+(?:[1-2](?=[\s|ㅣlｌ｜]+\d
 // 기준점 뒤 줄 끝의 한 자리 숫자가 석차등급. '(375)'처럼 수강자수 괄호 안의 숫자는 제외해요.
 const TRAILING_GRADE = /(?<![\d(])([1-9])\s*$/u;
 const MAX_CREDITS = 10;
+// 단위수와 점수 사이에 OCR이 끼워 넣는 찌꺼기 글자('4  iy  76/72.5(15.7)')는 버려요.
+const JUNK_BEFORE_SCORE = /[\s|ㅣlｌ｜]+[A-Za-z{([]{1,3}$/u;
+// 수강자수 괄호 뒤에 홀로 남은 'i'·'l'·'|'는 1을 잘못 읽은 것으로 봐요. 괄호 없이 떠 있는 글자는 믿지 않아요.
+const MISREAD_ONE = /\)\s*[iIl|!]\s*$/u;
 
 /** 단어 사이 칸 선·공백. OCR이 칸 선을 'ㅣ'나 'l'로 읽는 경우도 받아요. */
 const WORD_GAP = /[\s|ㅣlｌ｜]+/u;
@@ -50,7 +54,7 @@ function parseRecordLine(line: string, isKnownSubject: KnownSubject): Pick<Confi
   const score = SCORE_PATTERN.exec(line);
   if (!score) return null;
 
-  const before = line.slice(0, score.index).trimEnd();
+  const before = line.slice(0, score.index).trimEnd().replace(JUNK_BEFORE_SCORE, '');
   const after = line.slice(score.index + score[0].length).trim();
   const spaced = readSpacedSubject(before, isKnownSubject);
   const subject = spaced ? null : SUBJECT_AND_CREDITS.exec(before);
@@ -58,7 +62,7 @@ function parseRecordLine(line: string, isKnownSubject: KnownSubject): Pick<Confi
   const name = spaced
     ? spaced.name
     : subject && credits >= 1 && credits <= MAX_CREDITS ? subject[1]!.replace(/\s+/gu, '') : '';
-  const grade = TRAILING_GRADE.exec(after)?.[1] ?? '';
+  const grade = TRAILING_GRADE.exec(after)?.[1] ?? (MISREAD_ONE.test(after) ? '1' : '');
   return { name, grade };
 }
 

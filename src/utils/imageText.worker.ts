@@ -106,9 +106,20 @@ self.onmessage = async ({ data: file }: MessageEvent<File>) => {
     } catch {
       // The full-image result remains available when grid recognition is unsupported.
     }
+    // 표를 못 읽었고 조명 보정본으로 인식했다면, 원본으로도 한 번 더 읽어요. 사진마다 보정본과 원본이 맞히는 글자가 달라서 합치면 더 많이 읽혀요.
+    let altText = '';
+    if (!tableSubjects.length && prepared.bytes) {
+      try {
+        await engine.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_COLUMN });
+        self.postMessage({ kind: 'recognizing', progress: 0 });
+        altText = (await engine.recognize(new Uint8Array(await file.arrayBuffer()))).data.text;
+      } catch {
+        // 두 번째 인식이 실패해도 첫 번째 결과로 계속해요.
+      }
+    }
     await engine.terminate();
     engine = undefined;
-    self.postMessage({ kind: 'success', result: { text: data.text, words, tableSubjects, quality: prepared.quality } });
+    self.postMessage({ kind: 'success', result: { text: data.text, words, tableSubjects, quality: prepared.quality, altText } });
   } catch {
     await engine?.terminate();
     self.postMessage({ kind: 'error' });
