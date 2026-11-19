@@ -4,6 +4,9 @@ import { createModelClassifier, isModelCompatible } from './holisticModel';
 import type { HolisticModel, ModelClassifier } from './holisticModel';
 import { compileRules, findClauseHits } from './matchRules';
 import { loadBundledModel } from './modelLoader';
+import { createQualityScorer } from './qualityModel';
+import type { QualityModel, QualityScorer } from './qualityModel';
+import { loadQualityModel } from './qualityModelLoader';
 import { BUNDLED_RULES } from './rules';
 import { splitSections } from './splitSections';
 import type { HolisticRule, HolisticRules, NarrativeAnalysisResult, NarrativeBlock, TagKeyword } from './types';
@@ -39,6 +42,20 @@ export interface AnalyzeOptions {
    * 모델이 규칙 사전 버전과 맞지 않으면 자동으로 규칙만 쓴다.
    */
   model?: HolisticModel | null;
+  /** 서술 품질 모델. 생략하거나 null 이면 규칙 기반 품질을 쓴다(분석 함수 ...OnThisThread 가 앱에 포함된 모델을 읽어 온다). */
+  qualityModel?: QualityModel | null;
+}
+
+const scorerCache = new WeakMap<QualityModel, QualityScorer>();
+
+function scorerFor(model: QualityModel | null): QualityScorer | null {
+  if (!model) return null;
+  let scorer = scorerCache.get(model);
+  if (!scorer) {
+    scorer = createQualityScorer(model);
+    scorerCache.set(model, scorer);
+  }
+  return scorer;
 }
 
 /**
@@ -72,11 +89,16 @@ export function analyzeBlocks(blocks: readonly NarrativeBlock[], options: Analyz
     payload: {
       rulesVersion: rules.rulesVersion,
       coverage,
-      indicatorSignals: buildIndicatorSignals(hits, rules.limits),
+      indicatorSignals: buildIndicatorSignals(hits, rules.limits, scorerFor(options.qualityModel ?? null)),
       interestTags: buildInterestTags(blocks, options.tagKeywords ?? [], rules.limits),
       evidence: buildEvidence(hits, rules.limits),
     },
   };
+}
+
+/** 분류 모델과 품질 모델을 함께 읽는다. 하나라도 못 읽으면 그 모델만 빼고(null) 나머지로 분석한다. */
+function loadModels(): Promise<[HolisticModel | null, QualityModel | null]> {
+  return Promise.all([loadBundledModel().catch(() => null), loadQualityModel().catch(() => null)]);
 }
 
 /**
@@ -89,8 +111,8 @@ export async function analyzeNarrativeOnThisThread(
   options: AnalyzeOptions = {},
 ): Promise<NarrativeAnalysisResult> {
   if (options.model !== undefined) return analyzeNarrative(fullText, options);
-  const model = await loadBundledModel().catch(() => null);
-  return analyzeNarrative(fullText, { ...options, model });
+  const [model, qualityModel] = await loadModels();
+  return analyzeNarrative(fullText, { ...options, model, qualityModel: options.qualityModel ?? qualityModel });
 }
 
 /** analyzeBlocks 의 모델 읽기 포함 버전. analyzeNarrativeOnThisThread 와 같은 규칙으로 모델을 정한다. */
@@ -99,6 +121,6 @@ export async function analyzeBlocksOnThisThread(
   options: AnalyzeOptions = {},
 ): Promise<NarrativeAnalysisResult> {
   if (options.model !== undefined) return analyzeBlocks(blocks, options);
-  const model = await loadBundledModel().catch(() => null);
-  return analyzeBlocks(blocks, { ...options, model });
+  const [model, qualityModel] = await loadModels();
+  return analyzeBlocks(blocks, { ...options, model, qualityModel: options.qualityModel ?? qualityModel });
 }

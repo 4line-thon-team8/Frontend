@@ -100,7 +100,8 @@ test('워커를 쓸 수 없으면 reject 하고 다시 만들려 하지 않는�
 test('Worker 가 없는 환경(Node)에서도 번들 모델 분석은 같은 결과를 낸다', async t => {
   const m = await load(t);
   const bundled = await m.loadBundledModel();
-  const expected = m.analyzeNarrative(TEXT, { model: bundled });
+  const quality = await m.loadQualityModel();
+  const expected = m.analyzeNarrative(TEXT, { model: bundled, qualityModel: quality });
   assert.deepEqual(await m.analyzeNarrativeWithBundledModel(TEXT), expected);
 });
 
@@ -204,9 +205,10 @@ test('블록으로 분석해도 전문으로 분석한 결과와 같다(규칙�
   const blocks = m.splitSections(TEXT);
   assert.deepEqual(m.analyzeBlocks(blocks), m.analyzeNarrative(TEXT));
   const bundled = await m.loadBundledModel();
-  const expected = m.analyzeNarrative(TEXT, { model: bundled });
+  const quality = await m.loadQualityModel();
+  const expected = m.analyzeNarrative(TEXT, { model: bundled, qualityModel: quality });
   assert.equal(expected.ok, true);
-  assert.deepEqual(m.analyzeBlocks(blocks, { model: bundled }), expected);
+  assert.deepEqual(m.analyzeBlocks(blocks, { model: bundled, qualityModel: quality }), expected);
   assert.deepEqual(await m.analyzeBlocksWithBundledModel(blocks), expected);
 });
 
