@@ -20,7 +20,7 @@ export default function MyPage() {
   }, [navigate]);
   const { reports, listState, listError, reload: retryLoadReports } = useSavedReports(goSessionExpired);
 
-  const { resetAll: resetGradeAnalysis } = useGradeAnalysis();
+  const { resetAll: resetGradeAnalysis, reset: resetGradeInput } = useGradeAnalysis();
   const [loggingOut, setLoggingOut] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string>();
@@ -55,7 +55,9 @@ export default function MyPage() {
     setLogoutError(undefined);
     try {
       await logout();
-      resetGradeAnalysis(); // 다음 사용자에게 입력값이 남지 않도록 화면 상태도 비워요.
+      // 다음 사용자에게 입력값이 남지 않도록 입력 상태는 비워요.
+      // 마지막 리포트는 남겨 두고(로그아웃 동안은 숨겨져요), 같은 계정으로 다시 로그인하면 리포트 탭에서 보여요.
+      resetGradeInput();
       navigate('/login', { replace: true });
     } catch (error) {
       setLoggingOut(false);

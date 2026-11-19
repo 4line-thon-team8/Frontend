@@ -55,7 +55,9 @@ interface GradeAnalysisState {
   setResult: Dispatch<SetStateAction<SimulationResult | null>>;
   /**
    * 마지막으로 끝난 분석의 추천 원서 목록·요약 카드 문구. 하단 '리포트' 탭이 이 값을 보여줘요.
-   * 홈에서 새 입력을 시작해도(reset)·새로고침해도 남아 있고, 새 분석이 끝나면 바뀌어요. 로그아웃·탈퇴(resetAll) 때만 비워요.
+   * 홈에서 새 입력을 시작해도(reset)·새로고침해도·로그아웃해도 남아 있고, 새 분석이 끝나면 바뀌어요.
+   * 다른 계정으로 로그인하거나(syncReportOwner) 탈퇴하면(resetAll) 비워요.
+   * 로그아웃 상태이거나 지금 로그인한 계정의 리포트가 아니면 null 로 보여요 (다른 사람이 보지 못하게).
    */
   lastReport: StoredReport | null;
   /** 마지막 리포트의 총평·지원 전략 문장과 활동 요약·강점·학과별 조언. 메모리에만 있어서 새로고침하면 null 이에요. */
@@ -64,9 +66,9 @@ interface GradeAnalysisState {
   setLastReport: (report: StoredReport, reportText: ReportText) => void;
   /** 로그인 직후 불러요. 남아 있는 리포트가 다른 계정(또는 주인을 모르는) 것이면 지워요. */
   syncReportOwner: (userId: string | null) => void;
-  /** 입력 중인 분석만 비워요. 마지막 리포트는 남겨요. */
+  /** 입력 중인 분석만 비워요. 마지막 리포트는 남겨요 (로그아웃도 이것만 해요). */
   reset: () => void;
-  /** 마지막 리포트까지 모두 비워요 (로그아웃·탈퇴). */
+  /** 마지막 리포트까지 모두 비워요 (회원 탈퇴). */
   resetAll: () => void;
 }
 
