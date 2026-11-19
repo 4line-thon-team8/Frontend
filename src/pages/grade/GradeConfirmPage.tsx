@@ -9,6 +9,7 @@ import checkCircle from '../../assets/icons/check-circle.svg';
 import type { ConfirmSubject } from '../../types/gradeConfirm';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import { getGradeImage } from '../../utils/gradeImageStore';
+import { buildHolisticSubmitPayload } from '../../utils/holistic/submitPayload';
 import { reviewSubject, toggleAdmission, validateGradeConfirm } from '../../utils/gradeConfirmValidation';
 import { ADMISSION_OPTIONS, MAJOR_LIMIT } from './gradeConfirm.mock';
 import { ApiError } from '../../services/apiClient';
@@ -163,7 +164,7 @@ export default function GradeConfirmPage() {
       expandSimilarMajors: draft.expandSimilarMajors,
     };
     // 서술을 읽어 분석에 성공했을 때만 보내요. 서술이 짧거나 구분하지 못했으면 성적만으로 분석해요.
-    const holisticAnalysis = narrative?.ok ? narrative.payload : null;
+    const holisticAnalysis = buildHolisticSubmitPayload(narrative);
     // 입력이 그대로면(예: 세션 만료 후 재로그인해서 다시 분석) 같은 Idempotency-Key 로 재시도하고,
     // 입력이 바뀌었으면 새 분석이라 새 키를 만들어요. 서술 분석도 요청 내용이라 함께 비교해요.
     const sameRequest = snapshot !== null
