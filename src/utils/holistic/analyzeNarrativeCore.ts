@@ -6,7 +6,7 @@ import { compileRules, findClauseHits } from './matchRules';
 import { loadBundledModel } from './modelLoader';
 import { BUNDLED_RULES } from './rules';
 import { splitSections } from './splitSections';
-import type { HolisticRule, HolisticRules, NarrativeAnalysisResult, TagKeyword } from './types';
+import type { HolisticRule, HolisticRules, NarrativeAnalysisResult, NarrativeBlock, TagKeyword } from './types';
 
 /**
  * 같은 모델·규칙 조합의 분류기는 한 번만 만든다. 만드는 데 수십 ms 가 들고(가중치 표 구성),
@@ -47,8 +47,15 @@ export interface AnalyzeOptions {
  * 부수효과가 없는 순수 함수라 나중에 Web Worker로 옮기기 쉽다.
  */
 export function analyzeNarrative(fullText: string, options: AnalyzeOptions = {}): NarrativeAnalysisResult {
+  return analyzeBlocks(splitSections(fullText), options);
+}
+
+/**
+ * 영역×학년으로 이미 나눈 서술(splitSections 결과)을 분석한다. 확인 화면에서 서술을 고친 뒤 다시 분석할 때 쓴다.
+ * analyzeNarrative(text) 는 splitSections(text) 뒤에 이 함수를 부르므로, 같은 블록이면 결과가 같다.
+ */
+export function analyzeBlocks(blocks: readonly NarrativeBlock[], options: AnalyzeOptions = {}): NarrativeAnalysisResult {
   const rules = options.rules ?? BUNDLED_RULES;
-  const blocks = splitSections(fullText);
   if (blocks.length === 0) return { ok: false, reason: 'no-sections' };
 
   const coverage = buildCoverage(blocks);
@@ -84,4 +91,14 @@ export async function analyzeNarrativeOnThisThread(
   if (options.model !== undefined) return analyzeNarrative(fullText, options);
   const model = await loadBundledModel().catch(() => null);
   return analyzeNarrative(fullText, { ...options, model });
+}
+
+/** analyzeBlocks 의 모델 읽기 포함 버전. analyzeNarrativeOnThisThread 와 같은 규칙으로 모델을 정한다. */
+export async function analyzeBlocksOnThisThread(
+  blocks: readonly NarrativeBlock[],
+  options: AnalyzeOptions = {},
+): Promise<NarrativeAnalysisResult> {
+  if (options.model !== undefined) return analyzeBlocks(blocks, options);
+  const model = await loadBundledModel().catch(() => null);
+  return analyzeBlocks(blocks, { ...options, model });
 }

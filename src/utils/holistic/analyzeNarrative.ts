@@ -1,9 +1,9 @@
-import { analyzeNarrative, analyzeNarrativeOnThisThread } from './analyzeNarrativeCore';
+import { analyzeBlocks, analyzeBlocksOnThisThread, analyzeNarrative, analyzeNarrativeOnThisThread } from './analyzeNarrativeCore';
 import type { AnalyzeOptions } from './analyzeNarrativeCore';
-import { analyzeInWorker } from './narrativeWorker';
-import type { NarrativeAnalysisResult } from './types';
+import { analyzeBlocksInWorker, analyzeInWorker } from './narrativeWorker';
+import type { NarrativeAnalysisResult, NarrativeBlock } from './types';
 
-export { analyzeNarrative };
+export { analyzeBlocks, analyzeNarrative };
 export type { AnalyzeOptions };
 
 /**
@@ -21,5 +21,20 @@ export async function analyzeNarrativeWithBundledModel(
     return await analyzeInWorker(fullText, { rules: options.rules, tagKeywords: options.tagKeywords });
   } catch {
     return analyzeNarrativeOnThisThread(fullText, options);
+  }
+}
+
+/**
+ * analyzeNarrativeWithBundledModel 의 블록 버전. 확인 화면에서 서술을 고친 뒤 같은 방식(워커 우선, 실패 시 이 스레드)으로 다시 분석한다.
+ */
+export async function analyzeBlocksWithBundledModel(
+  blocks: readonly NarrativeBlock[],
+  options: AnalyzeOptions = {},
+): Promise<NarrativeAnalysisResult> {
+  if (options.model !== undefined) return analyzeBlocks(blocks, options);
+  try {
+    return await analyzeBlocksInWorker(blocks, { rules: options.rules, tagKeywords: options.tagKeywords });
+  } catch {
+    return analyzeBlocksOnThisThread(blocks, options);
   }
 }
