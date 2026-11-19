@@ -18,16 +18,46 @@ const SUBJECT_AND_CREDITS = /([가-힣A-Za-z·ㆍ]+(?:[1-2](?=[\s|ㅣlｌ｜]+\d
 const TRAILING_GRADE = /(?<![\d(])([1-9])\s*$/u;
 const MAX_CREDITS = 10;
 
+/** 단어 사이 칸 선·공백. OCR이 칸 선을 'ㅣ'나 'l'로 읽는 경우도 받아요. */
+const WORD_GAP = /[\s|ㅣlｌ｜]+/u;
+const ROW_TAIL = /^(.*?)[\s|ㅣlｌ｜,.]+(\d{1,2})[\s|ㅣlｌ｜]*$/u;
+/** 2022 개정 과목명 중 띄어 쓰는 이름('독서와 작문')은 몇 단어까지 이어 붙여 볼지. 가장 긴 이름('영어 독해와 작문')이 3단어예요. */
+const MAX_NAME_WORDS = 4;
+
+/** 과목 사전에 있는 이름인지. 사전(JSON)을 이 파일이 직접 읽지 않도록 호출하는 쪽에서 넘겨요. */
+export type KnownSubject = (name: string) => boolean;
+
+/**
+ * '국어 독서와 작문 3'처럼 이름이 띄어 쓰여 있으면, 단위수 앞 단어들을 이어 붙여 과목 사전에 있는 이름을 찾아요.
+ * 한 단어 이름은 아래 기본 규칙이 읽으므로, 두 단어 이상이면서 사전에 정확히 있는 경우만 다뤄요
+ * (그러지 않으면 '독서와 작문'이 '작문'으로만 읽혀요). 사전에 없으면 null이라 기존 규칙으로 넘어가요.
+ */
+function readSpacedSubject(before: string, isKnownSubject: KnownSubject): { name: string; credits: number } | null {
+  const tail = ROW_TAIL.exec(before);
+  if (!tail) return null;
+  const credits = Number(tail[2]);
+  if (credits < 1 || credits > MAX_CREDITS) return null;
+  const words = tail[1]!.split(WORD_GAP).filter(Boolean);
+  for (let size = Math.min(MAX_NAME_WORDS, words.length); size >= 2; size -= 1) {
+    const name = words.slice(-size).join('');
+    if (isKnownSubject(name)) return { name, credits };
+  }
+  return null;
+}
+
 /** 한 줄이 성적 행이면 과목·등급을 돌려주고, 아니면 null이에요. 읽지 못한 칸은 빈 문자열로 둬요. */
-function parseRecordLine(line: string): Pick<ConfirmSubject, 'name' | 'grade'> | null {
+function parseRecordLine(line: string, isKnownSubject: KnownSubject): Pick<ConfirmSubject, 'name' | 'grade'> | null {
   const score = SCORE_PATTERN.exec(line);
   if (!score) return null;
 
   const before = line.slice(0, score.index).trimEnd();
   const after = line.slice(score.index + score[0].length).trim();
-  const subject = SUBJECT_AND_CREDITS.exec(before);
-  const credits = subject ? Number(subject[2]) : 0;
-  const name = subject && credits >= 1 && credits <= MAX_CREDITS ? subject[1]!.replace(/\s+/gu, '') : '';
+  const spaced = readSpacedSubject(before, isKnownSubject);
+  const subject = spaced ? null : SUBJECT_AND_CREDITS.exec(before);
+  const credits = spaced ? spaced.credits : subject ? Number(subject[2]) : 0;
+  const name = spaced
+    ? spaced.name
+    : subject && credits >= 1 && credits <= MAX_CREDITS ? subject[1]!.replace(/\s+/gu, '') : '';
   const grade = TRAILING_GRADE.exec(after)?.[1] ?? '';
   return { name, grade };
 }
@@ -36,11 +66,12 @@ function parseRecordLine(line: string): Pick<ConfirmSubject, 'name' | 'grade'> |
  * 생기부 교과학습발달상황의 텍스트(PDF 글자 레이어 또는 OCR 결과)에서 과목별 석차등급을 읽어요.
  * - 과목명이나 등급을 읽지 못한 행도 빈 칸으로 남겨, 성적 확인 화면에서 사용자가 고치도록 해요.
  * - 등급이 없는 행(성취도만 있는 과목)은 grade가 빈 문자열이에요.
+ * - isKnownSubject를 넘기면 '독서와 작문'처럼 띄어 쓴 과목명을 사전과 맞춰 한 과목으로 읽어요.
  */
-export function parseRecordGrades(text: string): ConfirmSubject[] {
+export function parseRecordGrades(text: string, isKnownSubject: KnownSubject = () => false): ConfirmSubject[] {
   const subjects: ConfirmSubject[] = [];
   for (const line of text.split(/\r?\n/u)) {
-    const parsed = parseRecordLine(line);
+    const parsed = parseRecordLine(line, isKnownSubject);
     if (parsed) subjects.push({ id: `record-${subjects.length + 1}`, ...parsed });
   }
   return subjects;
