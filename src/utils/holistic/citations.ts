@@ -18,7 +18,7 @@ export const CITATION_LIMITS = {
   /** 모델 확률이 이 값 이상이고 규칙도 적중해야 인용 후보가 된다. */
   minProbability: 0.7,
   minChars: 15,
-  maxChars: 100,
+  maxChars: 150,
   /** 읽기 품질(0~1) 하한. 깨진 글자·끊긴 문장을 거른다. */
   minQuality: 0.9,
   perIndicatorMax: 2,

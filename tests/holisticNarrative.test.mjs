@@ -428,3 +428,19 @@ test('번들 모델은 비동기로 읽어 오고, 읽은 모델로 분석한 �
   // 모델을 명시하면(null 포함) 읽어 오지 않고 그 값을 그대로 쓴다.
   assert.deepEqual(await analyzeNarrativeWithBundledModel(SAMPLE, { model: null }), analyzeNarrative(SAMPLE, { model: null }));
 });
+
+test('인용 구절: 서버 상한(150자)까지의 완결 문장을 받고 그보다 긴 문장은 제외한다', async t => {
+  const { buildCitations, compileRules, BUNDLED_RULES, CITATION_LIMITS } = await load(t);
+  assert.equal(CITATION_LIMITS.maxChars, 150);
+  const compiled = compileRules(BUNDLED_RULES.rules);
+  const always = { predict: () => ({ probabilities: Object.fromEntries(['A2', 'A3', 'B3', 'C1', 'C2', 'C3', 'C4', 'D1', 'D3', 'D4'].map(id => [id, 0.95])), indicators: [] }) };
+  const base = '실험 결과를 표로 정리하고 오차의 원인을 분석하여 후속 실험을 설계하고 가설을 검증하고 결과를 보고서로 작성하여 발표함';
+  const tail = ', 문헌을 조사하여 이론을 비교하고 한계를 성찰하며 개선 방향을 정리하여 친구들과 공유함';
+  const within = `${base}${tail}`;
+  const long = `${base}${tail}${tail}${tail}`;
+  assert.ok(within.length > 100 && within.length <= 150, `within=${within.length}`);
+  assert.ok(long.length > 150, `long=${long.length}`);
+  const pick = text => buildCitations([{ section: 'subject', year: 1, entries: [text] }], compiled, always);
+  assert.ok(pick(within).length > 0, '100자 넘고 150자 이하 문장은 인용 후보가 된다');
+  assert.deepEqual(pick(long), []);
+});
