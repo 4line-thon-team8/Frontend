@@ -28,14 +28,27 @@
 .grade-camera-flash { position: absolute; bottom: 16px; right: 16px; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgb(26 26 26 / 65%); color: #fff; }
 .grade-camera-flash[aria-pressed='true'] { color: #ffe898; }
 .grade-camera-feedback { min-height: 28px; padding: 4px 20px; font-size: 12px; line-height: 20px; text-align: center; color: #ffe7b2; }
-.grade-camera-photo-list { padding: 0 20px 12px; }
+.grade-camera-photo-list { padding: 0 max(20px, env(safe-area-inset-right)) 12px max(20px, env(safe-area-inset-left)); }
 .grade-camera-photo-list p { margin: 0 0 8px; font-size: 14px; }
-.grade-camera-photo-list ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.grade-camera-photo-list ul {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-user-select: none;
+  user-select: none;
+  margin: 0;
+  padding: 7px;
+  list-style: none;
+}
+.grade-camera-photo-list ul::-webkit-scrollbar { display: none; }
+.grade-camera-photo-list li { flex: 0 0 64px; min-width: 0; }
 .grade-camera-thumbnail { position: relative; display: block; width: 100%; aspect-ratio: 1; padding: 0; border: 2px solid transparent; border-radius: 8px; background: #303633; color: #fff; }
 .grade-camera-thumbnail[aria-pressed='true'] { border-color: #84c2ae; }
 .grade-camera-thumbnail img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .grade-camera-thumbnail span { position: absolute; left: 3px; bottom: 3px; padding: 0 4px; border-radius: 4px; background: #1a1a1a; font-size: 11px; }
-.grade-camera-remove { width: 100%; min-height: 36px; border: 0; background: transparent; color: inherit; font-size: 12px; }
+.grade-camera-remove { width: 100%; min-height: 44px; border: 0; background: transparent; color: inherit; font-size: 12px; }
 .grade-camera-ocr { margin: 0 20px; padding: 12px; border-radius: 8px; background: #1f3029; font-size: 14px; }
 .grade-camera-ocr progress { width: 100%; accent-color: #84c2ae; }
 .grade-camera-ocr p { margin: 6px 0; }
@@ -48,8 +61,8 @@
 .grade-camera-review-actions { display: flex; gap: 12px; padding: 12px max(20px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
 .grade-camera-review-actions button { flex: 1; min-width: 0; padding: 16px 8px; border: 1px solid #2f5d50; border-radius: 8px; font-weight: 600; }
 .grade-camera-review-actions .grade-camera-icon-button { flex: 0 0 48px; align-self: center; padding: 0; border-radius: 50%; }
-.grade-camera-shell:has(.grade-camera-review-actions) .grade-camera-controls,
-.grade-camera-review-actions:has(+ .grade-camera-review-actions) { padding-bottom: 0; }
+.grade-camera-controls:has(+ .grade-camera-photo-list),
+.grade-camera-review-actions:has(+ .grade-camera-photo-list) { padding-bottom: 12px; }
 .grade-camera-retake { background: transparent; color: #fff; }
 .grade-camera-use { background: #2f5d50; color: #fff; }
 .grade-camera-file { display: none; }
