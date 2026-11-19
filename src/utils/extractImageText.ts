@@ -14,6 +14,8 @@ export interface ImageTextResult {
   tableSubjects: ConfirmSubject[];
   /** 사진 품질 측정(흐림·어두움). 측정하지 못했으면 null. 화면 안내는 이 값을 읽어 정한다. */
   quality?: ImageQuality | null;
+  /** 표를 못 읽은 사진에서만, 조명 보정 전 원본으로 한 번 더 인식한 글자. 두 결과를 합쳐 성적을 읽어요. */
+  altText?: string;
 }
 
 type ImageTextWorkerMessage = ImageTextProgress
