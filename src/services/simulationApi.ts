@@ -342,6 +342,12 @@ export async function runSimulation(snapshot: GradeAnalysisSnapshot, signal?: Ab
 function logGenerationMethods(result: SimulationResult) {
   const { report } = result;
   console.info('[분석 응답] 저장 결과:', result.saveStatus ?? '(응답에 없음)', '/ reportId:', result.reportId ?? '-');
+  // 활동·지원 전략 화면이 비어 보일 때 원인 확인용: 서술 분석 반영 여부와 영역별 개수만 찍어요.
+  const strategy = result.holisticStrategy;
+  console.info(
+    '[분석 응답] 서술 분석:', result.holistic.status, result.holistic.skipReason ?? '',
+    `/ 활동 요약 ${strategy.activitySummary ? 1 : 0} · 강점 ${strategy.strengths.length} · 학과별 조언 ${strategy.majorAdvices.length} · 상세 ${strategy.detail ? '있음' : '없음'}`,
+  );
   console.table({
     인사: report.greetingSummary?.generationMethod ?? '(없음)',
     총평: report.overallAssessment?.generationMethod ?? '(없음)',

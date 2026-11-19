@@ -190,3 +190,9 @@
   font-weight: 500;
   line-height: normal;
 }
+
+/* 상단 안내: Figma 315 × 24, #C9A227 · 9px · 500 · 줄 높이 12px → 두 줄 */
+.report-header p.strategy-header-note {
+  font-size: 9px;
+  line-height: 12px;
+}

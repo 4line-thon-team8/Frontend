@@ -1,4 +1,7 @@
-/* 활동에서의 강점 '자세히 보기' (Figma: 350 × 691, #F5F8F6, 1px #DFE6E3, 왼쪽 위 접힌 모서리) */
+/*
+ * 활동에서의 강점 '자세히 보기' (Figma: 350 × 691).
+ * 상아색 종이 느낌: 아이보리 바탕 + 왼쪽 위 노란 접힌 모서리, 아래 가운데 '돌아가기 >'.
+ */
 .strength-detail {
   width: 100%;
   max-width: none;
@@ -19,21 +22,23 @@
 }
 
 .strength-detail__panel {
-  --fold-size: 26px;
+  --fold-size: 30px;
   position: relative;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   width: min(350px, calc(100% - 40px));
   height: min(691px, calc(100dvh - 80px));
-  border: 1px solid #dfe6e3;
+  border: 1px solid #ede6d3;
   border-radius: 8px;
-  background: #f5f8f6;
-  color: #2f5d50;
+  background: #fffcf2;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.12);
+  color: #52625d;
   font-family: inherit;
   clip-path: polygon(var(--fold-size) 0, 100% 0, 100% 100%, 0 100%, 0 var(--fold-size));
 }
 
+/* 왼쪽 위 접힌 모서리 (노란색) */
 .strength-detail__panel::before {
   content: '';
   position: absolute;
@@ -41,43 +46,47 @@
   left: -1px;
   width: var(--fold-size);
   height: var(--fold-size);
-  background: #1f3b33;
+  background: #c9a227;
   border-bottom-right-radius: 2px;
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 
-.strength-detail__back {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  margin: 10px 0 0 30px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #1a1a1a;
-  cursor: pointer;
-}
-
-/* 내용이 길면 창 안에서만 스크롤 */
+/*
+ * 내용 영역: Figma 316 × 580, 창 위에서 48.5px · 좌우 17px. 섹션 사이 14px (가운데에 구분선).
+ * 내용이 길면 이 영역 안에서만 스크롤돼요.
+ */
 .strength-detail__content {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 14px;
   min-height: 0;
+  margin: 48.5px 17px 0;
   overflow-y: auto;
-  padding: 4px 20px 24px;
   word-break: keep-all;
 }
 
-.strength-detail__section { padding: 16px 0; }
+.strength-detail__section {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0 8px;
+}
 
-.strength-detail__section + .strength-detail__section { border-top: 1px solid #9fb5ac; }
+/* 섹션 사이 14px 간격의 가운데 구분선 (0_캐릭터 #F3EDDF) */
+.strength-detail__section + .strength-detail__section::before {
+  content: '';
+  position: absolute;
+  top: -7.5px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: #f3eddf;
+}
 
 .strength-detail__section h2 {
   margin: 0 0 8px;
-  padding-left: 20px;
-  color: #1a1a1a;
-  font-size: 12px;
+  color: #1c2b26;
+  font-size: 14px;
   font-weight: 700;
   line-height: normal;
 }
@@ -85,7 +94,6 @@
 .strength-detail__section p,
 .strength-detail__section li {
   margin: 0;
-  padding-left: 20px;
   font-size: 12px;
   line-height: 1.5;
   white-space: pre-line;
@@ -93,7 +101,7 @@
 
 .strength-detail__section ul {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -102,11 +110,28 @@
 /* '·' 목록: 둘째 줄부터는 글자 위치에 맞춰 들여써요. */
 .strength-detail__section li {
   position: relative;
-  padding-left: 28px;
+  padding-left: 9px;
 }
 
 .strength-detail__section li::before {
   content: '·';
   position: absolute;
-  left: 20px;
+  left: 0;
+}
+
+/* 돌아가기 >: #1C2B26 · 12px · 500, 가운데. 내용 영역 27px 아래, 창 아래까지 27px */
+.strength-detail__close {
+  flex-shrink: 0;
+  align-self: center;
+  margin: 27px 0 27px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: #1c2b26;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  text-align: center;
+  cursor: pointer;
 }
