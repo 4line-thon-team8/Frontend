@@ -89,6 +89,7 @@
   line-height: normal;
 }
 
+/* 학과 이름: Figma #2F5D50 · 12px · 700 · line-height normal */
 .strategy-advice h2 {
   margin: 0;
   color: #2f5d50;
@@ -97,9 +98,13 @@
   line-height: normal;
 }
 
+/* 조언: Figma #52625D · 12px · 400 · line-height normal, 학과 이름 아래 7px */
 .strategy-advice p {
-  margin-top: 6px;
+  margin-top: 7px;
   color: #52625d;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
   white-space: pre-line;
 }
 
