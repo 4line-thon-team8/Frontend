@@ -24,7 +24,7 @@ const AI_NOTICE: StrengthDetailSection = {
 
 /**
  * 활동에서의 강점 '자세히 보기' 창 (Figma '활동 지원 전략' 상세, 350 × 691).
- * 네이티브 <dialog> 라서 Esc·뒤로 버튼·바깥 클릭으로 닫히고, 열린 동안 뒤 화면은 누를 수 없어요.
+ * 네이티브 <dialog> 라서 Esc·'돌아가기' 버튼·바깥 클릭으로 닫히고, 열린 동안 뒤 화면은 누를 수 없어요.
  * 내용이 길면 창 안에서 스크롤돼요.
  */
 export default function StrengthDetailDialog({ open, sections, onClose }: StrengthDetailDialogProps) {
@@ -48,11 +48,6 @@ export default function StrengthDetailDialog({ open, sections, onClose }: Streng
       onClick={event => { if (event.target === event.currentTarget) onClose(); }}
     >
       <div className="strength-detail__panel">
-        <button type="button" className="strength-detail__back" onClick={onClose} aria-label="닫기" autoFocus>
-          <svg width="10" height="18" viewBox="0 0 10 18" fill="none" aria-hidden="true">
-            <path d="M9 1L1 9l8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
         <div className="strength-detail__content">
           {visible.map(section => (
             <section key={section.title} className="strength-detail__section">
@@ -63,6 +58,10 @@ export default function StrengthDetailDialog({ open, sections, onClose }: Streng
             </section>
           ))}
         </div>
+        {/* Figma: 주의 문구 27px 아래 가운데 '돌아가기 >' (내용이 길어도 창 아래에 항상 보여요) */}
+        <button type="button" className="strength-detail__close" onClick={onClose} autoFocus>
+          돌아가기 <span aria-hidden="true">&gt;</span>
+        </button>
       </div>
     </dialog>
   );

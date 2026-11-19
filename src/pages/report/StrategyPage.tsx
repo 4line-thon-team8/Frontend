@@ -80,7 +80,7 @@ export default function StrategyPage() {
           <img src={clipboard} alt="" width="15" height="17" />
           활동·지원 전략
         </h1>
-        <p>*서술 원문 전체는 보내지 않아요.<br />이름·학교명을 가린 짧은 근거 구절만 AI 설명에 쓰이고, 저장하지 않도록 만들었어요.</p>
+        <p className="strategy-header-note">*서술 원문 전체는 보내지 않아요.<br />이름·학교명을 가린 짧은 근거 구절만 AI 설명에 쓰이고, 저장하지 않도록 만들었어요.</p>
       </header>
 
       {summarySentence && <>

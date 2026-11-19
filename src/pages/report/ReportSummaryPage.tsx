@@ -11,7 +11,7 @@ import './ReportSummaryPage.css';
 
 /** 자동 저장 결과 안내. 응답에 저장 결과가 없으면 아무것도 단정하지 않아요. */
 const SAVE_STATUS_MESSAGES: Partial<Record<SaveStatus, string>> = {
-  SAVED: '입력하신 성적은 저장되지 않아요. 이 리포트는 내 계정에 자동 저장됐어요.',
+  // SAVED 안내('입력하신 성적은 저장되지 않아요…')는 기획 요청으로 화면에서 뺐어요. 저장 실패만 알려요.
   FAILED: '리포트를 저장하지 못했어요. 이 결과는 지금 화면에서만 볼 수 있어요.',
 };
 
