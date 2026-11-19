@@ -1,4 +1,5 @@
 import type { ConfirmSubject } from '../types/gradeConfirm';
+import type { ImageQuality } from './ocr/imageQuality';
 
 export type ImageTextProgress = { kind: 'recognizing'; progress: number };
 export interface ImageTextWord {
@@ -11,6 +12,8 @@ export interface ImageTextResult {
   text: string;
   words: ImageTextWord[];
   tableSubjects: ConfirmSubject[];
+  /** 사진 품질 측정(흐림·어두움). 측정하지 못했으면 null. 화면 안내는 이 값을 읽어 정한다. */
+  quality?: ImageQuality | null;
 }
 
 type ImageTextWorkerMessage = ImageTextProgress
