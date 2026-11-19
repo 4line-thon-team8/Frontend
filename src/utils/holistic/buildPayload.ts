@@ -1,5 +1,6 @@
 import { INQUIRY_STAGES, SECTIONS, SECTION_EVIDENCE_CAP, SPECIFIC_MARKERS } from './rules';
 import type { ClauseHit } from './matchRules';
+import type { QualityScorer } from './qualityModel';
 import type {
   HolisticEvidencePhrase,
   HolisticIndicatorSignal,
@@ -56,17 +57,23 @@ function windowQuality(text: string): number {
  * 문단 하나의 품질: 탐구 단계(동기·과정·결과·성찰) 충족 절반 + 구체 표현 유무 절반.
  * 문단 전체에 한 번만 재면 길수록 네 단계와 구체 표현이 거의 항상 채워져 만점에 붙으므로,
  * 150자 안팎의 덩어리마다 재서 평균한다(문단 길이와 무관하게 비슷한 값이 나오도록).
+ * scorer(학습한 품질 모델)가 있으면 덩어리마다 모델 점수(0~1)를 쓰고, 없으면 위 규칙 기반 값을 쓴다.
  */
-export function entryQuality(entryText: string): number {
+export function entryQuality(entryText: string, scorer: QualityScorer | null = null): number {
   const windows = qualityWindows(entryText);
-  return windows.reduce((sum, window) => sum + windowQuality(window), 0) / windows.length;
+  const measure = scorer ? scorer.score : windowQuality;
+  return windows.reduce((sum, window) => sum + measure(window), 0) / windows.length;
 }
 
 /**
  * 지표마다 count(맞은 구절 수), years(나타난 학년), quality(맞은 문단들의 평균 품질)를 만든다.
  * 서버는 학년이 하나는 있어야 받으므로, 학년을 알 수 없는 지표는 보내지 않는다.
  */
-export function buildIndicatorSignals(hits: readonly ClauseHit[], limits: HolisticRuleLimits): HolisticIndicatorSignal[] {
+export function buildIndicatorSignals(
+  hits: readonly ClauseHit[],
+  limits: HolisticRuleLimits,
+  scorer: QualityScorer | null = null,
+): HolisticIndicatorSignal[] {
   type IndicatorState = { clauses: number; years: Array<NarrativeYear | null>; entries: Map<string, string> };
   const byIndicator = new Map<string, IndicatorState>();
   for (const hit of hits) {
@@ -82,7 +89,7 @@ export function buildIndicatorSignals(hits: readonly ClauseHit[], limits: Holist
   for (const [id, state] of byIndicator) {
     const years = sortedYears(state.years);
     if (years.length === 0) continue;
-    const qualities = [...state.entries.values()].map(entryQuality);
+    const qualities = [...state.entries.values()].map(entry => entryQuality(entry, scorer));
     const quality = qualities.reduce((sum, value) => sum + value, 0) / qualities.length;
     signals.push({ id, count: state.clauses, years, quality: round2(quality) });
   }

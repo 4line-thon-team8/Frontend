@@ -12,6 +12,7 @@ async function load(t) {
   const analyze = await server.ssrLoadModule('/src/utils/holistic/analyzeNarrative.ts');
   const model = await server.ssrLoadModule('/src/utils/holistic/model.ts');
   const bundledModel = await model.loadBundledModel();
+  const qualityModel = await model.loadQualityModel();
   // 예전 기본 동작(번들 모델 사용)을 테스트에서 그대로 쓰기 위해 모델을 기본값으로 넣는다. null 은 규칙만이다.
   const analyzeNarrative = (text, options = {}) => analyze.analyzeNarrative(text, { model: bundledModel, ...options });
   const rules = await server.ssrLoadModule('/src/utils/holistic/rules.ts');
@@ -19,7 +20,7 @@ async function load(t) {
   const payload = await server.ssrLoadModule('/src/utils/holistic/buildPayload.ts');
   const sections = await server.ssrLoadModule('/src/utils/holistic/splitSections.ts');
   const citations = await server.ssrLoadModule('/src/utils/holistic/citations.ts');
-  return { ...analyze, ...rules, ...match, ...payload, ...sections, ...citations, analyzeNarrative, BUNDLED_MODEL: bundledModel };
+  return { ...analyze, ...rules, ...match, ...payload, ...sections, ...citations, analyzeNarrative, BUNDLED_MODEL: bundledModel, QUALITY_MODEL: qualityModel };
 }
 
 // 실제 학생 기록이 아닌 가상의 서술. 이름·학교는 가려지는지 보려고 일부러 넣었다.
@@ -419,8 +420,11 @@ test('분석 결과에 인용 구절이 따로 담기고 서버 payload에는 �
 });
 
 test('번들 모델은 비동기로 읽어 오고, 읽은 모델로 분석한 결과가 모델을 직접 준 결과와 같다', async t => {
-  const { analyzeNarrative, analyzeNarrativeWithBundledModel, BUNDLED_MODEL } = await load(t);
-  assert.deepEqual(await analyzeNarrativeWithBundledModel(SAMPLE), analyzeNarrative(SAMPLE, { model: BUNDLED_MODEL }));
+  const { analyzeNarrative, analyzeNarrativeWithBundledModel, BUNDLED_MODEL, QUALITY_MODEL } = await load(t);
+  assert.deepEqual(
+    await analyzeNarrativeWithBundledModel(SAMPLE),
+    analyzeNarrative(SAMPLE, { model: BUNDLED_MODEL, qualityModel: QUALITY_MODEL }),
+  );
   // 모델을 명시하면(null 포함) 읽어 오지 않고 그 값을 그대로 쓴다.
   assert.deepEqual(await analyzeNarrativeWithBundledModel(SAMPLE, { model: null }), analyzeNarrative(SAMPLE, { model: null }));
 });

@@ -1,5 +1,6 @@
 import { analyzeBlocksOnThisThread, analyzeNarrativeOnThisThread } from './analyzeNarrativeCore';
 import { loadBundledModel } from './modelLoader';
+import { loadQualityModel } from './qualityModelLoader';
 import type { NarrativeWorkerRequest, NarrativeWorkerResponse } from './narrativeWorkerClient';
 
 // 생기부 서술 분석을 메인 스레드 밖에서 한다. 모델 읽기·n-gram·분류가 수백 ms~수 초 걸려 화면이 멈출 수 있어서다.
@@ -10,6 +11,7 @@ const post = (message: NarrativeWorkerResponse) => self.postMessage(message);
 self.onmessage = async ({ data }: MessageEvent<NarrativeWorkerRequest>) => {
   if (data.kind === 'warm') {
     loadBundledModel().catch(() => undefined);
+    loadQualityModel().catch(() => undefined);
     return;
   }
   try {

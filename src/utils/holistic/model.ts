@@ -1,7 +1,8 @@
 import { loadBundledModel } from './modelLoader';
+import { loadQualityModel } from './qualityModelLoader';
 import { warmNarrativeWorker } from './narrativeWorker';
 
-export { loadBundledModel };
+export { loadBundledModel, loadQualityModel };
 
 /**
  * 분석 화면에 들어오기 전에 미리 준비해 둔다. 실패해도 조용히 넘어가고, 분석할 때 다시 시도한다.
@@ -11,4 +12,5 @@ export { loadBundledModel };
 export function preloadBundledModel(): void {
   if (warmNarrativeWorker()) return;
   loadBundledModel().catch(() => undefined);
+  loadQualityModel().catch(() => undefined);
 }
