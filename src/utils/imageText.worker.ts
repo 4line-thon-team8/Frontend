@@ -5,6 +5,7 @@ import { detectOcrTables, recognizeOcrTable } from './ocrTable';
 import type { Cell } from './ocrTable';
 import type { ConfirmSubject } from '../types/gradeConfirm';
 import { flattenIllumination, toGray } from './ocr/flattenIllumination';
+import { looksLikeGradeTable } from './ocr/gradeTableHint';
 import { assessImageQuality } from './ocr/imageQuality';
 import type { ImageQuality } from './ocr/imageQuality';
 
@@ -106,9 +107,10 @@ self.onmessage = async ({ data: file }: MessageEvent<File>) => {
     } catch {
       // The full-image result remains available when grid recognition is unsupported.
     }
-    // 표를 못 읽었고 조명 보정본으로 인식했다면, 원본으로도 한 번 더 읽어요. 사진마다 보정본과 원본이 맞히는 글자가 달라서 합치면 더 많이 읽혀요.
+    // 표를 못 읽은 성적표 사진은 원본으로도 한 번 더 읽어요. 사진마다 보정본과 원본이 맞히는 글자가 달라서 합치면 더 많이 읽혀요.
+    // 서술 페이지는 시간만 두 배가 되므로 성적표처럼 보일 때만 해요.
     let altText = '';
-    if (!tableSubjects.length && prepared.bytes) {
+    if (!tableSubjects.length && prepared.bytes && looksLikeGradeTable(data.text)) {
       try {
         await engine.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_COLUMN });
         self.postMessage({ kind: 'recognizing', progress: 0 });
