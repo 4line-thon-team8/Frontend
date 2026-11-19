@@ -28,7 +28,7 @@ type MajorLookup =
 export default function GradeConfirmPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { draft, setDraft, snapshot, setSnapshot, setResult, narrative, pendingOcrSubjects, setPendingOcrSubjects, setHasConfirmedGrades } = useGradeAnalysis();
+  const { draft, setDraft, snapshot, setSnapshot, setResult, resolveNarrative, discardNarrativeText, pendingOcrSubjects, setPendingOcrSubjects, setHasConfirmedGrades } = useGradeAnalysis();
   const ocrSubjects = pendingOcrSubjects;
   const subjects = ocrSubjects ?? draft.subjects;
   const ocrReview = ocrSubjects && reviewOcrGrades(ocrSubjects, draft.curriculum);
@@ -38,6 +38,7 @@ export default function GradeConfirmPage() {
   const skippedPhotos = ocrSubjects && typeof state?.skippedPhotos === 'number' ? state.skippedPhotos : 0;
   const [editing, setEditing] = useState(manualEntry);
   const focusSubjectId = useRef<string | null>(null);
+  const submitting = useRef(false);
   const [majorDialogOpen, setMajorDialogOpen] = useState(false);
   const [majorLookup, setMajorLookup] = useState<MajorLookup>({ status: 'loading' });
   const [majorAttempt, setMajorAttempt] = useState(0);
@@ -137,11 +138,19 @@ export default function GradeConfirmPage() {
     });
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (analysisBlocked) return;
+    if (analysisBlocked || submitting.current) return;
     const subjects = toSimulationSubjectRows(analysisDraft);
     if (!subjects) return;
+    // 서술 분석이 아직 끝나지 않았거나 서술을 고친 직후라면, 가장 최근 서술 기준 결과를 기다려요.
+    submitting.current = true;
+    let narrative;
+    try {
+      narrative = await resolveNarrative();
+    } finally {
+      submitting.current = false;
+    }
     if (ocrSubjects) {
       setDraft(current => applyOcrGrades(current, ocrSubjects, true));
       setPendingOcrSubjects(null);
@@ -169,6 +178,8 @@ export default function GradeConfirmPage() {
       idempotencyKey: sameRequest && snapshot ? snapshot.idempotencyKey : createIdempotencyKey(),
     });
     setResult(null);
+    // 서술 문장은 분석 결과를 만든 뒤에는 필요 없어요. 메모리에서도 지워요.
+    discardNarrativeText();
     setEditing(false);
     navigate('/grade/loading');
   }

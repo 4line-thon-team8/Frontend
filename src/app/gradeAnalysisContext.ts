@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { SimulationResult, SimulationSubjectRow } from '../services/simulationApi';
 import type { ConfirmSubject, GradeConfirmDraft } from '../types/gradeConfirm';
-import type { HolisticAnalysisPayload, NarrativeAnalysisResult } from '../utils/holistic/types';
+import type { HolisticAnalysisPayload, NarrativeAnalysisResult, NarrativeBlock } from '../utils/holistic/types';
 import type { StoredReport } from '../pages/report/lastReportStorage';
 
 /** 메모리에만 두는 리포트 부분: 총평·전략 등 문장 + 활동 요약·강점·학과별 조언 (브라우저 저장소에는 남기지 않아요) */
@@ -33,9 +33,21 @@ interface GradeAnalysisState {
   setPendingOcrSubjects: Dispatch<SetStateAction<ConfirmSubject[] | null>>;
   draft: GradeConfirmDraft;
   setDraft: Dispatch<SetStateAction<GradeConfirmDraft>>;
-  /** 서술 분석 결과(서버로 보낼 신호·근거 구절). 서술 전문은 저장하지 않아요. */
+  /** 서술 분석 결과(서버로 보낼 신호·근거 구절). 서술 전문은 담지 않아요. 가장 최근 블록 기준이에요. */
   narrative: NarrativeAnalysisResult | null;
-  setNarrative: Dispatch<SetStateAction<NarrativeAnalysisResult | null>>;
+  /**
+   * 확인 단계에서 고칠 수 있는 서술(영역×학년 블록). 메모리에만 두고 저장소·snapshot·서버에는 넣지 않아요.
+   * 분석을 제출하거나(discardNarrativeText) 입력을 비우면(reset) 사라져요.
+   */
+  narrativeBlocks: readonly NarrativeBlock[] | null;
+  /** 추출한 전문을 블록으로 나눠 담고 분석을 시작해요. null 이면 서술을 비워요. 기다리지 않아도 돼요(제출 때 resolveNarrative 가 기다려요). */
+  loadNarrative: (fullText: string | null) => void;
+  /** 서술 블록을 고쳐요. 잠시 뒤 고친 내용으로 다시 분석해요. 아직 서술이 없으면 아무 일도 하지 않아요. */
+  editNarrativeBlocks: (update: (current: readonly NarrativeBlock[]) => readonly NarrativeBlock[]) => void;
+  /** 가장 최근 블록 기준 분석이 끝나길 기다려 결과를 돌려줘요. 분석이 없었으면 null. 제출할 때 불러요. */
+  resolveNarrative: () => Promise<NarrativeAnalysisResult | null>;
+  /** 서술 문장(블록)만 지워요. 분석 결과(narrative)는 남겨 같은 입력으로 다시 제출할 수 있어요. */
+  discardNarrativeText: () => void;
   snapshot: GradeAnalysisSnapshot | null;
   setSnapshot: Dispatch<SetStateAction<GradeAnalysisSnapshot | null>>;
   /** 분석 응답 전체 (리포트 화면에서 사용). 새 분석을 시작하면 비워요. */

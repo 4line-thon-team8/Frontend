@@ -6,7 +6,6 @@ import { useCamera } from '../../hooks/useCamera';
 import { setGradeImage } from '../../utils/gradeImageStore';
 import type { GradeImage } from '../../utils/gradeImageStore';
 import { extractImageText } from '../../utils/extractImageText';
-import { analyzeNarrative, analyzeNarrativeWithBundledModel } from '../../utils/holistic/analyzeNarrative';
 import { preloadBundledModel } from '../../utils/holistic/model';
 import { recognizeGradeImages } from '../../utils/recognizeGradeImages';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
@@ -16,7 +15,7 @@ import './CameraPage.css';
 type OcrState =
   | { kind: 'idle' }
   | { kind: 'working'; page: number; progress: number | null }
-  | { kind: 'empty'; failed: number; empty: number; narrative: ReturnType<typeof analyzeNarrative> | null };
+  | { kind: 'empty'; failed: number; empty: number };
 
 type Photo = GradeImage & { id: number; url: string };
 
@@ -32,7 +31,7 @@ function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
 
 export default function CameraPage() {
   const navigate = useNavigate();
-  const { setPendingOcrSubjects, setNarrative } = useGradeAnalysis();
+  const { setPendingOcrSubjects, loadNarrative } = useGradeAnalysis();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const photo = photos.find(item => item.id === selectedId);
@@ -160,21 +159,23 @@ export default function CameraPage() {
         });
       });
       request.signal.throwIfAborted();
-      const narrative = text.trim() ? await analyzeNarrativeWithBundledModel(text) : null;
-      request.signal.throwIfAborted();
-      if (subjects.length) openGradeConfirm(subjects, narrative, failed + empty);
-      else setOcr({ kind: 'empty', failed, empty, narrative });
+      // 분석은 기다리지 않고 시작만 해요. 서술은 확인 화면에서 고칠 수 있도록 블록으로 들고 있다가 제출할 때 결과를 받아요.
+      loadNarrative(text);
+      if (subjects.length) openGradeConfirm(subjects, failed + empty);
+      else setOcr({ kind: 'empty', failed, empty });
     } catch {
-      if (!request.signal.aborted) setOcr({ kind: 'empty', failed: photos.length, empty: 0, narrative: null });
+      if (!request.signal.aborted) {
+        loadNarrative(null);
+        setOcr({ kind: 'empty', failed: photos.length, empty: 0 });
+      }
     } finally {
       if (activeOcr.current === request) activeOcr.current = null;
     }
   }
 
-  function openGradeConfirm(subjects: ConfirmSubject[] | null, narrative: ReturnType<typeof analyzeNarrative> | null, skipped = 0) {
+  function openGradeConfirm(subjects: ConfirmSubject[] | null, skipped = 0) {
     const firstPhoto = photos[0];
     if (!firstPhoto) return;
-    setNarrative(narrative);
     setPendingOcrSubjects(subjects);
     setGradeImage({ file: firstPhoto.file, source: firstPhoto.source });
     navigate('/grade/confirm', { replace: true, state: skipped ? { skippedPhotos: skipped } : undefined });
@@ -237,7 +238,7 @@ export default function CameraPage() {
             ? <button type="button" className="grade-camera-retake" onClick={cancelOcr}>분석 취소</button>
             : <>
               <button type="button" className="grade-camera-use" disabled={busy} onClick={() => void recognizePhotos()}>{ocr.kind === 'empty' ? '다시 시도' : '사진 분석하기'}</button>
-              {ocr.kind === 'empty' && <button type="button" className="grade-camera-retake" disabled={busy} onClick={() => openGradeConfirm(null, ocr.narrative)}>성적 확인으로 이동</button>}
+              {ocr.kind === 'empty' && <button type="button" className="grade-camera-retake" disabled={busy} onClick={() => openGradeConfirm(null)}>성적 확인으로 이동</button>}
             </>}
         </div>}
         <input ref={inputRef} type="file" accept="image/*" multiple className="grade-camera-file" aria-label="성적표 이미지 파일" onChange={event => void selectImage(event)} />
