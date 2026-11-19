@@ -444,3 +444,23 @@ test('인용 구절: 서버 상한(150자)까지의 완결 문장을 받고 그�
   assert.ok(pick(within).length > 0, '100자 넘고 150자 이하 문장은 인용 후보가 된다');
   assert.deepEqual(pick(long), []);
 });
+
+test('지표 신호: 같은 지표 안의 같거나 거의 같은 구절은 한 번만 센다', async t => {
+  const { buildIndicatorSignals, DUPLICATE_SIMILARITY } = await load(t);
+  assert.equal(DUPLICATE_SIMILARITY, 0.8);
+  const limits = { indicatorSignalsMax: 20 };
+  const hit = (clause, year, entryKey, indicators = ['C3']) =>
+    ({ section: 'behavior', year, entryKey, entryText: clause, clause, indicators, matches: [] });
+  const repeated = ['수업 태도가 바르고 성실함', '수업 태도가 바르고 성실함', '수업 태도가  바르고 성실함.'];
+  const signals = buildIndicatorSignals(repeated.map((clause, index) => hit(clause, index + 1, `e${index}`)), limits, null);
+  assert.equal(signals.find(signal => signal.id === 'C3').count, 1);
+  assert.deepEqual(signals.find(signal => signal.id === 'C3').years, [1, 2, 3]);
+
+  const distinct = ['모둠 활동에서 맡은 역할을 책임감 있게 수행함', '학급 정보부장으로서 공지를 정리하여 게시함', '교실 장비를 점검하고 기록하여 관리함'];
+  const counted = buildIndicatorSignals(distinct.map((clause, index) => hit(clause, index + 1, `d${index}`)), limits, null);
+  assert.equal(counted.find(signal => signal.id === 'C3').count, 3);
+
+  const other = buildIndicatorSignals([hit('협력하여 과제를 완성함', 1, 'x', ['C1']), hit('협력하여 과제를 완성함', 2, 'y', ['C3'])], limits, null);
+  assert.equal(other.find(signal => signal.id === 'C1').count, 1);
+  assert.equal(other.find(signal => signal.id === 'C3').count, 1);
+});
