@@ -28,10 +28,38 @@ export function buildCoverage(blocks: readonly NarrativeBlock[]) {
 
 /* ---------- 지표별 신호 ---------- */
 
-/** 문단 하나의 품질: 탐구 단계(동기·과정·결과·성찰) 충족 절반 + 구체 표현 유무 절반. */
-function entryQuality(entryText: string): number {
-  const stages = INQUIRY_STAGES.filter(stage => stage.test(entryText)).length;
-  return 0.5 * (stages / INQUIRY_STAGES.length) + (SPECIFIC_MARKERS.test(entryText) ? 0.5 : 0);
+/** 품질을 재는 한 덩어리의 글자 수. 문단이 길어도 같은 크기로 잘라서 재야 문단 길이가 점수를 올리지 못한다. */
+const QUALITY_WINDOW_CHARS = 150;
+
+/** 문단을 문장 단위로 모아 QUALITY_WINDOW_CHARS 안팎의 덩어리로 나눈다. 짧은 문단은 그대로 한 덩어리다. */
+function qualityWindows(entryText: string): string[] {
+  const sentences = entryText.split(/(?<=[.!?])\s+/u).filter(sentence => sentence.trim() !== '');
+  const windows: string[] = [];
+  let current = '';
+  for (const sentence of sentences) {
+    current = current === '' ? sentence : `${current} ${sentence}`;
+    if (current.length >= QUALITY_WINDOW_CHARS) {
+      windows.push(current);
+      current = '';
+    }
+  }
+  if (current !== '') windows.push(current);
+  return windows.length > 0 ? windows : [entryText];
+}
+
+function windowQuality(text: string): number {
+  const stages = INQUIRY_STAGES.filter(stage => stage.test(text)).length;
+  return 0.5 * (stages / INQUIRY_STAGES.length) + (SPECIFIC_MARKERS.test(text) ? 0.5 : 0);
+}
+
+/**
+ * 문단 하나의 품질: 탐구 단계(동기·과정·결과·성찰) 충족 절반 + 구체 표현 유무 절반.
+ * 문단 전체에 한 번만 재면 길수록 네 단계와 구체 표현이 거의 항상 채워져 만점에 붙으므로,
+ * 150자 안팎의 덩어리마다 재서 평균한다(문단 길이와 무관하게 비슷한 값이 나오도록).
+ */
+export function entryQuality(entryText: string): number {
+  const windows = qualityWindows(entryText);
+  return windows.reduce((sum, window) => sum + windowQuality(window), 0) / windows.length;
 }
 
 /**
