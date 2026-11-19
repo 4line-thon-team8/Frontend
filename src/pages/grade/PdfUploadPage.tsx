@@ -5,7 +5,6 @@ import arrowBack from '../../assets/icons/arrow-back.svg';
 import clipboard from '../../assets/icons/clipboard.svg';
 import { useGradeAnalysis } from '../../app/gradeAnalysisContext';
 import Button from '../../components/common/Button';
-import { analyzeNarrativeWithBundledModel } from '../../utils/holistic/analyzeNarrative';
 import { preloadBundledModel } from '../../utils/holistic/model';
 import { createPageOcr } from '../../utils/createPageOcr';
 import { extractPdfText, MAX_PDF_BYTES } from '../../utils/extractPdfText';
@@ -34,7 +33,7 @@ export default function PdfUploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const activeRequest = useRef<AbortController | null>(null);
   const navigate = useNavigate();
-  const { setNarrative, setPendingOcrSubjects } = useGradeAnalysis();
+  const { loadNarrative, setPendingOcrSubjects } = useGradeAnalysis();
   const [status, setStatus] = useState<UploadStatus>({ kind: 'idle' });
 
   // 서술 분석 모델은 별도 파일이라 화면에 들어올 때 미리 읽어 둬요.
@@ -68,7 +67,8 @@ export default function PdfUploadPage() {
     if (result.ok) {
       // 페이지를 이어 붙여 분석해요(영역이 페이지 경계에서 끊기는 경우 대비). 전문은 여기서만 쓰고 저장하지 않아요.
       const text = result.pages.map(page => page.text).join('\n');
-      setNarrative(await analyzeNarrativeWithBundledModel(text));
+      // 분석은 기다리지 않고 시작만 해요. 확인 화면에서 서술을 고칠 수 있도록 블록을 들고 있다가 제출할 때 결과를 받아요.
+      loadNarrative(text);
       const subjects = parseRecordGrades(text).map(subject => ({ ...subject, name: snapSubjectName(subject.name, '2022') }));
       if (subjects.length) {
         setPendingOcrSubjects(subjects);
@@ -78,7 +78,7 @@ export default function PdfUploadPage() {
       setPendingOcrSubjects(null);
       setStatus({ kind: 'no-grades', pageCount: result.pages.length });
     } else if (result.reason !== 'cancelled') {
-      setNarrative(null);
+      loadNarrative(null);
       setPendingOcrSubjects(null);
       setStatus({ kind: 'error', message: errorMessages[result.reason] });
     }

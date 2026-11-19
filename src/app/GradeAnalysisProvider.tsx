@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { createInitialGradeConfirmDraft } from '../pages/grade/gradeConfirm.mock';
 import { GradeAnalysisContext } from './gradeAnalysisContext';
@@ -8,7 +8,10 @@ import { getCurrentUserId } from '../services/authToken';
 import type { ConfirmSubject } from '../types/gradeConfirm';
 import type { SimulationResult } from '../services/simulationApi';
 import { clearGradeImage } from '../utils/gradeImageStore';
-import type { NarrativeAnalysisResult } from '../utils/holistic/types';
+import { analyzeBlocksWithBundledModel } from '../utils/holistic/analyzeNarrative';
+import { createNarrativeSession } from '../utils/holistic/narrativeSession';
+import type { NarrativeSessionState } from '../utils/holistic/narrativeSession';
+import { loadTagKeywords } from '../utils/holistic/tagKeywords';
 
 export default function GradeAnalysisProvider({ children }: PropsWithChildren) {
   const [draft, setDraft] = useState(createInitialGradeConfirmDraft);
@@ -16,7 +19,13 @@ export default function GradeAnalysisProvider({ children }: PropsWithChildren) {
   const [snapshot, setSnapshot] = useState<GradeAnalysisSnapshot | null>(null);
   const [pendingOcrSubjects, setPendingOcrSubjects] = useState<ConfirmSubject[] | null>(null);
   const [result, setResult] = useState<SimulationResult | null>(null);
-  const [narrative, setNarrative] = useState<NarrativeAnalysisResult | null>(null);
+  // 확인 단계의 서술(블록)과 분석 결과. 블록은 메모리에만 두고, 로직은 narrativeSession 이 맡아요.
+  const [narrativeState, setNarrativeState] = useState<NarrativeSessionState>({ blocks: null, result: null });
+  const [narrativeSession] = useState(() => createNarrativeSession({
+    analyze: async blocks => analyzeBlocksWithBundledModel(blocks, { tagKeywords: await loadTagKeywords() }),
+    onChange: setNarrativeState,
+  }));
+  useEffect(() => () => narrativeSession.dispose(), [narrativeSession]);
   const [ownedReport, setOwnedReport] = useState<OwnedReport | null>(loadLastReport);
   const lastReport = ownedReport?.report ?? null;
   /**
@@ -56,8 +65,8 @@ export default function GradeAnalysisProvider({ children }: PropsWithChildren) {
     setSnapshot(null);
     setPendingOcrSubjects(null);
     setResult(null);
-    setNarrative(null);
-  }, []);
+    narrativeSession.reset();
+  }, [narrativeSession]);
 
   const resetAll = useCallback(() => {
     reset();
@@ -67,7 +76,7 @@ export default function GradeAnalysisProvider({ children }: PropsWithChildren) {
   }, [reset]);
 
   return (
-    <GradeAnalysisContext.Provider value={{ lastReport, lastReportText, setLastReport, syncReportOwner, resetAll, narrative, setNarrative, draft, setDraft, snapshot, setSnapshot, reset, pendingOcrSubjects, setPendingOcrSubjects, hasConfirmedGrades, setHasConfirmedGrades, result, setResult }}>
+    <GradeAnalysisContext.Provider value={{ lastReport, lastReportText, setLastReport, syncReportOwner, resetAll, narrative: narrativeState.result, narrativeBlocks: narrativeState.blocks, loadNarrative: narrativeSession.load, editNarrativeBlocks: narrativeSession.edit, resolveNarrative: narrativeSession.resolve, discardNarrativeText: narrativeSession.discardText, draft, setDraft, snapshot, setSnapshot, reset, pendingOcrSubjects, setPendingOcrSubjects, hasConfirmedGrades, setHasConfirmedGrades, result, setResult }}>
       {children}
     </GradeAnalysisContext.Provider>
   );
