@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, MouseEvent, PointerEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import chevron from '../../assets/icons/chevron-right.svg';
 import { useCamera } from '../../hooks/useCamera';
@@ -18,6 +18,8 @@ type OcrState =
   | { kind: 'empty'; failed: number; empty: number };
 
 type Photo = GradeImage & { id: number; url: string };
+
+const PHOTO_DRAG_THRESHOLD = 6;
 
 function CameraIcon({ kind }: { kind: 'gallery' | 'switch' | 'flash' }) {
   return (
@@ -43,6 +45,8 @@ export default function CameraPage() {
   const activeOcr = useRef<AbortController | null>(null);
   const recognizing = ocr.kind === 'working';
   const inputRef = useRef<HTMLInputElement>(null);
+  const photoDrag = useRef<{ pointerId: number; startX: number; scrollLeft: number } | null>(null);
+  const ignorePhotoClick = useRef(false);
   const mounted = useRef(false);
   const operation = useRef(0);
   const { videoRef, status, error, torchOn, torchSupported, torchBusy, restart, switchCamera, markReady, onPlaybackPause, toggleTorch } = useCamera(!photo && !recognizing);
@@ -79,6 +83,37 @@ export default function CameraPage() {
     setPhotos(current => current.filter(photo => photo.id !== item.id));
     if (selectedId === item.id) setSelectedId(null);
     setOcr({ kind: 'idle' });
+  }
+
+  function startPhotoDrag(event: PointerEvent<HTMLUListElement>) {
+    if (!event.isPrimary) return;
+    ignorePhotoClick.current = false;
+    const list = event.currentTarget;
+    if (event.pointerType !== 'mouse' || event.button !== 0 || list.scrollWidth <= list.clientWidth) return;
+    photoDrag.current = { pointerId: event.pointerId, startX: event.clientX, scrollLeft: list.scrollLeft };
+  }
+
+  function movePhotoDrag(event: PointerEvent<HTMLUListElement>) {
+    const drag = photoDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const distance = event.clientX - drag.startX;
+    const list = event.currentTarget;
+    if (!ignorePhotoClick.current) {
+      if (Math.abs(distance) < PHOTO_DRAG_THRESHOLD) return;
+      list.setPointerCapture(event.pointerId);
+      ignorePhotoClick.current = true;
+    }
+    list.scrollLeft = drag.scrollLeft - distance;
+  }
+
+  function endPhotoDrag(event: PointerEvent<HTMLUListElement>) {
+    if (photoDrag.current?.pointerId === event.pointerId) photoDrag.current = null;
+  }
+
+  function preventPhotoDragClick(event: MouseEvent<HTMLUListElement>) {
+    if (!ignorePhotoClick.current || event.detail === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   async function capture() {
@@ -200,13 +235,34 @@ export default function CameraPage() {
           </>}
         </div>
         <div className="grade-camera-feedback" aria-live="polite">{message || (status === 'ready' && !photo ? error : '')}</div>
+        <div className={photo ? 'grade-camera-review-actions' : 'grade-camera-controls'}>
+          <button type="button" className="grade-camera-icon-button" aria-label="갤러리에서 사진 선택" disabled={busy || recognizing} onClick={() => inputRef.current?.click()}><CameraIcon kind="gallery" /></button>
+          {photo
+            ? <button type="button" className="grade-camera-retake" disabled={busy || recognizing} onClick={() => setSelectedId(null)}>추가 촬영</button>
+            : <>
+              <button type="button" className="grade-camera-shutter" aria-label="성적표 촬영" disabled={status !== 'ready' || busy || recognizing} onClick={() => void capture()} />
+              <button type="button" className="grade-camera-icon-button" aria-label="전면 후면 카메라 전환" disabled={busy || recognizing || status === 'requesting'} onClick={switchCamera}><CameraIcon kind="switch" /></button>
+            </>}
+        </div>
         {photos.length > 0 && <div className="grade-camera-photo-list">
           <p role="status">추가한 사진 {photos.length}장</p>
-          <ul aria-label="추가한 성적표 사진">
+          <ul
+            role="list"
+            aria-label="추가한 성적표 사진"
+            onPointerDown={startPhotoDrag}
+            onPointerMove={movePhotoDrag}
+            onPointerUp={endPhotoDrag}
+            onPointerLeave={event => {
+              if (!event.currentTarget.hasPointerCapture(event.pointerId)) endPhotoDrag(event);
+            }}
+            onPointerCancel={endPhotoDrag}
+            onLostPointerCapture={endPhotoDrag}
+            onClickCapture={preventPhotoDragClick}
+          >
             {photos.map((item, index) => (
               <li key={item.id}>
                 <button type="button" className="grade-camera-thumbnail" aria-label={`${index + 1}번 사진 미리보기`} aria-pressed={item.id === selectedId} disabled={busy || recognizing} onClick={() => setSelectedId(item.id)}>
-                  <img src={item.url} alt="" />
+                  <img src={item.url} alt="" draggable={false} />
                   <span aria-hidden="true">{index + 1}</span>
                 </button>
                 <button type="button" className="grade-camera-remove" aria-label={`${index + 1}번 사진 삭제`} disabled={busy || recognizing} onClick={() => removePhoto(item)}>삭제</button>
@@ -224,15 +280,6 @@ export default function CameraPage() {
           </div>
           {ocr.kind === 'working' && <progress aria-label="텍스트 인식 진행률" max={1} value={ocr.progress ?? undefined} />}
         </div>}
-        <div className={photo ? 'grade-camera-review-actions' : 'grade-camera-controls'}>
-          <button type="button" className="grade-camera-icon-button" aria-label="갤러리에서 사진 선택" disabled={busy || recognizing} onClick={() => inputRef.current?.click()}><CameraIcon kind="gallery" /></button>
-          {photo
-            ? <button type="button" className="grade-camera-retake" disabled={busy || recognizing} onClick={() => setSelectedId(null)}>추가 촬영</button>
-            : <>
-              <button type="button" className="grade-camera-shutter" aria-label="성적표 촬영" disabled={status !== 'ready' || busy || recognizing} onClick={() => void capture()} />
-              <button type="button" className="grade-camera-icon-button" aria-label="전면 후면 카메라 전환" disabled={busy || recognizing || status === 'requesting'} onClick={switchCamera}><CameraIcon kind="switch" /></button>
-            </>}
-        </div>
         {photos.length > 0 && <div className="grade-camera-review-actions">
           {ocr.kind === 'working'
             ? <button type="button" className="grade-camera-retake" onClick={cancelOcr}>분석 취소</button>
