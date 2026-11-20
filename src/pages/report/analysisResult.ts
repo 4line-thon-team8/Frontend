@@ -72,10 +72,15 @@ const ADMISSION_LABELS: Record<string, string> = { 'school-record': '학생부�
 
 function toProfileLines(snapshot: GradeAnalysisSnapshot | null): string[] {
   const majorNames = snapshot?.majorNames ?? [];
-  const admissions = snapshot?.preferences.admissions.map(id => ADMISSION_LABELS[id] ?? id) ?? [];
+  const admissionIds = snapshot?.preferences.admissions ?? [];
+  const admissions = admissionIds.map(id => ADMISSION_LABELS[id] ?? id);
+  // '상관없음'을 고르면 '상관없음 선호'가 아니라 '전형 상관없음'으로 보여줘요 (Figma).
+  const admissionLine = admissionIds.includes('any')
+    ? '전형 상관없음'
+    : admissions.length ? `${admissions.join(' · ')} 선호` : '';
   return [
     majorNames.length ? `${majorNames.join(' · ')} 희망` : '',
-    admissions.length ? `${admissions.join(' · ')} 선호` : '',
+    admissionLine,
   ].filter(Boolean);
 }
 

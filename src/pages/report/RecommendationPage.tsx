@@ -21,13 +21,24 @@ function ChevronIcon({ up }: { up: boolean }) {
 }
 
 /**
+ * 카드마다 붙어 오는 '(지원 전) 최신 모집요강과 지원 자격을 확인해 주세요.' 문장은 빼요.
+ * 같은 안내를 화면 맨 위에 한 번만 보여줘요 (Figma).
+ */
+const ADMISSION_CHECK_SENTENCE = /\s*(?:지원\s*전\s*)?최신\s*모집\s*요강과\s*지원\s*자격을\s*확인해\s*주세요\.?/g;
+
+function stripAdmissionCheck(text: string) {
+  return text.replace(ADMISSION_CHECK_SENTENCE, '').trim();
+}
+
+/**
  * 추천 카드 (Figma '수정된 리포트'): 지망·학교·배지 → 근거 칩 → '펼쳐보기'.
  * 추천 이유는 글이 길어서 접어 두고, 펼치면 보여줘요. 카드별 주의 안내는 접어도 항상 보여요.
  */
 function RecommendationCard({ item, warnings }: { item: Recommendation; warnings: ResultWarning[] }) {
   const [open, setOpen] = useState(false);
   const reasonId = useId();
-  const hasReason = item.reason.text !== '';
+  const reasonText = stripAdmissionCheck(item.reason.text);
+  const hasReason = reasonText !== '';
 
   return (
     <li className={`report-fold-card recommendation-card ${tierClassName(item.tier)}`}>
@@ -40,7 +51,7 @@ function RecommendationCard({ item, warnings }: { item: Recommendation; warnings
       {warnings.map(warning => (
         <p key={`${warning.code}-${warning.message}`} className="recommendation-card__warning">{warning.message}</p>
       ))}
-      {hasReason && open && <p id={reasonId} className="recommendation-card__reason">{item.reason.text}</p>}
+      {hasReason && open && <p id={reasonId} className="recommendation-card__reason">{reasonText}</p>}
       {hasReason && (
         <button
           type="button"
@@ -70,6 +81,7 @@ export default function RecommendationPage() {
           <img src={clipboard} alt="" width="15" height="17" />
           추천 원서 {recommendations.length}장
         </h1>
+        <p>*최신 모집요강과 지원 자격을 확인해 주세요.</p>
       </header>
 
       {isNoCandidates(view) ? <RecommendationEmpty /> : (
