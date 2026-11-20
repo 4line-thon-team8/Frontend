@@ -7,6 +7,8 @@ import type { HolisticRule, NarrativeSection } from './types';
  * 학습·내보내기는 파이썬(model-<버전>.json)에서 하며, 여기서는 같은 계산을 그대로 재현한다.
  * 입력: 구절의 char_wb 1~3-gram TF-IDF(L2 정규화) + 영역 원-핫 + 규칙 적중 플래그 + 구절 길이 + 부정·개선 표현 유무.
  * 모델 0.5.0 부터는 NB-SVM 방식으로 학습했지만, 클래스별 비율 가중치를 계수에 미리 곱해 내보내므로 계산식은 그대로 선형이다.
+ * 모델 0.6.0 부터는 증류 항이 더해진다. 비라벨 구절 약 3만 개의 문장 임베딩(multilingual-e5-small)을 글자 1~4-gram 에서
+ * 선형으로 흉내 내도록 학습한 사상을 분류기 계수에 접어 넣은 것이라, 앱은 임베딩 모델 없이 n-gram 가중치 합만 계산한다.
  */
 
 export interface HolisticModelIndicator {
@@ -37,6 +39,17 @@ export interface HolisticModel {
   vocab: Record<string, number>;
   idf: number[];
   indicators: Record<string, HolisticModelIndicator>;
+  /** 증류 항(0.6.0~). 별도 n-gram 사전(1~4)으로 만든 TF-IDF(L2 정규화)에 지표별 계수를 곱해 로짓에 더한다. 절편은 intercept 에 합쳐 두었다. */
+  distill?: HolisticModelDistill;
+}
+
+export interface HolisticModelDistill {
+  ngramRange: [number, number];
+  sublinearTf: boolean;
+  vocab: Record<string, number>;
+  idf: number[];
+  /** 지표별 특성 번호 → 가중치 */
+  indicators: Record<string, { coef: Record<string, number> }>;
 }
 
 export interface ModelPrediction {
@@ -110,6 +123,43 @@ export function createModelClassifier(model: HolisticModel, rules: readonly Holi
     for (const [index, w] of Object.entries(model.indicators[id]!.coef)) dense[Number(index) * indicatorCount + k] = w;
   });
 
+  // 증류 항: 지표마다 계수 묶음을 한 칸에 둔다(위와 같은 방식).
+  const distill = model.distill;
+  const distillVocabulary = distill ? new Map<string, number>(Object.entries(distill.vocab)) : null;
+  let distillMax = -1;
+  if (distill) {
+    for (const id of indicatorIds) {
+      for (const index of Object.keys(distill.indicators[id]?.coef ?? {})) distillMax = Math.max(distillMax, Number(index));
+    }
+  }
+  const distillDense = new Float64Array((distillMax + 1) * indicatorCount);
+  if (distill) {
+    indicatorIds.forEach((id, k) => {
+      for (const [index, w] of Object.entries(distill.indicators[id]?.coef ?? {})) distillDense[Number(index) * indicatorCount + k] = w;
+    });
+  }
+
+  /** 증류 항에 쓰는 L2 정규화 TF-IDF. 정규화는 사전 전체로 하므로 가중치가 없는 n-gram 도 노름에 들어간다. */
+  function distillFeatures(clause: string): Map<number, number> {
+    const x = new Map<number, number>();
+    if (!distill || !distillVocabulary) return x;
+    const counts = new Map<number, number>();
+    for (const gram of charWbNgrams(clause, distill.ngramRange[0], distill.ngramRange[1])) {
+      const index = distillVocabulary.get(gram);
+      if (index !== undefined) counts.set(index, (counts.get(index) ?? 0) + 1);
+    }
+    let squares = 0;
+    for (const [index, count] of counts) {
+      const tf = distill.sublinearTf ? 1 + Math.log(count) : count;
+      const value = tf * (distill.idf[index] ?? 0);
+      x.set(index, value);
+      squares += value * value;
+    }
+    const norm = Math.sqrt(squares) || 1;
+    for (const [index, value] of x) x.set(index, value / norm);
+    return x;
+  }
+
   function ruleIndicators(section: NarrativeSection, clause: string): Set<string> {
     const found = new Set<string>();
     for (const item of compiled) {
@@ -166,6 +216,13 @@ export function createModelClassifier(model: HolisticModel, rules: readonly Holi
         if (index > maxFeature) continue; // 가중치가 없는 특성은 0 이다.
         const base = index * indicatorCount;
         for (let k = 0; k < indicatorCount; k++) z[k]! += dense[base + k]! * value;
+      }
+      if (distill) {
+        for (const [index, value] of distillFeatures(clause)) {
+          if (index > distillMax) continue;
+          const base = index * indicatorCount;
+          for (let k = 0; k < indicatorCount; k++) z[k]! += distillDense[base + k]! * value;
+        }
       }
       const probabilities: Record<string, number> = {};
       const hits: string[] = [];
